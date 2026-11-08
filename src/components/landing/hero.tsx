@@ -21,24 +21,31 @@ import {
 import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
 import confetti from "canvas-confetti"
+import type { HskTopic } from "@/lib/api/types"
+
+type CatalogSummary = { words: number | null; practices: number | null; exams: number | null; topics: HskTopic[]; available: boolean }
 
 // Animated Dashboard Mockup
-function LiveDashboardMockup() {
+function LiveDashboardMockup({ catalog }: { catalog: CatalogSummary }) {
   const [bandScore, setBandScore] = useState(0)
-  const targetBand = 8.0
+  const targetBand = 9
+  const availableLevels = new Set(catalog.topics.filter(topic => topic.totalSets > 0).map(topic => topic.hskLevel)).size
+  const skillCounts = ["listeningCount", "readingCount", "writingCount", "speakingCount"].map(key => catalog.topics.reduce((sum, topic) => sum + Number(topic[key as keyof HskTopic] || 0), 0))
+  const maxSkillCount = Math.max(1, ...skillCounts)
+  const number = (value: number | null) => value === null ? "—" : value.toLocaleString("vi-VN")
 
   useEffect(() => {
     const timer = setTimeout(() => {
       let current = 0
 
       const interval = setInterval(() => {
-        current += 0.1
+        current += 1
 
-        if (current >= 7.0) {
-          setBandScore(7.0)
+        if (current >= availableLevels) {
+          setBandScore(availableLevels)
           clearInterval(interval)
         } else {
-          setBandScore(Number(current.toFixed(1)))
+          setBandScore(current)
         }
       }, 50)
 
@@ -46,7 +53,7 @@ function LiveDashboardMockup() {
     }, 800)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [availableLevels])
 
   const progress = (bandScore / targetBand) * 100
   const circumference = 2 * Math.PI * 54
@@ -63,8 +70,7 @@ function LiveDashboardMockup() {
 
         <div className="ml-3 flex-1 text-center">
           <div className="inline-block px-2 py-0.5 rounded bg-white border border-mist text-[10px] text-slate font-medium">
-            ieltsbeta.app/dashboard
-          </div>
+             TriceHSK · Nội dung từ hệ thống </div>
         </div>
       </div>
 
@@ -82,7 +88,7 @@ function LiveDashboardMockup() {
               <Zap className="h-4 w-4 text-xp" />
             </div>
             <span className="text-xs font-bold text-xp">
-              2,450
+              {number(catalog.practices)}
             </span>
           </div>
         </div>
@@ -93,20 +99,20 @@ function LiveDashboardMockup() {
             {
               icon: Zap,
               color: "text-xp",
-              label: "XP",
-              value: "2,450",
+              label: "Từ vựng",
+              value: number(catalog.words),
             },
             {
               icon: Target,
               color: "text-flame",
-              label: "Streak",
-              value: "12 days",
+              label: "Bộ luyện tập",
+              value: number(catalog.practices),
             },
             {
               icon: BookOpen,
               color: "text-teal",
-              label: "Courses",
-              value: "3",
+              label: "Đề thi",
+              value: number(catalog.exams),
             },
           ].map((stat, i) => (
             <motion.div
@@ -171,17 +177,17 @@ function LiveDashboardMockup() {
 
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-lg font-black text-navy">
-                  {bandScore.toFixed(1)}
+                  {catalog.available ? `${bandScore}/${targetBand}` : "—"}
                 </span>
 
                 <span className="text-[8px] text-slate">
-                  of {targetBand} target
+                  Cấp độ có bài
                 </span>
               </div>
             </div>
 
             <span className="text-[9px] font-bold text-teal mt-1">
-              {Math.round(progress)}% there
+              {catalog.available ? `${availableLevels} cấp độ HSK` : "Đang cập nhật dữ liệu"}
             </span>
           </div>
 
@@ -191,22 +197,22 @@ function LiveDashboardMockup() {
               {
                 icon: Headphones,
                 color: "#0EA599",
-                pct: 78,
+                pct: (skillCounts[0] || 0) / maxSkillCount * 100,
               },
               {
                 icon: BookOpen,
                 color: "#123C6B",
-                pct: 65,
+                pct: (skillCounts[1] || 0) / maxSkillCount * 100,
               },
               {
                 icon: PenLine,
                 color: "#F5A524",
-                pct: 52,
+                pct: (skillCounts[2] || 0) / maxSkillCount * 100,
               },
               {
                 icon: Mic,
                 color: "#9B8AFB",
-                pct: 45,
+                pct: (skillCounts[3] || 0) / maxSkillCount * 100,
               },
             ].map((skill, i) => (
               <motion.div
@@ -380,15 +386,19 @@ function MagneticButton({
   )
 }
 
-// Typewriter headline
+const HERO_HEADLINE_LINES = ["Cùng chinh phục", "tiếng Trung", "mỗi ngày."]
+const HERO_HEADLINE = HERO_HEADLINE_LINES.join(" ")
+
+// Reserve all three lines before typing so the illustration stays in place.
 function TypewriterHeadline() {
   const [text, setText] = useState("")
   const [showCursor, setShowCursor] = useState(true)
 
-  const fullText = "Ready to level up your IELTS score?"
+  const fullText = HERO_HEADLINE
 
   useEffect(() => {
     let i = 0
+    let cursorTimer: ReturnType<typeof setTimeout> | undefined
 
     const timer = setInterval(() => {
       if (i <= fullText.length) {
@@ -397,28 +407,36 @@ function TypewriterHeadline() {
       } else {
         clearInterval(timer)
 
-        setTimeout(() => {
+        cursorTimer = setTimeout(() => {
           setShowCursor(false)
         }, 1000)
       }
     }, 45)
 
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(timer)
+      if (cursorTimer) clearTimeout(cursorTimer)
+    }
   }, [])
 
   return (
-    <h1 className="text-5xl font-black tracking-tighter text-ink sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95]">
-      {text}
-      {showCursor && (
-        <span className="animate-blink text-teal">
-          |
-        </span>
-      )}
+    <h1 className="hsk-hero-heading text-ink" aria-label={fullText}>
+      {HERO_HEADLINE_LINES.map((line, index) => {
+        const start = HERO_HEADLINE_LINES.slice(0, index).reduce((sum, item) => sum + item.length + 1, 0)
+        const visible = text.slice(start, start + line.length)
+        const cursorHere = showCursor && text.length >= start && text.length <= start + line.length
+        return (
+          <span key={line} className="hsk-hero-line" aria-hidden="true">
+            {visible}
+            {cursorHere && <span className="hsk-hero-cursor animate-blink text-teal">|</span>}
+          </span>
+        )
+      })}
     </h1>
   )
 }
 
-export function Hero() {
+export function Hero({ catalog }: { catalog: CatalogSummary }) {
   const sectionRef = useRef<HTMLElement>(null)
 
   const { scrollYProgress } = useScroll({
@@ -498,8 +516,7 @@ export function Hero() {
               className="inline-flex items-center rounded-full border-3 border-ink/10 bg-ink/5 px-4 py-1.5 text-sm font-black text-ink mb-6"
             >
               <span className="flex h-2.5 w-2.5 rounded-full bg-teal mr-2 animate-pulse" />
-              Trusted by 12,000+ learners in Bangladesh
-            </motion.div>
+               你好 · Học tiếng Trung cùng TriceHSK </motion.div>
 
             {/* Headline */}
             <TypewriterHeadline />
@@ -520,11 +537,7 @@ export function Hero() {
               }}
               className="mt-6 text-lg md:text-xl text-slate max-w-xl leading-relaxed font-medium"
             >
-              Practice IELTS with self-grading tests, teacher
-              feedback, vocabulary tools, and AI-powered help —
-              including Writing Task 1 &amp; Task 2 grading.
-              Everything you need to move toward your target band.
-            </motion.p>
+               Học chữ Hán, ghi nhớ pinyin và luyện nghe, nói, đọc, viết theo chủ đề HSK. Một nơi để bạn xây dựng nền tảng tiếng Trung và theo đuổi mục tiêu của mình. </motion.p>
 
             {/* CTAs */}
             <motion.div
@@ -543,11 +556,10 @@ export function Hero() {
               className="mt-8 flex flex-wrap gap-4"
             >
               <MagneticButton
-                href="/signup"
+                href="/register"
                 variant="primary"
               >
-                Start free today
-                <ArrowRight className="h-4 w-4" />
+                 Đăng ký học HSK <ArrowRight className="h-4 w-4" />
               </MagneticButton>
 
               <MagneticButton
@@ -555,8 +567,7 @@ export function Hero() {
                 variant="secondary"
               >
                 <Play className="h-4 w-4 fill-current" />
-                View demo
-              </MagneticButton>
+                 Khám phá cách học </MagneticButton>
             </motion.div>
 
             {/* Stats */}
@@ -577,16 +588,16 @@ export function Hero() {
             >
               {[
                 {
-                  value: "12K+",
-                  label: "Active learners",
+                  value: "4",
+                  label: "Kỹ năng",
                 },
                 {
-                  value: "4.9/5",
-                  label: "Satisfaction",
+                  value: "HSK",
+                  label: "Nội dung",
                 },
                 {
-                  value: "+1.4",
-                  label: "Avg. band gain",
+                  value: "Cá nhân",
+                  label: "Lộ trình",
                 },
               ].map((stat, i) => (
                 <motion.div
@@ -653,7 +664,7 @@ export function Hero() {
               }}
               className="relative"
             >
-              <LiveDashboardMockup />
+              <LiveDashboardMockup catalog={catalog} />
             </motion.div>
 
             {/* Floating streak card */}
@@ -676,12 +687,10 @@ export function Hero() {
 
                 <div>
                   <div className="text-base font-black text-navy">
-                    21 day streak!
-                  </div>
+                     Ôn tập mỗi ngày </div>
 
                   <div className="text-xs font-bold text-slate">
-                    Keep it going 🔥
-                  </div>
+                     加油 · Cùng cố gắng! </div>
                 </div>
               </div>
             </motion.div>
@@ -707,12 +716,10 @@ export function Hero() {
 
                 <div>
                   <div className="text-base font-black text-navy">
-                    Band 7.5
-                  </div>
+                     Mục tiêu HSK </div>
 
                   <div className="text-xs font-bold text-slate">
-                    New personal best 🎉
-                  </div>
+                     学习中文 · Học tiếng Trung </div>
                 </div>
               </div>
             </motion.div>

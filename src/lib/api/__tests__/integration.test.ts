@@ -41,10 +41,10 @@ describe("Existing HSK backend integration", () => {
         ),
       );
     const response = await POST(
-      new NextRequest("http://localhost:3000/api/hsk/auth/email/login", {
+      new NextRequest("http://localhost:3002/api/hsk/auth/email/login", {
         method: "POST",
         body: "{}",
-        headers: { origin: "http://localhost:3000" },
+        headers: { origin: "http://localhost:3002" },
       }),
       ctx("auth/email/login"),
     );
@@ -61,7 +61,7 @@ describe("Existing HSK backend integration", () => {
     const mocked = jest.fn();
     global.fetch = mocked;
     const response = await GET(
-      new NextRequest("http://localhost:3000/api/hsk/" + path),
+      new NextRequest("http://localhost:3002/api/hsk/" + path),
       ctx(path),
     );
     expect(response.status).toBe(404);
@@ -70,7 +70,7 @@ describe("Existing HSK backend integration", () => {
   it("rejects mutations sent from a different origin", async () => {
     global.fetch = jest.fn();
     const response = await POST(
-      new NextRequest("http://localhost:3000/api/hsk/auth/logout", {
+      new NextRequest("http://localhost:3002/api/hsk/auth/logout", {
         method: "POST",
         headers: { origin: "https://other.example.com" },
       }),
@@ -90,7 +90,7 @@ describe("Existing HSK backend integration", () => {
       .mockResolvedValueOnce(new Response('{"id":2}'));
     global.fetch = mocked;
     const response = await GET(
-      new NextRequest("http://localhost:3000/api/hsk/auth/me", {
+      new NextRequest("http://localhost:3002/api/hsk/auth/me", {
         headers: { cookie: "hsk_access=old; hsk_refresh=test-refresh" },
       }),
       ctx("auth/me"),
@@ -103,7 +103,7 @@ describe("Existing HSK backend integration", () => {
   it("clears the local session on logout even when the backend is unavailable", async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error("offline"));
     const response = await POST(
-      new NextRequest("http://localhost:3000/api/hsk/auth/logout", {
+      new NextRequest("http://localhost:3002/api/hsk/auth/logout", {
         method: "POST",
       }),
       ctx("auth/logout"),
@@ -112,17 +112,22 @@ describe("Existing HSK backend integration", () => {
     expect(response.cookies.get("hsk_access")?.value).toBe("");
   });
   it("supports the backend's empty registration response", async () => {
+    const registration = { username: "hsk_learner", email: "learner@example.com", password: "abcdef" };
     global.fetch = jest
       .fn()
       .mockResolvedValue(new Response(null, { status: 204 }));
     const response = await POST(
-      new NextRequest("http://localhost:3000/api/hsk/auth/email/register", {
+      new NextRequest("http://localhost:3002/api/hsk/auth/email/register", {
         method: "POST",
-        body: "{}",
+        body: JSON.stringify(registration),
       }),
       ctx("auth/email/register"),
     );
     expect(response.status).toBe(204);
     expect(await response.text()).toBe("");
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:3001/api/v1/auth/email/register",
+      expect.objectContaining({ method: "POST", body: JSON.stringify(registration) }),
+    );
   });
 });

@@ -1,120 +1,29 @@
-import {
-  signupSchema,
-  loginSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
-} from "@/lib/validations/auth";
-
-function isoDateYearsAgo(years: number, extraDays = 0): string {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - years);
-  d.setDate(d.getDate() + extraDays);
-  return d.toISOString().slice(0, 10);
-}
-
-describe("signupSchema", () => {
-  const base = {
-    firstName: "Nafisa",
-    lastName: "Rahman",
-    email: "nafisa@example.com",
-    password: "password123",
-    role: "student" as const,
-  };
-
-  it("accepts a valid signup for someone exactly 13", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(13) });
-    expect(result.success).toBe(true);
+import { signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "../auth";
+describe("HSK registration contract", () => {
+  const valid = {username:"hsk_learner",email:"learner@example.com",password:"abcdef",confirmPassword:"abcdef"};
+  it("accepts actual backend fields and six-character passwords", () => {
+    expect(signupSchema.safeParse(valid).success).toBe(true);
   });
-
-  it("rejects someone who turns 13 tomorrow (not yet had this year's birthday)", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(13, 1) });
-    expect(result.success).toBe(false);
+  it("normalizes username and email", () => {
+    const result = signupSchema.parse({...valid,username:" learner ",email:" LEARNER@EXAMPLE.COM "});
+    expect(result.username).toBe("learner");
+    expect(result.email).toBe("learner@example.com");
   });
-
-  it("accepts someone who already had this year's birthday and is 13", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(13, -1) });
-    expect(result.success).toBe(true);
+  it.each([{username:" "},{username:"x".repeat(256)},{email:"invalid"},{password:"short",confirmPassword:"short"},{password:"x".repeat(73),confirmPassword:"x".repeat(73)},{confirmPassword:"different"}])("rejects invalid registration data %j", changes => {
+    expect(signupSchema.safeParse({...valid,...changes}).success).toBe(false);
   });
-
-  it("rejects a date of birth in the future", () => {
-    const future = new Date();
-    future.setDate(future.getDate() + 5);
-    const result = signupSchema.safeParse({ ...base, dob: future.toISOString().slice(0, 10) });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an invalid (unparseable) date of birth", () => {
-    const result = signupSchema.safeParse({ ...base, dob: "not-a-date" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects a missing date of birth", () => {
-    const result = signupSchema.safeParse({ ...base, dob: "" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an invalid email", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(20), email: "not-an-email" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects a password shorter than 8 characters", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(20), password: "short" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an unrecognized role", () => {
-    const result = signupSchema.safeParse({ ...base, dob: isoDateYearsAgo(20), role: "superadmin" });
-    expect(result.success).toBe(false);
+  it("attributes confirmation errors to the confirmation field", () => {
+    const result = signupSchema.safeParse({...valid,confirmPassword:"other"});
+    if(result.success)throw new Error("Expected confirmation error");
+    expect(result.error.issues[0]?.path).toEqual(["confirmPassword"]);
   });
 });
-
-describe("loginSchema", () => {
-  it("accepts a valid email/password pair", () => {
-    expect(loginSchema.safeParse({ email: "a@b.com", password: "x" }).success).toBe(true);
-  });
-
-  it("rejects an empty password", () => {
-    expect(loginSchema.safeParse({ email: "a@b.com", password: "" }).success).toBe(false);
-  });
-
-  it("rejects an invalid email", () => {
-    expect(loginSchema.safeParse({ email: "not-an-email", password: "x" }).success).toBe(false);
-  });
-});
-
-describe("forgotPasswordSchema", () => {
-  it("accepts a valid email", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "a@b.com" }).success).toBe(true);
-  });
-
-  it("rejects an invalid email", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "nope" }).success).toBe(false);
-  });
-});
-
-describe("resetPasswordSchema", () => {
-  it("accepts matching passwords of sufficient length", () => {
-    const result = resetPasswordSchema.safeParse({
-      password: "password123",
-      confirmPassword: "password123",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects mismatched passwords", () => {
-    const result = resetPasswordSchema.safeParse({
-      password: "password123",
-      confirmPassword: "different123",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects a password shorter than 8 characters", () => {
-    const result = resetPasswordSchema.safeParse({
-      password: "short",
-      confirmPassword: "short",
-    });
-    expect(result.success).toBe(false);
+describe("HSK login and recovery", () => {
+  it("accepts existing passwords without a new length rule", () => expect(loginSchema.safeParse({email:"a@b.com",password:"x"}).success).toBe(true));
+  it("rejects empty passwords", () => expect(loginSchema.safeParse({email:"a@b.com",password:""}).success).toBe(false));
+  it("requires a valid recovery email", () => expect(forgotPasswordSchema.safeParse({email:"invalid"}).success).toBe(false));
+  it("requires matching reset passwords within backend limits", () => {
+    expect(resetPasswordSchema.safeParse({password:"abcdef",confirmPassword:"abcdef"}).success).toBe(true);
+    expect(resetPasswordSchema.safeParse({password:"abcdef",confirmPassword:"other"}).success).toBe(false);
   });
 });

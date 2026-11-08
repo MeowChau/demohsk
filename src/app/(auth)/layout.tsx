@@ -10,19 +10,20 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="flex items-center justify-between px-6 py-5 sm:px-10">
         <Link
           href="/"
-          aria-label="IELTS Beta home"
+          aria-label="Trang chủ TriceHSK"
           className="transition-opacity hover:opacity-80"
         >
           {/* LOGO FIX: white badge so transparent PNG is visible */}
           <div className="rounded-xl border-3 border-ink bg-white p-2.5 shadow-hard">
             <Image
-              src="/logo.png"
-              alt="IELTS Beta"
+              src="/favicon.ico" unoptimized
+              alt="TriceHSK"
               width={140}
               height={42}
               priority
-              className="h-8 w-auto object-contain"
+              className="h-9 w-9 object-contain"
             />
+            <span className="text-lg font-semibold text-ink">TriceHSK</span>
           </div>
         </Link>
 

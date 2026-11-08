@@ -12,12 +12,12 @@ export function ConfirmEmailForm({
   const [message, setMessage] = useState("");
   return (
     <>
-      <h1 className="mb-6 text-center font-display text-2xl font-semibold text-navy dark:text-white">
-        Confirm your email
-      </h1>
+      <h1 className="mb-6 text-center font-display text-2xl font-semibold text-ink dark:text-white">
+         Xác nhận email </h1>
       <p className="mb-6 text-center text-sm text-slate">
-        Confirm your address to continue. A new account may also need
-        administrator approval.
+        {newEmail
+          ? "Xác nhận địa chỉ email mới cho tài khoản của bạn."
+          : "Quyền đăng nhập và sử dụng tài khoản do quản trị viên phê duyệt."}
       </p>
       <form
         className="flex flex-col gap-4"
@@ -51,7 +51,7 @@ export function ConfirmEmailForm({
           disabled={pending || !hash}
           className="mt-2 rounded-pill bg-navy px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {pending ? "Confirming…" : "Confirm email"}
+          {pending ? "Confirming…" : "Xác nhận email"}
         </button>
         {message && (
           <p className="text-sm text-slate" role="status">
@@ -62,8 +62,7 @@ export function ConfirmEmailForm({
           href="/login"
           className="mt-4 text-center text-sm font-medium text-teal"
         >
-          Back to login
-        </a>
+           Quay lại đăng nhập </a>
       </form>
     </>
   );

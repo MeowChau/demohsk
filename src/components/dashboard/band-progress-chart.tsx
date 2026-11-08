@@ -14,11 +14,11 @@ type BandProgressChartProps = {
 export function BandProgressChart({
   currentBand,
   targetBand,
-  unit = "Band",
+  unit = "HSK",
 }: BandProgressChartProps) {
   /*
    * Real database values can be null before the student
-   * has completed onboarding / received a band score.
+   * has selected their current HSK level and target.
    */
   const current = currentBand ?? 0;
   const target = targetBand ?? MAX_BAND;
@@ -214,7 +214,7 @@ export function BandProgressChart({
           </motion.span>
 
           <span className="text-xs font-black text-slate">
-            {unit === "HSK" && targetBand == null ? "Target not set" : <>of {unit === "HSK" ? `HSK ${target}` : target.toFixed(1)} target</>}
+            {unit === "HSK" && targetBand == null ? "Chưa đặt mục tiêu" : <>Mục tiêu HSK {target}</>}
           </span>
         </div>
       </div>
@@ -235,8 +235,7 @@ export function BandProgressChart({
         }}
         className="mt-3 text-sm font-black text-teal"
       >
-        {progressPct}% of the way there 🎯
-      </motion.p>
+        {progressPct} % chặng đường mục tiêu 🎯 </motion.p>
     </div>
   );
 }

@@ -6,96 +6,53 @@ import { Check, Zap } from "lucide-react"
 import Link from "next/link"
 import { TiltCard } from "@/components/ui/tilt-card"
 
-function AnimatedPrice({
-  price,
-  isVisible,
-}: {
-  price: number
-  isVisible: boolean
-}) {
-  const springValue = useSpring(0, {
-    duration: 1500,
-    bounce: 0,
-  })
-
-  const displayValue = useTransform(springValue, (value) => {
-    if (price === 0) return "Free"
-    return `৳${Math.round(value).toLocaleString()}`
-  })
-
-  useEffect(() => {
-    if (isVisible) {
-      springValue.set(price)
-    }
-  }, [isVisible, springValue, price])
-
-  return <motion.span className="tabular-nums">{displayValue}</motion.span>
-}
-
 const plans = [
   {
-    name: "Core",
-    price: {
-      monthly: 0,
-      yearly: 0,
-    },
-    period: "forever",
-    description: "For students getting started",
-    features: [
-      "User account & dashboard",
-      "Goal tracking",
-      "All 4 skill modules",
-      "Dark / light mode",
-      "Basic flashcards",
+    "name": "Nền tảng",
+    "level": "HSK 1–3",
+    "description": "Bắt đầu với tiếng Trung và xây dựng thói quen học.",
+    "features": [
+      "Nhận diện chữ Hán và pinyin",
+      "Làm quen từ vựng theo chủ đề",
+      "Luyện nghe và đọc từng bước",
+      "Ôn từ vựng mỗi ngày"
     ],
-    cta: "Get started",
-    ctaStyle: "outline" as const,
-    popular: false,
+    "cta": "Bắt đầu học",
+    "ctaStyle": "outline",
+    "popular": false
   },
   {
-    name: "Engage",
-    price: {
-      monthly: 999,
-      yearly: 799,
-    },
-    period: "/mo",
-    description: "For serious test takers",
-    features: [
-      "Everything in Core",
-      "Vocabulary flashcards",
-      "Daily streaks & rewards",
-      "Progress analytics",
-      "AI tutor access",
-      "Cambridge resource library",
+    "name": "Phát triển",
+    "level": "HSK 4–6",
+    "description": "Tiếp tục mở rộng vốn từ và luyện các kỹ năng.",
+    "features": [
+      "Mở rộng chủ đề từ vựng",
+      "Luyện nghe, nói, đọc, viết",
+      "Thực hành với bài đã xuất bản",
+      "Theo dõi mục tiêu trong hồ sơ"
     ],
-    cta: "Start free trial",
-    ctaStyle: "filled" as const,
-    popular: true,
+    "cta": "Đặt mục tiêu HSK",
+    "ctaStyle": "filled",
+    "popular": true
   },
   {
-    name: "Advanced",
-    price: {
-      monthly: 1999,
-      yearly: 1599,
-    },
-    period: "/mo",
-    description: "For band 7+ aspirants",
-    features: [
-      "Everything in Engage",
-      "Full mock tests + reports",
-      "Priority teacher feedback",
-      "AI Writing Task 1 & Task 2 grading",
-      "Detailed writing feedback",
-      "1-on-1 live sessions",
+    "name": "Nâng cao",
+    "level": "HSK 7–9",
+    "description": "Chủ động chọn mục tiêu và nội dung nâng cao.",
+    "features": [
+      "Khám phá nội dung theo cấp độ",
+      "Ôn chữ Hán cùng cách sử dụng",
+      "Luyện tập theo kỹ năng",
+      "Duy trì việc ôn tập cá nhân"
     ],
-    cta: "Start free trial",
-    ctaStyle: "outline" as const,
-    popular: false,
-  },
+    "cta": "Khám phá lộ trình",
+    "ctaStyle": "outline",
+    "popular": false
+  }
 ]
 
 export function PricingSection() {
-  const [yearly, setYearly] = useState(false)
+
 
   const ref = useRef(null)
 
@@ -106,7 +63,7 @@ export function PricingSection() {
 
   return (
     <section
-      id="pricing"
+      id="levels"
       ref={ref}
       className="py-20 md:py-28 bg-white"
     >
@@ -120,49 +77,20 @@ export function PricingSection() {
           className="text-center mb-12"
         >
           <span className="inline-block text-sm font-black tracking-widest text-teal uppercase mb-3">
-            Pricing
+            Cấp độ HSK
           </span>
 
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter text-ink leading-none">
-            Simple, transparent pricing
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter text-ink leading-[1.2]">
+            Chọn cấp độ phù hợp với bạn
           </h2>
 
           <p className="mt-4 text-lg text-slate max-w-2xl mx-auto font-medium">
-            Start free. Upgrade when you're ready. No hidden fees, no surprises.
+            Đặt mục tiêu HSK trong hồ sơ, rồi học và luyện tập theo nhịp độ của bạn.
           </p>
 
-          {/* Billing Toggle */}
-          <div className="mt-8 inline-flex items-center gap-1 rounded-full border-3 border-ink bg-paper p-1 shadow-hard">
-            <button
-              type="button"
-              onClick={() => setYearly(false)}
-              className={`px-5 py-2 rounded-full text-sm font-black transition-all ${
-                !yearly
-                  ? "bg-navy text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                  : "text-slate hover:text-ink"
-              }`}
-            >
-              Monthly
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setYearly(true)}
-              className={`px-5 py-2 rounded-full text-sm font-black transition-all ${
-                yearly
-                  ? "bg-navy text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                  : "text-slate hover:text-ink"
-              }`}
-            >
-              Yearly
-              <span className="ml-1.5 text-xs font-black text-success">
-                Save 20%
-              </span>
-            </button>
-          </div>
         </motion.div>
 
-        {/* Pricing Cards */}
+        {/* Cấp độ HSK Cards */}
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
           {plans.map((plan, i) => (
             <motion.div
@@ -190,12 +118,12 @@ export function PricingSection() {
                       : "border-ink bg-white shadow-hard"
                   }`}
                 >
-                  {/* Most Popular Badge */}
+                  {/* Tiếp tục tiến bộ Badge */}
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className="bg-teal text-white text-xs font-black px-4 py-1 rounded-full uppercase tracking-wider border-2 border-ink shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 whitespace-nowrap">
                         <Zap className="h-3 w-3" />
-                        Most Popular
+                        Tiếp tục tiến bộ
                       </span>
                     </div>
                   )}
@@ -208,23 +136,9 @@ export function PricingSection() {
 
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl lg:text-5xl font-black text-ink">
-                        {plan.price.monthly === 0 ? (
-                          "Free"
-                        ) : (
-                          <AnimatedPrice
-                            price={
-                              yearly
-                                ? plan.price.yearly
-                                : plan.price.monthly
-                            }
-                            isVisible={isInView}
-                          />
-                        )}
+                        {plan.level}
                       </span>
 
-                      <span className="text-sm font-bold text-slate">
-                        {plan.period}
-                      </span>
                     </div>
 
                     <p className="mt-2 text-sm text-slate font-medium">
@@ -250,7 +164,7 @@ export function PricingSection() {
 
                   {/* CTA */}
                   <Link
-                    href="/signup"
+                    href="/register"
                     className={`block text-center w-full py-3 rounded-xl font-black text-base transition-all hover:scale-[1.02] border-3 ${
                       plan.ctaStyle === "filled"
                         ? "bg-navy hover:bg-navy-deep text-white border-navy shadow-hard hover:shadow-brutalist"

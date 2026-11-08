@@ -1,5 +1,5 @@
-import type { SupportTicket } from "@/lib/repositories/support-ticket.repository";
-import { SupportTicketRepository, type TicketStatus } from "@/lib/repositories/support-ticket.repository";
+import type { SupportTicket } from "@/types/community";
+import type { TicketStatus } from "@/types/community";
 import { getCurrentStudentId } from "@/lib/auth/current-user";
 import { CreateTicketForm } from "./create-ticket-form";
 import { WarningIcon, InfoIcon, CheckIcon } from "@/components/icons/stat-icons";
@@ -12,7 +12,7 @@ const STATUS_ICON: Record<TicketStatus, typeof WarningIcon> = {
 };
 const STATUS_LABEL: Record<TicketStatus, string> = {
   Open: "Open",
-  InProgress: "In progress",
+  InProgress: "Đang xử lý",
   Resolved: "Resolved",
 };
 
@@ -20,16 +20,16 @@ export default async function SupportPage(){const tickets:SupportTicket[]=[];
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-navy dark:text-white">Support</h1>
-        <p className="text-sm text-slate">Need help? Open a ticket and we'll follow up by email.</p>
+        <h1 className="font-display text-2xl font-semibold text-ink dark:text-white"> Hỗ trợ </h1>
+        <p className="text-sm text-slate"> Cần trợ giúp? Liên hệ quản trị viên của hệ thống HSK. </p>
       </div>
 
       <CreateTicketForm />
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-ink">Your tickets</h2>
+        <h2 className="font-display text-lg font-semibold text-ink"> Yêu cầu của bạn </h2>
         {tickets.length === 0 ? (
-          <EmptyState icon={<CheckIcon size={28} />} title="No tickets yet" body="Nothing to report — that's a good thing." />
+          <EmptyState icon={<CheckIcon size={28} />} title="Chưa có yêu cầu" body="Các yêu cầu đã ghi nhận sẽ xuất hiện tại đây." />
         ) : (
           tickets.map((t) => {
             const Icon = STATUS_ICON[t.status];

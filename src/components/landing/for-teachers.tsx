@@ -19,23 +19,23 @@ import { useEffect, useRef, useState } from "react"
 const teacherFeatures = [
   {
     icon: Users,
-    text: "Course management — Upload videos, PDFs, and organize lessons",
+    text: "Học theo chủ đề — chọn nội dung phù hợp với cấp độ HSK",
   },
   {
     icon: BarChart3,
-    text: "Student progress tracking — See band scores, streaks, and weak spots",
+    text: "Mục tiêu cá nhân — lưu cấp độ hiện tại và cấp độ mong muốn",
   },
   {
     icon: FileCheck,
-    text: "Essay & speaking review — Grade with the official IELTS rubric",
+    text: "Luyện kỹ năng — nghe, nói, đọc, viết tiếng Trung",
   },
   {
     icon: Video,
-    text: "Live classes — Schedule and host sessions with enrolled students",
+    text: "Ôn từ vựng — kết hợp chữ Hán, pinyin và nghĩa từ",
   },
   {
     icon: Calendar,
-    text: "Class analytics — Average band scores, completion rates, and more",
+    text: "Duy trì thói quen — theo dõi hoạt động học từ tài khoản",
   },
 ]
 
@@ -73,8 +73,7 @@ function BeforeAfterDemo() {
           <X className="h-4 w-4 text-danger" />
 
           <span className="text-xs font-black text-slate">
-            The Old Way
-          </span>
+             Học rời rạc </span>
         </div>
 
         <div className="space-y-2 flex-1">
@@ -127,8 +126,7 @@ function BeforeAfterDemo() {
           <Check className="h-4 w-4 text-success" />
 
           <span className="text-xs font-black text-teal">
-            With IELTS Beta
-          </span>
+             Cùng TriceHSK </span>
         </div>
 
         <div className="grid grid-cols-2 gap-2 flex-1">
@@ -262,7 +260,7 @@ function BeforeAfterDemo() {
 export function ForTeachers() {
   return (
     <section
-      id="for-teachers"
+      id="roadmap"
       className="py-20 md:py-28 bg-violet/10"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -307,20 +305,14 @@ export function ForTeachers() {
             }}
           >
             <span className="inline-block text-sm font-black tracking-widest text-violet uppercase mb-3">
-              For Teachers
-            </span>
+               Lộ trình của bạn </span>
 
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-ink mb-6 leading-none">
-              Teach IELTS.
-              <br />
-              Not paperwork.
-            </h2>
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-ink mb-6 leading-[1.2]">
+               Học tiếng Trung. <br />
+               Có mục tiêu. </h2>
 
             <p className="text-lg text-slate leading-relaxed mb-8 font-medium">
-              Manage your courses, track every student's band
-              progress, review essays and speaking recordings,
-              and host live classes — all from one dashboard.
-            </p>
+               Từ những chữ Hán đầu tiên đến các bài luyện HSK: chọn mục tiêu, học theo chủ đề và duy trì việc ôn tập mỗi ngày. </p>
 
             <ul className="space-y-4 mb-8">
               {teacherFeatures.map((feature, i) => (
@@ -354,11 +346,10 @@ export function ForTeachers() {
             </ul>
 
             <Link
-              href="/teachers"
+              href="/profile"
               className="btn-brutalist bg-violet hover:bg-violet-deep"
             >
-              Start teaching
-              <ArrowRight className="h-4 w-4" />
+               Đặt mục tiêu HSK <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
         </div>

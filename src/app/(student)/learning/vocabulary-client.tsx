@@ -27,7 +27,7 @@ function DifficultyDot({ level }: { level: VocabDifficulty }) {
 function DifficultyBadge({ level }: { level: VocabDifficulty }) {
   return (
     <span className={`rounded-pill px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${DIFFICULTY_STYLES[level].badge}`}>
-      {level}
+      {{ easy: "HSK 1–3", medium: "HSK 4–6", hard: "HSK 7–9" }[level]}
     </span>
   );
 }
@@ -52,8 +52,10 @@ export function VocabularyClient({
   const [savedIds, setSavedIds] = useState(new Set(savedWordIds));
 
   const filteredWords = useMemo(() => {
+    const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+    const term = normalize(query.trim());
     return allWords.filter((w) => {
-      const matchesQuery = w.word.toLowerCase().includes(query.trim().toLowerCase());
+      const matchesQuery = [w.word, w.example || "", w.definition].some((text) => normalize(text).includes(term));
       const matchesDifficulty = difficulty === "all" || w.difficulty === difficulty;
       return matchesQuery && matchesDifficulty;
     });
@@ -129,8 +131,8 @@ export function VocabularyClient({
   const livePreview: CustomCard = previewCard ?? {
     cardid: "preview",
     userid: "",
-    front: form.front || "Your term",
-    back: form.back || "Its meaning",
+    front: form.front || "Chữ Hán",
+    back: form.back || "Nghĩa từ",
     example: form.example || null,
     difficulty: (form.difficulty as VocabDifficulty) || null,
     created_at: "",
@@ -140,7 +142,7 @@ export function VocabularyClient({
     <div className="flex flex-col gap-6">
       {/* Section tabs — matches the Lessons/Vocabulary pill pattern already on the page */}
       <div className="inline-flex w-fit gap-1 rounded-pill bg-mist p-1">
-        {(["bank", "custom"] as Tab[]).map((t) => (
+        {(["bank"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -148,7 +150,7 @@ export function VocabularyClient({
               tab === t ? "bg-surface text-teal shadow-card" : "text-slate-soft hover:text-slate"
             }`}
           >
-            {t === "bank" ? "Study & Word Bank" : "My Custom Cards"}
+            {t === "bank" ? "Học và ôn từ vựng" : "Thẻ từ của tôi"}
           </button>
         ))}
       </div>
@@ -156,10 +158,10 @@ export function VocabularyClient({
       {tab === "bank" ? (
         <div className="flex flex-col gap-6">
           {/* Saved words strip */}
-          <section className="rounded-2xl border-3 border-ink bg-surface p-6 shadow-hard">
-            <h2 className="mb-3 font-display text-lg font-black text-ink">Words practiced this session</h2>
+          <section className="rounded-2xl border border-mist bg-surface p-6 shadow-hard">
+            <h2 className="mb-3 font-display text-lg font-semibold text-ink"> Từ đã học trong phiên này </h2>
             {savedIds.size === 0 ? (
-              <p className="text-sm text-slate-soft">Mark a word as studied to record your progress. This list covers the current session.</p>
+              <p className="text-sm text-slate-soft"> Đánh dấu từ đã học để ghi nhận hoạt động. Danh sách dưới đây thuộc phiên học hiện tại. </p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {allWords
@@ -173,7 +175,7 @@ export function VocabularyClient({
                       <button
                         onClick={() => toggleSave(w)}
                         className="text-slate-soft hover:text-danger"
-                        aria-label={`Unsave ${w.word}`}
+                        aria-label={`Bỏ đánh dấu ${w.word}`}
                       >
                         ×
                       </button>
@@ -184,13 +186,12 @@ export function VocabularyClient({
           </section>
 
           {/* Word bank study card */}
-          <section className="rounded-2xl border-3 border-ink bg-surface p-6 shadow-hard">
+          <section className="rounded-2xl border border-mist bg-surface p-6 shadow-hard">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-lg font-black text-ink">IELTS Word Bank</h2>
+                <h2 className="font-display text-lg font-semibold text-ink"> Kho từ vựng tiếng Trung </h2>
                 <p className="text-xs text-slate-soft">
-                  Study {allWords.length} academic words and manage your own list
-                </p>
+                   Học {allWords.length}  từ vựng HSK với chữ Hán, pinyin và nghĩa từ </p>
               </div>
               <input
                 value={query}
@@ -199,7 +200,7 @@ export function VocabularyClient({
                   setActiveIndex(0);
                   setFlipped(false);
                 }}
-                placeholder="Search words..."
+                placeholder="Tìm chữ Hán, pinyin hoặc nghĩa…"
                 className="w-48 rounded-pill border border-mist px-3 py-1.5 text-sm outline-none focus:border-teal"
               />
             </div>
@@ -219,20 +220,20 @@ export function VocabularyClient({
                       : "border border-mist text-slate-soft hover:border-teal hover:text-teal"
                   }`}
                 >
-                  {d}
+                  {{ all: "Tất cả", easy: "HSK 1–3", medium: "HSK 4–6", hard: "HSK 7–9" }[d]}
                 </button>
               ))}
             </div>
 
             {!activeWord ? (
-              <p className="py-12 text-center text-sm text-slate-soft">No words match your search.</p>
+              <p className="py-12 text-center text-sm text-slate-soft"> Không tìm thấy từ phù hợp. </p>
             ) : (
               <>
                 <div className="mx-auto flex max-w-xl items-center gap-4">
                   <button
                     onClick={() => step(-1)}
                     className="rounded-full border border-mist p-2 text-slate-soft hover:border-teal hover:text-teal"
-                    aria-label="Previous word"
+                    aria-label="Từ trước"
                   >
                     ←
                   </button>
@@ -247,21 +248,21 @@ export function VocabularyClient({
                     >
                       {/* Front */}
                       <div
-                        className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-3 border-ink bg-cyan-light [backface-visibility:hidden]"
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border border-mist bg-cyan-light [backface-visibility:hidden]"
                       >
                         <DifficultyBadge level={activeWord.difficulty} />
-                        <p className="font-display text-3xl font-black text-navy">{activeWord.word}</p>
-                        <p className="text-xs text-slate-soft">Click to reveal</p>
+                        <p lang="zh-CN" className="font-display text-3xl font-semibold text-ink">{activeWord.word}</p>
+                        <p className="text-xs text-slate-soft"> Bấm để xem nghĩa </p>
                       </div>
 
                       {/* Back */}
                       <div
-                        className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border-3 border-ink bg-navy-deep px-8 text-center text-white [backface-visibility:hidden]"
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border border-mist bg-navy-deep px-8 text-center text-white [backface-visibility:hidden]"
                         style={{ transform: "rotateY(180deg)" }}
                       >
                         <p className="text-lg font-semibold">{activeWord.definition}</p>
                         {activeWord.example && (
-                          <p className="text-sm italic text-white/80">"{activeWord.example}"</p>
+                          <p className="text-sm text-white/80">Pinyin: {activeWord.example}</p>
                         )}
                         <button
                           onClick={(e) => {
@@ -274,7 +275,7 @@ export function VocabularyClient({
                               : "bg-white/15 text-white hover:bg-white/25"
                           }`}
                         >
-                          {savedIds.has(activeWord.wordid) ? "Studied ✓" : "Mark studied"}
+                          {savedIds.has(activeWord.wordid) ? "Đã học ✓" : "Đánh dấu đã học"}
                         </button>
                       </div>
                     </motion.div>
@@ -283,7 +284,7 @@ export function VocabularyClient({
                   <button
                     onClick={() => step(1)}
                     className="rounded-full border border-mist p-2 text-slate-soft hover:border-teal hover:text-teal"
-                    aria-label="Next word"
+                    aria-label="Từ tiếp theo"
                   >
                     →
                   </button>
@@ -314,78 +315,73 @@ export function VocabularyClient({
         <div className="flex flex-col gap-6">
           <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
             {/* Create / edit form */}
-            <div className="rounded-2xl border-3 border-ink bg-surface p-6 shadow-hard">
+            <div className="rounded-2xl border border-mist bg-surface p-6 shadow-hard">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-lg font-black text-ink">
-                  {editingCard ? "Edit Custom Card" : "Create Custom Card"}
+                <h2 className="font-display text-lg font-semibold text-ink">
+                  {editingCard ? "Sửa thẻ từ" : "Tạo thẻ từ"}
                 </h2>
                 {editingCard && (
                   <button onClick={resetForm} className="text-xs font-medium text-slate-soft hover:text-danger">
-                    Cancel
-                  </button>
+                     Hủy </button>
                 )}
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-soft">
-                    Word
-                  </label>
+                     Chữ Hán </label>
                   <input
                     required
                     value={form.front}
                     onChange={(e) => setForm((f) => ({ ...f, front: e.target.value }))}
-                    placeholder="e.g. Ubiquitous"
+                    placeholder="Ví dụ: 学习"
                     className="w-full rounded-md border border-mist px-3 py-2 text-sm outline-none focus:border-teal"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-soft">
-                    Definition
-                  </label>
+                     Nghĩa từ </label>
                   <input
                     required
                     value={form.back}
                     onChange={(e) => setForm((f) => ({ ...f, back: e.target.value }))}
-                    placeholder="Definition..."
+                    placeholder="Nhập nghĩa từ…"
                     className="w-full rounded-md border border-mist px-3 py-2 text-sm outline-none focus:border-teal"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-soft">
-                    Example sentence (optional)
-                  </label>
+                     Câu ví dụ (không bắt buộc) </label>
                   <input
                     value={form.example}
                     onChange={(e) => setForm((f) => ({ ...f, example: e.target.value }))}
-                    placeholder="Use the word in a sentence..."
+                    placeholder="Ví dụ: 我每天学习中文。"
                     className="w-full rounded-md border border-mist px-3 py-2 text-sm outline-none focus:border-teal"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-soft">
-                    Difficulty (optional)
-                  </label>
+                     Độ khó (không bắt buộc) </label>
                   <select
                     value={form.difficulty}
                     onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value }))}
                     className="w-full rounded-md border border-mist px-3 py-2 text-sm outline-none focus:border-teal"
                   >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
+                    <option value="easy"> Cơ bản </option>
+                    <option value="medium"> Trung cấp </option>
+                    <option value="hard"> Nâng cao </option>
                   </select>
                 </div>
                 <button
                   type="submit"
-                  className="rounded-pill border-2 border-ink bg-teal px-4 py-2 text-sm font-black text-white shadow-hard transition-all hover:shadow-brutalist"
+                  className="rounded-pill border border-mist bg-teal px-4 py-2 text-sm font-semibold text-white shadow-hard transition-all hover:shadow-brutalist"
                 >
-                  {editingCard ? "Save changes" : "Save Flashcard"}
+                  {editingCard ? "Lưu thay đổi" : "Lưu thẻ từ"}
                 </button>
               </form>
             </div>
 
             {/* Live preview / flip card */}
-            <div className="flex flex-col items-center justify-center rounded-2xl border-3 border-ink bg-surface p-6 shadow-hard">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-mist bg-surface p-6 shadow-hard">
               <div className="relative h-64 w-full max-w-sm [perspective:1200px]">
                 <motion.div
                   className="absolute inset-0 cursor-pointer rounded-2xl shadow-hard"
@@ -394,15 +390,14 @@ export function VocabularyClient({
                   transition={{ duration: 0.45 }}
                   onClick={() => setCustomFlipped((f) => !f)}
                 >
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-3 border-ink bg-cyan-light px-6 text-center [backface-visibility:hidden]">
-                    <span className="text-[10px] font-black uppercase tracking-wide text-teal-deep">
-                      Custom card
-                    </span>
-                    <p className="font-display text-2xl font-black text-navy">{livePreview.front}</p>
-                    <p className="text-xs text-slate-soft">Click to flip</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border border-mist bg-cyan-light px-6 text-center [backface-visibility:hidden]">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-deep">
+                       Thẻ từ cá nhân </span>
+                    <p className="font-display text-2xl font-semibold text-ink">{livePreview.front}</p>
+                    <p className="text-xs text-slate-soft"> Bấm để lật thẻ </p>
                   </div>
                   <div
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border-3 border-ink bg-navy-deep px-6 text-center text-white [backface-visibility:hidden]"
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border border-mist bg-navy-deep px-6 text-center text-white [backface-visibility:hidden]"
                     style={{ transform: "rotateY(180deg)" }}
                   >
                     <p className="text-base font-semibold">{livePreview.back}</p>
@@ -414,10 +409,9 @@ export function VocabularyClient({
                             e.stopPropagation();
                             startEdit(previewCard);
                           }}
-                          className="rounded-pill bg-white/90 px-4 py-1.5 text-xs font-semibold text-ink hover:bg-white"
+                          className="rounded-pill bg-white/90 px-4 py-1.5 text-xs font-semibold text-ink hover:bg-surface"
                         >
-                          Edit
-                        </button>
+                           Sửa </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -425,8 +419,7 @@ export function VocabularyClient({
                           }}
                           className="rounded-pill bg-danger px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                         >
-                          Delete
-                        </button>
+                           Xóa </button>
                       </div>
                     )}
                   </div>
@@ -436,10 +429,10 @@ export function VocabularyClient({
           </section>
 
           {/* Personal words grid */}
-          <section className="rounded-2xl border-3 border-ink bg-surface p-6 shadow-hard">
-            <h2 className="mb-4 font-display text-lg font-black text-ink">My Personal Words</h2>
+          <section className="rounded-2xl border border-mist bg-surface p-6 shadow-hard">
+            <h2 className="mb-4 font-display text-lg font-semibold text-ink"> Từ vựng của tôi </h2>
             {customCards.length === 0 ? (
-              <p className="text-sm text-slate-soft">No custom flashcards yet.</p>
+              <p className="text-sm text-slate-soft"> Chưa có thẻ từ cá nhân. </p>
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                 {customCards.map((c) => (

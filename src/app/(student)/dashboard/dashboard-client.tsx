@@ -12,7 +12,7 @@ import { XpGem } from "@/components/gamification/xp-gem"
 import { AnimatedFlame } from "@/components/gamification/animated-flame"
 import { LevelBadge } from "@/components/gamification/level-badge"
 import { BookIcon } from "@/components/icons/stat-icons"
-import type { LevelInfo } from "@/lib/repositories/gamification.repository"
+import type { LevelInfo } from "@/types/gamification"
 import type { Skill } from "@/types/assessment"
 
 type DashboardView = {
@@ -118,7 +118,7 @@ function StatCard({
 
       <p
         className={`text-xs font-black uppercase tracking-wider ${
-          textLight ? "text-white/70" : "text-slate"
+          textLight ? "text-white/70" : "text-slate dark:text-navy"
         }`}
       >
         {label}
@@ -132,7 +132,7 @@ function StatCard({
         {suffix && (
           <span
             className={`ml-1 text-sm font-bold ${
-              textLight ? "text-white/70" : "text-slate"
+              textLight ? "text-white/70" : "text-slate dark:text-navy"
             }`}
           >
             {suffix}
@@ -210,8 +210,7 @@ export default function DashboardClient({
             animate={{ opacity: 1, x: 0 }}
             className="font-display text-3xl font-black tracking-tighter text-navy dark:text-white sm:text-5xl"
           >
-            Welcome back! 👋
-          </motion.h1>
+             Chào mừng bạn trở lại! 👋 </motion.h1>
 
           <motion.p
             initial={{ opacity: 0 }}
@@ -220,10 +219,8 @@ export default function DashboardClient({
             className="text-base font-medium text-slate"
           >
             {views.length > 0
-              ? `You have ${views.length} HSK topic${
-                  views.length > 1 ? "s" : ""
-                }.`
-              : "Published HSK lessons will appear here."}
+              ? `Bạn có ${views.length} chủ đề bài học HSK.`
+              : "Các chủ đề HSK đã xuất bản sẽ xuất hiện ở đây."}
           </motion.p>
         </div>
 
@@ -234,7 +231,7 @@ export default function DashboardClient({
             delay: 0.3,
             type: "spring",
           }}
-          className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-5 py-3 shadow-hard"
+          className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-5 py-3 shadow-hard dark:border-slate/30 dark:bg-surface"
         >
           <LevelBadge
             level={levelInfo.level}
@@ -272,9 +269,9 @@ export default function DashboardClient({
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           icon={<XpGem size={24} />}
-          label="Total XP"
+          label="Tổng EXP"
           value={xpTotal}
-          accent="text-navy"
+          accent="text-ink dark:text-navy"
           bg="bg-gradient-to-br from-cyan to-cyan-light"
           border="border-teal/30"
           iconBg="bg-white/60"
@@ -283,10 +280,10 @@ export default function DashboardClient({
 
         <StatCard
           icon={<AnimatedFlame size={24} />}
-          label="Current streak"
+          label="Chuỗi ngày học"
           value={currentStreak}
-          suffix="days"
-          accent="text-navy"
+          suffix="ngày"
+          accent="text-ink dark:text-navy"
           bg="bg-gradient-to-br from-orange-100 to-amber-50"
           border="border-orange-300"
           iconBg="bg-white/60"
@@ -297,7 +294,7 @@ export default function DashboardClient({
         {/* REAL DATABASE COURSE COUNT */}
         <StatCard
           icon={<BookIcon size={24} />}
-          label="Courses"
+          label="Chủ đề HSK"
           value={views.length}
           accent="text-white"
           bg="bg-navy"
@@ -329,23 +326,20 @@ export default function DashboardClient({
         >
           <Link
             href="/practice"
-            className="group flex h-full flex-col justify-center rounded-2xl border-3 border-ink bg-gradient-to-br from-navy to-navy-deep p-5 text-white shadow-hard transition-all hover:shadow-brutalist"
+            className="group flex h-full flex-col justify-center rounded-2xl border-3 border-ink bg-gradient-to-br from-navy to-navy-deep p-5 text-white shadow-hard transition-all hover:shadow-brutalist dark:border-slate/30"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10">
               <Target size={20} className="text-cyan" />
             </div>
 
             <p className="text-sm font-black">
-              Start a practice test
-            </p>
+               Bắt đầu luyện tiếng Trung </p>
 
             <p className="mt-1 text-xs font-medium text-white/70">
-              Earn XP & keep your streak!
-            </p>
+               Chọn kỹ năng và dành thời gian ôn tập hôm nay. </p>
 
             <div className="mt-3 flex items-center gap-1 text-xs font-black text-cyan transition-all group-hover:gap-2">
-              Begin now
-              <ArrowRight size={14} />
+               Luyện tập ngay <ArrowRight size={14} />
             </div>
           </Link>
         </motion.div>
@@ -377,16 +371,15 @@ export default function DashboardClient({
           <div>
             <p className="text-base font-black text-navy">
               {currentStreak === 1
-                ? "You just started your streak! 🔥"
+                ? "Bạn vừa bắt đầu chuỗi ngày học! 🔥"
                 : currentStreak < 3
-                  ? `${currentStreak} day streak! Keep it up! 🔥`
-                  : `${currentStreak} day streak! You're on fire! 🔥🔥`}
+                  ? `${currentStreak} ngày học liên tục. Tiếp tục nhé! 🔥`
+                  : `${currentStreak} ngày học liên tục. Bạn làm tốt lắm! 🔥🔥`}
             </p>
 
-            <p className="mt-0.5 text-sm font-medium text-slate">
-              Longest streak:{" "}
-              {longestStreak} days. Don't break the chain!
-            </p>
+            <p className="mt-0.5 text-sm font-medium text-slate dark:text-navy">
+               Chuỗi dài nhất: {" "}
+              {longestStreak}  ngày. Tiếp tục duy trì nhé! </p>
           </div>
 
           <motion.div
@@ -423,13 +416,12 @@ export default function DashboardClient({
           transition={{
             delay: 0.5,
           }}
-          className="relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-6 shadow-hard"
+          className="relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-6 shadow-hard dark:border-slate/30 dark:bg-surface"
         >
           <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-teal to-cyan" />
 
           <h2 className="mb-5 font-display text-lg font-black tracking-tight text-navy dark:text-white">
-            HSK learning goal
-          </h2>
+             Mục tiêu học HSK </h2>
 
           <BandProgressChart
             unit="HSK"
@@ -453,13 +445,12 @@ export default function DashboardClient({
           transition={{
             delay: 0.6,
           }}
-          className="relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-6 shadow-hard"
+          className="relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-6 shadow-hard dark:border-slate/30 dark:bg-surface"
         >
           <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-navy to-teal" />
 
           <h2 className="mb-5 font-display text-lg font-black tracking-tight text-navy dark:text-white">
-            Skills breakdown
-          </h2>
+             Các kỹ năng tiếng Trung </h2>
 
           <SkillProgress
             bands={resolvedSkillBands}
@@ -475,15 +466,13 @@ export default function DashboardClient({
       <section>
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="font-display text-xl font-black tracking-tight text-navy dark:text-white">
-            Your courses
-          </h2>
+             Chủ đề của bạn </h2>
 
           <Link
             href="/learning"
             className="text-sm font-black text-teal transition-colors hover:text-teal-deep"
           >
-            View all lessons →
-          </Link>
+             Xem tất cả bài học → </Link>
         </div>
 
         {views.length === 0 ? (
@@ -496,12 +485,10 @@ export default function DashboardClient({
             </div>
 
             <p className="text-sm font-black text-slate">
-              No courses yet.
-            </p>
+               Chưa có chủ đề HSK. </p>
 
             <p className="mt-1 text-xs font-medium text-slate-soft">
-              Ask your teacher to enroll you in a course.
-            </p>
+               Nội dung sẽ xuất hiện khi có chủ đề phù hợp với cấp độ của bạn. </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -509,7 +496,7 @@ export default function DashboardClient({
               <Link
                 key={course.courseid}
                 href="/learning"
-                className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-brutalist"
+                className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-brutalist dark:border-slate/30 dark:bg-surface"
               >
                 <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-teal to-cyan opacity-0 transition-opacity group-hover:opacity-100" />
 
@@ -520,8 +507,7 @@ export default function DashboardClient({
                     </p>
 
                     <p className="mt-1 text-sm text-slate">
-                      {contents.length} lesson
-                      {contents.length === 1 ? "" : "s"}
+                      {contents.length}  bài học {contents.length === 1 ? "" : "s"}
 
                       {course.level
                         ? ` · ${course.level}`

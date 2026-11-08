@@ -1,70 +1,78 @@
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { FieldError } from "./field-error";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
+  endAdornment?: ReactNode;
+  hint?: string;
 }
 
 export function Field({
   label,
   error,
+  endAdornment,
+  hint,
   className,
   id,
   ...props
 }: FieldProps) {
-  const describedBy = error ? `${id}-error` : undefined;
+  const describedBy = [props["aria-describedby"], error ? `${id}-error` : hint ? `${id}-hint` : undefined].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className="flex flex-col gap-2">
       <label
         htmlFor={id}
-        className="text-sm font-medium leading-none text-ink"
+        className="text-sm font-medium leading-6 text-ink"
       >
         {label}
+        {props.required && !props.disabled && <span className="text-[#b42318] dark:text-[#fda29b]" aria-hidden="true"> *</span>}
       </label>
 
-      <input
-        id={id}
-        aria-invalid={Boolean(error)}
-        aria-describedby={describedBy}
-        className={cn(
-          [
-            "h-12 w-full rounded-lg",
-            "border border-mist",
-            "bg-surface",
-            "px-4",
-            "text-sm text-ink",
-            "placeholder:text-slate-soft",
-            "outline-none",
-            "transition-all duration-200",
-            "shadow-sm",
-            "hover:border-slate-soft",
-            "focus:border-teal",
-            "focus:ring-4 focus:ring-teal/10",
-            "disabled:cursor-not-allowed",
-            "disabled:opacity-60",
-          ].join(" "),
-          error && [
-            "border-danger",
-            "bg-danger/5",
-            "focus:border-danger",
-            "focus:ring-danger/10",
-          ],
-          className
+      <div className="relative">
+        <input
+          {...props}
+          id={id}
+          aria-invalid={Boolean(error) || props["aria-invalid"]}
+          aria-describedby={describedBy}
+          className={cn(
+            [
+              "block h-12 w-full rounded-lg",
+              "border border-mist",
+              "bg-surface",
+              "px-4",
+              "text-sm text-ink",
+              "placeholder:text-slate-soft",
+              "outline-none",
+              "transition-all duration-200",
+              "shadow-sm",
+              "hover:border-slate-soft",
+              "focus:border-teal",
+              "focus:ring-4 focus:ring-teal/10",
+              "disabled:cursor-not-allowed",
+              "disabled:opacity-60",
+            ].join(" "),
+            endAdornment && "pr-12",
+            className,
+            error && [
+              "border-danger",
+              "hover:border-danger",
+              "bg-danger/5",
+              "focus:border-danger",
+              "focus:ring-danger/10",
+            ],
+          )}
+        />
+        {endAdornment && (
+          <div className="absolute inset-y-0 right-3 flex items-center">
+            {endAdornment}
+          </div>
         )}
-        {...props}
-      />
+      </div>
 
-      {error && (
-        <span
-          id={`${id}-error`}
-          role="alert"
-          className="text-xs font-medium leading-5 text-danger"
-        >
-          {error}
-        </span>
-      )}
+      <FieldError id={`${id}-error`} message={error} />
+      {!error && hint && <p id={`${id}-hint`} className="text-xs leading-5 text-slate">{hint}</p>}
     </div>
   );
 }

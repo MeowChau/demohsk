@@ -6,29 +6,29 @@ import { Plus, Minus } from "lucide-react"
 
 const faqs = [
   {
-    q: "How accurate are the auto-graded Listening & Reading tests?",
-    a: "Our auto-grader uses official IELTS scoring rubrics and has been calibrated against thousands of real test results. Listening and Reading scores are calculated instantly with 95%+ accuracy. Writing and Speaking are reviewed by your teacher for the most reliable feedback.",
+    "q": "TriceHSK giúp tôi học những gì?",
+    "a": "Bạn có thể học từ vựng với chữ Hán, pinyin và nghĩa từ; khám phá chủ đề HSK và luyện nghe, nói, đọc, viết qua các bài đã xuất bản."
   },
   {
-    q: "Can my teacher assign custom lessons through IELTS Beta?",
-    a: "Yes! Teachers can create courses, upload videos, PDFs, and YouTube links, and organize content exactly how they want. Students see everything in their personalized dashboard.",
+    "q": "Tôi đăng ký tài khoản như thế nào?",
+    "a": "Mở trang Đăng ký, nhập tên người dùng, email và mật khẩu. Sau đó chờ quản trị viên duyệt tài khoản. Khi tài khoản được duyệt, bạn có thể đăng nhập và bắt đầu học."
   },
   {
-    q: "What's the difference between Core and Engage plans?",
-    a: "Core is free forever and includes basic practice tests, goal tracking, and all 4 skill modules. Engage adds vocabulary flashcards, daily streaks, progress analytics, and AI tutor access for ৳999/month.",
+    "q": "Tôi đặt mục tiêu HSK ở đâu?",
+    "a": "Sau khi đăng nhập, mở Hồ sơ và cài đặt để chọn cấp độ HSK hiện tại và cấp độ mục tiêu từ 1 đến 9."
   },
   {
-    q: "Is there a mobile app available?",
-    a: "IELTS Beta is fully responsive and works great on mobile browsers. A native app is on our 2026 roadmap. For now, you can study anywhere with your phone or tablet.",
+    "q": "Tôi có thể học trên điện thoại không?",
+    "a": "Bạn có thể mở website bằng trình duyệt điện thoại, máy tính bảng hoặc máy tính. Thanh điều hướng trên màn hình nhỏ nằm trong nút menu."
   },
   {
-    q: "How does the teacher feedback system work?",
-    a: "When you submit a Writing Task or Speaking recording, it goes directly to your enrolled teacher. They grade it against the official IELTS rubric and return detailed feedback within 24-48 hours.",
+    "q": "Bài tự luyện có lưu điểm và lịch sử không?",
+    "a": "Hiện bạn có thể làm bài và tải câu trả lời về máy. Phần chấm điểm và lịch sử bài thi trong tài khoản chưa được hệ thống hỗ trợ."
   },
   {
-    q: "Can I cancel my subscription anytime?",
-    a: "Absolutely. There are no contracts or cancellation fees. You can downgrade to Core (free) or cancel completely at any time from your profile settings.",
-  },
+    "q": "Làm sao để ôn từ vựng?",
+    "a": "Mở mục Từ vựng, tìm theo chữ Hán, pinyin hoặc nghĩa từ rồi lật thẻ để ôn. Bấm Đánh dấu đã học để ghi nhận hoạt động học từ."
+  }
 ]
 
 function FAQItem({ item, isOpen, onClick }: { item: typeof faqs[0]; isOpen: boolean; onClick: () => void }) {
@@ -78,11 +78,9 @@ export function FAQSection() {
           className="text-center mb-12"
         >
           <span className="inline-block text-sm font-bold tracking-widest text-[var(--teal)] uppercase mb-3">
-            FAQ
-          </span>
+             Câu hỏi thường gặp </span>
           <h2 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F1720]">
-            Questions? Answered.
-          </h2>
+             Giải đáp trước khi bắt đầu </h2>
         </motion.div>
 
         <motion.div

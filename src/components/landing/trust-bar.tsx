@@ -22,7 +22,7 @@ function AnimatedNumber({
 
   const displayValue = useTransform(springValue, (v) => {
     if (value < 10) {
-      return v.toFixed(1)
+      return Math.round(v).toLocaleString("vi-VN")
     }
 
     return Math.round(v).toLocaleString()
@@ -55,28 +55,28 @@ function AnimatedNumber({
 
 const stats = [
   {
-    value: 12000,
-    suffix: "+",
-    label: "Learners building their streak",
+    "value": 9,
+    "suffix": "",
+    "label": "Cấp độ HSK trong hệ thống"
   },
   {
-    value: 4.9,
-    suffix: "/5",
-    label: "Average student rating",
+    "value": 4,
+    "suffix": "",
+    "label": "Kỹ năng nghe, nói, đọc, viết"
   },
   {
-    value: 50000,
-    suffix: "+",
-    label: "Practice tests taken",
+    "value": 3,
+    "suffix": "",
+    "label": "Chữ Hán · Pinyin · nghĩa Việt"
   },
   {
-    value: 98,
-    suffix: "%",
-    label: "Students hit their target band",
-  },
+    "value": 1,
+    "suffix": "",
+    "label": "Mục tiêu học của riêng bạn"
+  }
 ]
 
-export function TrustBar() {
+export function TrustBar({ stats }: { stats: { label: string; value: number | null }[] }) {
   return (
     <section className="relative overflow-hidden border-y-3 border-ink bg-white py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -105,10 +105,7 @@ export function TrustBar() {
               }`}
             >
               <div className="text-3xl font-black text-ink md:text-4xl lg:text-5xl">
-                <AnimatedNumber
-                  value={stat.value}
-                  suffix={stat.suffix}
-                />
+                {stat.value === null ? "—" : <AnimatedNumber value={stat.value} />}
               </div>
 
               {/* Animated accent line */}

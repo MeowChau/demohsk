@@ -4,30 +4,78 @@ import Image from "next/image"
 import Link from "next/link"
 
 const footerLinks = {
-  Product: [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "For teachers", href: "#for-teachers" },
-    { label: "Mobile app", href: "#" },
+  "Khám phá": [
+    {
+      "label": "Cách học",
+      "href": "/#how-it-works"
+    },
+    {
+      "label": "Tính năng",
+      "href": "/#features"
+    },
+    {
+      "label": "Lộ trình HSK",
+      "href": "/#roadmap"
+    },
+    {
+      "label": "Cấp độ HSK",
+      "href": "/#levels"
+    }
   ],
-  Resources: [
-    { label: "Blog", href: "#" },
-    { label: "IELTS tips", href: "#" },
-    { label: "Band score calculator", href: "#" },
-    { label: "Study guides", href: "#" },
+  "Học tiếng Trung": [
+    {
+      "label": "Bài học",
+      "href": "/learning"
+    },
+    {
+      "label": "Từ vựng",
+      "href": "/vocabulary"
+    },
+    {
+      "label": "Luyện nghe",
+      "href": "/practice/listening"
+    },
+    {
+      "label": "Luyện đọc",
+      "href": "/practice/reading"
+    }
   ],
-  Company: [
-    { label: "About", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Contact", href: "#" },
-    { label: "Privacy", href: "#" },
+  "Luyện tập": [
+    {
+      "label": "Luyện viết",
+      "href": "/practice/writing"
+    },
+    {
+      "label": "Luyện nói",
+      "href": "/practice/speaking"
+    },
+    {
+      "label": "Thành tích",
+      "href": "/rewards"
+    },
+    {
+      "label": "Góc tiếng Trung",
+      "href": "/#chinese-phrases"
+    }
   ],
-  Connect: [
-    { label: "Facebook", href: "#" },
-    { label: "Instagram", href: "#" },
-    { label: "YouTube", href: "#" },
-    { label: "LinkedIn", href: "#" },
-  ],
+  "Tài khoản": [
+    {
+      "label": "Đăng nhập",
+      "href": "/login"
+    },
+    {
+      "label": "Đăng ký",
+      "href": "/register"
+    },
+    {
+      "label": "Hồ sơ",
+      "href": "/profile"
+    },
+    {
+      "label": "Câu hỏi thường gặp",
+      "href": "/#faq"
+    }
+  ]
 }
 
 export function LandingFooter() {
@@ -39,19 +87,18 @@ export function LandingFooter() {
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <Image
-                src="/logo.png"
-                alt="IELTS Beta"
+                src="/favicon.ico" unoptimized
+                alt="TriceHSK"
                 width={90}
                 height={30}
-                className="h-[90px] w-auto object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
+                className="h-12 w-12 object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
               />
               <span className="text-xl font-extrabold tracking-tight text-white dark:text-white">
-                IELTS Beta
+                TriceHSK
               </span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Built for learners, by learners. The complete IELTS preparation platform for Bangladesh and beyond.
-            </p>
+               Học tiếng Trung theo mục tiêu của bạn. Từ chữ Hán và pinyin đến những bài luyện HSK mỗi ngày. </p>
           </div>
 
           {/* Link columns */}
@@ -78,15 +125,12 @@ export function LandingFooter() {
 
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
-            © 2026 IELTS Beta. Built for learners, by learners.
-          </p>
+             © 2026 TriceHSK. Cùng bạn học tiếng Trung mỗi ngày. </p>
           <div className="flex items-center gap-6">
             <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-              Log in
-            </Link>
-            <Link href="/signup" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-              Sign up
-            </Link>
+               Đăng nhập </Link>
+            <Link href="/register" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+               Đăng ký </Link>
           </div>
         </div>
       </div>

@@ -9,6 +9,8 @@ import {
 import { clearSession, refreshSession, setSession } from "@/lib/api/session";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (pathname === "/signup")
+    return NextResponse.redirect(new URL("/register", request.url));
   if (
     pathname === "/admin" ||
     pathname.startsWith("/admin/") ||
@@ -69,9 +71,15 @@ export async function middleware(request: NextRequest) {
 }
 export const config = {
   matcher: [
+    "/signup",
     "/dashboard/:path*",
     "/learning/:path*",
+    "/vocabulary/:path*",
     "/practice/:path*",
+    "/exams/:path*",
+    "/leaderboard/:path*",
+    "/games/:path*",
+    "/assessment/:path*",
     "/results/:path*",
     "/rewards/:path*",
     "/support/:path*",

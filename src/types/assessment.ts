@@ -1,5 +1,5 @@
 export type Skill = "Listening" | "Reading" | "Writing" | "Speaking";
-export type TestCategory = "Academic" | "General";
+export type TestCategory = `HSK ${number}`;
 
 export interface PracticeTest {
   testid: string;
@@ -11,6 +11,15 @@ export interface PracticeTest {
   total_marks: number;
 }
 
+export interface TestWithQuestions {
+  test: PracticeTest;
+  passages: Passage[];
+  questionsBySkill: Partial<Record<Skill, {
+    question: Question;
+    options: { optionid: string; option_text: string; image_url?: string | null }[];
+  }[]>>;
+}
+
 export interface Question {
   questionid: string;
   testid: string;
@@ -18,6 +27,15 @@ export interface Question {
   question: string;
   skill: Skill;
   marks: number;
+  type?: string;
+  templateId?: string;
+  hskLevel?: number;
+  pinyin?: string;
+  translation?: string;
+  image_url?: string | null;
+  context_image_url?: string | null;
+  continuation_image_url?: string | null;
+  audio_url?: string | null;
 }
 
 export interface AnswerOptionPublic {

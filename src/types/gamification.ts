@@ -19,3 +19,18 @@ export interface Achievement {
   code: string;
   earned_at: string;
 }
+
+export interface LevelInfo {
+  level: number;
+  title: string;
+  currentXp: number;
+  xpForNextLevel: number;
+  progressPercent: number;
+}
+
+export interface DailyChallenge {
+  type: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+}

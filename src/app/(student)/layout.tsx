@@ -6,7 +6,7 @@ export default async function StudentLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireOnboarding(); // ← blocks if onboarding not done
+  await requireOnboarding();
 
   return <AppShell role="student">{children}</AppShell>;
 }

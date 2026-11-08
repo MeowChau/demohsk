@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/shell/theme-provider";
 import "./globals.css";
 
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-display",
+const body = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-inter",
   display: "swap",
 });
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
+const display = Plus_Jakarta_Sans({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "IELTS Beta 3.0",
-  description: "Your complete IELTS preparation companion.",
+  title: { default: "TriceHSK — Học tiếng Trung mỗi ngày", template: "%s | TriceHSK" },
+  description: "Học từ vựng tiếng Trung, luyện nghe, nói, đọc, viết và theo dõi mục tiêu HSK cùng TriceHSK.",
 };
 
 export default function RootLayout({
@@ -27,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+    <html lang="vi" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased">
         <ThemeProvider>
           {children}

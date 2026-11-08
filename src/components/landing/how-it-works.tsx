@@ -9,22 +9,22 @@ const steps = [
     num: "01",
     color: "bg-cyan",
     icon: Target,
-    title: "Take a diagnostic test",
-    desc: "Get your current band score instantly across all 4 skills. Know exactly where you stand before you start.",
+    title: "Đặt mục tiêu HSK",
+    desc: "Tạo tài khoản, chọn cấp độ HSK hiện tại và đặt cấp độ bạn muốn đạt được trong hồ sơ.",
   },
   {
     num: "02",
     color: "bg-yellow-300",
     icon: BookOpen,
-    title: "Follow your study plan",
-    desc: "Lessons, practice tests & flashcards tailored to your weak spots. Your teacher assigns what you need.",
+    title: "Học từ vựng và chủ đề",
+    desc: "Khám phá chữ Hán, pinyin, nghĩa từ và bài luyện được xuất bản theo chủ đề.",
   },
   {
     num: "03",
     color: "bg-blue-300",
     icon: TrendingUp,
-    title: "Track & improve",
-    desc: "Watch your band climb with instant feedback, streak rewards, and a clear history of every test.",
+    title: "Luyện tập và ôn lại",
+    desc: "Luyện từng kỹ năng, đánh dấu từ đã học và theo dõi mục tiêu cùng hoạt động học của bạn.",
   },
 ]
 
@@ -124,12 +124,10 @@ export function HowItWorks() {
           className="mb-16"
         >
           <span className="inline-block text-sm font-black tracking-widest text-teal uppercase mb-3">
-            How it works
-          </span>
+             Cách học </span>
 
-          <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-ink leading-none">
-            How IELTS Beta works
-          </h2>
+          <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-ink leading-[1.2]">
+             Bắt đầu học với ba bước </h2>
         </motion.div>
 
         {/* Steps */}

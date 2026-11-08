@@ -12,9 +12,11 @@
     background: var(--paper);
     color: var(--ink);
     font-family: var(--font-body);
+    line-height: var(--text-body-leading);
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
+    line-height: var(--text-heading-leading);
     letter-spacing: -0.02em;
   }
   :focus-visible {
@@ -54,7 +56,7 @@
 
   /* Brutalist Button */
   .btn-brutalist {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-3 border-ink bg-navy px-8 py-4 text-base font-black text-white;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-3 border-ink bg-navy px-8 py-4 text-base font-black leading-7 text-white;
     box-shadow: var(--shadow-hard);
     transition: all 0.15s ease;
   }
@@ -68,7 +70,7 @@
   }
 
   .btn-brutalist-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-3 border-ink bg-white px-8 py-4 text-base font-black text-ink;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-3 border-ink bg-white px-8 py-4 text-base font-black leading-7 text-ink;
     box-shadow: var(--shadow-hard);
     transition: all 0.15s ease;
   }
@@ -511,4 +513,41 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--slate-soft);
+}
+
+/* Preserve the original CSS-variable opacity classes under Tailwind 3. */
+@layer utilities {
+  .bg-\[var\(--white\)\]\/80 { background-color: rgb(var(--white-rgb) / 0.8); }
+  .border-\[var\(--navy\)\]\/10 { border-color: rgb(var(--navy-rgb) / 0.1); }
+  .border-\[var\(--danger\)\]\/20 { border-color: rgb(var(--danger-rgb) / 0.2); }
+  .hover\:bg-\[var\(--mist\)\]\/60:hover { background-color: rgb(var(--mist-rgb) / 0.6); }
+  .hover\:border-\[var\(--navy\)\]\/30:hover { border-color: rgb(var(--navy-rgb) / 0.3); }
+}
+
+@layer components {
+  .hsk-panel { @apply rounded-lg border border-mist bg-surface p-5 shadow-card sm:p-6; }
+  .hsk-hero-heading {
+    font-family: var(--font-display);
+    font-size: min(3rem, 12.8vw);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.05em;
+  }
+  .hsk-hero-line { display: block; min-height: 1.12em; white-space: nowrap; }
+  .hsk-hero-cursor { display: inline-block; width: 0; }
+  @media (min-width: 640px) {
+    .hsk-hero-heading { font-size: 3.75rem; }
+  }
+  @media (min-width: 1024px) {
+    .hsk-hero-heading { font-size: clamp(3.5rem, 6.25vw, 5rem); }
+  }
+  .hsk-page-title { @apply font-display text-2xl font-semibold text-ink sm:text-3xl; line-height: var(--text-heading-leading); }
+  .hsk-section-title { @apply font-display text-lg font-semibold text-ink sm:text-xl; line-height: 1.35; }
+  .hsk-hanzi { font-family: var(--font-body); font-size: 32px; line-height: 1.6; font-weight: 500; }
+  .hsk-input { @apply min-h-11 w-full rounded-lg border border-mist bg-surface px-3 py-2.5 text-sm font-normal text-ink outline-none transition placeholder:text-slate-soft focus:border-brand focus:ring-4 focus:ring-brand/10 disabled:cursor-not-allowed disabled:opacity-60; }
+  .hsk-button { @apply inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-brand px-4 py-2.5 text-sm font-medium leading-6 text-white shadow-sm transition hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50; }
+  .hsk-button-secondary { @apply inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-lg border border-mist bg-surface px-4 py-2.5 text-sm font-medium leading-6 text-slate transition hover:bg-paper hover:text-ink focus-visible:ring-4 focus-visible:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50; }
+  .hsk-notice { @apply rounded-lg border border-brand/20 bg-brand/5 px-4 py-3 text-sm leading-6 text-slate; }
+  .hsk-error { @apply rounded-lg border border-danger/20 bg-danger-soft px-4 py-3 text-sm leading-6 text-danger; }
+  .hsk-label { @apply flex flex-col gap-2 text-sm font-medium text-ink; }
 }

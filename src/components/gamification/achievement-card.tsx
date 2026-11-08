@@ -22,52 +22,52 @@ const ACHIEVEMENT_META: Record<
   first_steps: {
     icon: "🎯",
     color: "from-blue-400 to-blue-600",
-    desc: "Complete your first practice test",
+    desc: "Hoàn thành bài luyện đầu tiên",
   },
   vocab_builder: {
     icon: "📚",
     color: "from-purple-400 to-purple-600",
-    desc: "Create 10 vocabulary flashcards",
+    desc: "Tạo 10 thẻ từ vựng",
   },
   on_fire: {
     icon: "🔥",
     color: "from-orange-400 to-red-500",
-    desc: "Maintain a 7-day streak",
+    desc: "Duy trì chuỗi học 7 ngày",
   },
   unstoppable: {
     icon: "⚡",
     color: "from-yellow-400 to-orange-500",
-    desc: "Maintain a 30-day streak",
+    desc: "Duy trì chuỗi học 30 ngày",
   },
   legendary: {
     icon: "👑",
     color: "from-yellow-300 to-yellow-600",
-    desc: "Maintain a 100-day streak",
+    desc: "Duy trì chuỗi học 100 ngày",
   },
   xp_100: {
     icon: "💎",
     color: "from-teal-400 to-teal-600",
-    desc: "Earn 100 XP total",
+    desc: "Tích lũy 100 EXP",
   },
   xp_500: {
     icon: "💎",
     color: "from-emerald-400 to-emerald-600",
-    desc: "Earn 500 XP total",
+    desc: "Tích lũy 500 EXP",
   },
   xp_1000: {
     icon: "🌟",
     color: "from-amber-400 to-amber-600",
-    desc: "Earn 1,000 XP total",
+    desc: "Tích lũy 1.000 EXP",
   },
   xp_5000: {
     icon: "⭐",
     color: "from-cyan-400 to-cyan-600",
-    desc: "Earn 5,000 XP total",
+    desc: "Tích lũy 5.000 EXP",
   },
   xp_10000: {
     icon: "🏆",
     color: "from-rose-400 to-rose-600",
-    desc: "Earn 10,000 XP total",
+    desc: "Tích lũy 10.000 EXP",
   },
 };
 
@@ -84,7 +84,7 @@ export function AchievementCard({
     ACHIEVEMENT_META[code] ?? {
       icon: "🏆",
       color: "from-gray-400 to-gray-600",
-      desc: "Mystery achievement",
+      desc: "Thành tích đang chờ",
     };
 
   const displayName = code

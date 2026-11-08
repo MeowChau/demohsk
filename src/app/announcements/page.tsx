@@ -1,14 +1,13 @@
-import type { Announcement } from "@/lib/repositories/announcement.repository";
-import { AnnouncementRepository } from "@/lib/repositories/announcement.repository";
+import type { Announcement } from "@/types/community";
 import { InfoIcon } from "@/components/icons/stat-icons";
 
 export default async function AnnouncementsPage(){const announcements:Announcement[]=[];
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-semibold text-navy dark:text-white">Announcements</h1>
+      <h1 className="font-display text-2xl font-semibold text-ink dark:text-white"> Thông báo </h1>
 
       {announcements.length === 0 ? (
-        <p className="text-sm text-slate-soft">No announcements yet — check back soon.</p>
+        <p className="text-sm text-slate-soft"> Chưa có thông báo mới. </p>
       ) : (
         <div className="flex flex-col gap-3">
           {announcements.map((a) => (

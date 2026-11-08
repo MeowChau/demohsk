@@ -1,4 +1,6 @@
 "use client";
+import { SKILL_LABELS } from "@/lib/hsk";
+
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
@@ -80,7 +82,7 @@ export function SkillProgress({
 
           return (
             <motion.div
-              key={skill}
+              key={SKILL_LABELS[skill]}
               initial={{
                 opacity: 0,
                 y: 20,
@@ -104,7 +106,7 @@ export function SkillProgress({
                 y: -3,
                 scale: 1.02,
               }}
-              className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard hover:shadow-brutalist transition-all"
+              className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard hover:shadow-brutalist transition-all dark:border-slate/30 dark:bg-surface"
             >
               {/* Skill accent */}
               <div
@@ -127,12 +129,11 @@ export function SkillProgress({
 
                   <div>
                     <p className="text-sm font-black text-ink leading-tight dark:text-white">
-                      {skill}
+                      {SKILL_LABELS[skill]}
                     </p>
 
                     <p className="text-xs text-slate mt-0.5 font-black">
-                      Assessment
-                    </p>
+                       Đánh giá </p>
                   </div>
                 </div>
 
@@ -163,7 +164,7 @@ export function SkillProgress({
                   <span className="font-black text-slate">
                     {hasScore
                       ? `${pct}% proficiency`
-                      : "Not assessed"}
+                      : "Chưa đánh giá"}
                   </span>
 
                   <span className="font-black text-slate tabular-nums">
@@ -218,7 +219,7 @@ export function SkillProgress({
                   )}
                 </div>
 
-                {/* IELTS milestones */}
+                {/* Các mốc cấp độ HSK */}
                 <div className="relative h-3 w-full">
                   {[3, 6, 9].map(
                     (milestone) => (

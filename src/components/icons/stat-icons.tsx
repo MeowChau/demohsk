@@ -235,7 +235,7 @@ export function CalendarIcon({ size = 20, className }: IconProps) {
   );
 }
 
-/** Bar-chart trend — used for avg. class band score. */
+/** Bar-chart trend for learning statistics. */
 export function TrendIcon({ size = 22, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>

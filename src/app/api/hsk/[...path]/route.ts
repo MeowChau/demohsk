@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ACCESS_COOKIE, REFRESH_COOKIE, backendUrl } from "@/lib/api/config";
+import { ACCESS_COOKIE, REFRESH_COOKIE, backendEndpoint } from "@/lib/api/config";
 import {
   clearSession,
   refreshSession,
@@ -15,10 +15,14 @@ const allowed: Record<string, RegExp[]> = {
     /^exams(?:\/\d+)?$/,
     /^analytics\/dashboard$/,
     /^leaderboard\/streak$/,
+    /^game\/offline\/(words|top-scores)$/,
+    /^game\/pk\/history$/,
   ],
   POST: [
     /^auth\/(email\/(login|register|confirm|resend|confirm\/new)|forgot\/password|reset\/password|logout)$/,
     /^analytics\/(ping|vocabulary-progress)$/,
+    /^game\/offline\/submit$/,
+    /^ai\/(writing-assessment|speaking\/pronunciation-assessment)$/,
   ],
   PATCH: [/^auth\/me$/, /^users\/me\/study-goals$/],
   DELETE: [/^auth\/me$/],
@@ -41,22 +45,32 @@ async function handle(
     );
   let renewed: ApiSession | null = null;
   try {
-    const body = request.method === "GET" ? undefined : await request.text();
-    if (body && body.length > 150000)
+    const isAudio = path === "ai/speaking/pronunciation-assessment";
+    let body: string | FormData | undefined;
+    if (isAudio) {
+      if (Number(request.headers.get("content-length")) > 11 * 1024 * 1024)
+        return NextResponse.json({ message: "Tệp ghi âm quá lớn." }, { status: 413 });
+      body = await request.formData();
+      const audio = body.get("audio");
+      const reference = body.get("referenceText");
+      if (!(audio instanceof File) || !audio.size || audio.size > 10 * 1024 * 1024 || typeof reference !== "string" || !reference.trim() || reference.length > 5000)
+        return NextResponse.json({ message: "Chọn bản ghi WAV hợp lệ và nhập nội dung cần đọc." }, { status: 422 });
+    } else body = request.method === "GET" ? undefined : await request.text();
+    if (typeof body === "string" && body.length > 150000)
       return NextResponse.json(
         { message: "Dữ liệu quá lớn." },
         { status: 413 },
       );
     const send = (token?: string) =>
-      fetch(`${backendUrl()}/${path}${request.nextUrl.search}`, {
+      fetch(`${backendEndpoint(path)}${request.nextUrl.search}`, {
         method: request.method,
         body: body || undefined,
         headers: {
-          "Content-Type": "application/json",
+          ...(!isAudio ? { "Content-Type": "application/json" } : {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(path.startsWith("ai/") ? 45000 : 20000),
       });
     let upstream = await send(request.cookies.get(ACCESS_COOKIE)?.value);
     if (

@@ -21,10 +21,10 @@ export function LearningTabs({
             onClick={() => setTab(t)}
             className={cn(
               "rounded-pill px-4 py-1.5 text-sm font-medium capitalize transition-colors",
-              tab === t ? "bg-surface text-navy shadow-card" : "text-slate hover:text-navy"
+              tab === t ? "bg-surface text-ink shadow-card" : "text-slate hover:text-ink"
             )}
           >
-            {t}
+            {t === "lessons" ? "Chủ đề bài học" : "Từ vựng"}
           </button>
         ))}
       </div>

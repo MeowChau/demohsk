@@ -35,11 +35,9 @@ type QuickChip = {
 };
 
 const QUICK_CHIPS: QuickChip[] = [
-  { label: "Task 2 tips", prompt: "How do I improve my Writing Task 2 band score?", icon: PenLine },
-  { label: "Speaking Part 2", prompt: "What are common mistakes in Speaking Part 2?", icon: Mic },
-  { label: "Vocab for essays", prompt: "Give me 5 academic vocabulary words for environment essays", icon: BookOpen },
-  { label: "Academic vs General", prompt: "What is the difference between Academic and General IELTS?", icon: HelpCircle },
-  { label: "Test dates & fees", prompt: "What are the latest IELTS test dates and fees?", icon: Globe },
+  {label:"Pinyin",prompt:"Giải thích các thanh điệu trong tiếng Trung.",icon:Mic},
+  {label:"Từ vựng HSK",prompt:"Gợi ý cách ghi nhớ từ vựng HSK.",icon:BookOpen},
+  {label:"Luyện viết",prompt:"Làm sao để luyện viết chữ Hán?",icon:PenLine},
 ];
 
 function makeThreadId(userId: string) {
@@ -92,7 +90,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
     {
       id: "welcome",
       role: "bot",
-      content: `Hi ${firstName}! I'm your IELTS AI tutor, powered by LangGraph and Groq. I can help with Writing Task 2 feedback, vocabulary, grammar, test strategy, and I can search the web for the latest IELTS info. What would you like help with?`,
+      content: `你好, ${firstName}! Chức năng hội thoại tiếng Trung chưa được mở. Bạn có thể tiếp tục học tại mục Bài học, Từ vựng và Luyện tập.`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -133,7 +131,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
     setMessages((prev) => [
       ...prev,
       { id: crypto.randomUUID(), role: "user", content: trimmed },
-      { id: "thinking", role: "bot", content: "Thinking…", isThinking: true },
+      { id: "thinking", role: "bot", content: "Đang trả lời…", isThinking: true },
     ]);
 
     try {
@@ -147,7 +145,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
         const withoutThinking = prev.filter((m) => m.id !== "thinking");
         const reply =
           data.reply ??
-          (data.detail ? `Engine error: ${data.detail}` : "No response from AI. Please try again.");
+          (data.detail ? `Engine error: ${data.detail}` : "Chưa nhận được phản hồi. Vui lòng thử lại.");
         return [...withoutThinking, { id: crypto.randomUUID(), role: "bot", content: reply }];
       });
     } catch {
@@ -156,7 +154,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
         {
           id: crypto.randomUUID(),
           role: "bot",
-          content: "Could not reach the AI Tutor server. Make sure the FastAPI engine is running.",
+          content: "Chưa kết nối được trợ lý học tập. Vui lòng thử lại sau.",
         },
       ]);
     } finally {
@@ -177,10 +175,9 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           </span>
           <div>
             <h1 className="font-[var(--font-display)] text-xl font-bold" style={{ color: "var(--ink)" }}>
-              AI Tutor
-            </h1>
+               Góc học tiếng Trung </h1>
             <p className="text-sm" style={{ color: "var(--slate)" }}>
-              Powered by LangGraph + Groq + Tavily Search (Live)
+              Hội thoại tiếng Trung · Chưa mở
             </p>
           </div>
         </div>
@@ -193,13 +190,11 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           }}
         >
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-          {online === null ? "Connecting…" : online ? "AI Tutor online" : "AI Tutor offline"}
+          {online === null ? "Đang kết nối…" : online ? "Đang hoạt động" : "Chưa mở"}
         </div>
       </div>
 
-      {/* Offline notice — the FastAPI engine is deployed on a free-tier host and
-          currently crashes / fails to start there due to its memory limit, so
-          the health check reports offline. Works fully when run locally. */}
+      {/* Availability notice */}
       <AnimatePresence initial={false}>
         {online === false && showOfflineNotice && (
           <motion.div
@@ -212,11 +207,11 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="flex-1 leading-relaxed">
-              General AI chat is not enabled on the current HSK backend. Your learning and practice pages remain available.
+              Hội thoại chưa được mở trong phiên bản này. Bạn vẫn có thể học từ vựng và luyện tập tiếng Trung.
             </p>
             <button
               onClick={() => setShowOfflineNotice(false)}
-              aria-label="Dismiss"
+              aria-label="Đóng"
               className="shrink-0 rounded-full p-0.5 opacity-70 transition-opacity hover:opacity-100"
             >
               <X className="h-3.5 w-3.5" />
@@ -260,7 +255,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
                   {m.isThinking ? (
                     <span className="inline-flex items-center gap-2" style={{ color: "var(--slate)" }}>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Thinking…
+                      Đang trả lời…
                     </span>
                   ) : (
                     <ReactMarkdown
@@ -279,6 +274,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
         {/* Input row */}
         <div className="mt-3 flex items-center gap-2">
           <input
+            disabled={online !== true}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -287,7 +283,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
                 sendMessage(input);
               }
             }}
-            placeholder="Ask anything about IELTS…"
+            placeholder="Hội thoại chưa được mở"
             className="flex-1 rounded-[var(--radius-pill)] border px-4 py-2.5 text-sm outline-none focus:ring-2"
             style={{
               background: "var(--white)",
@@ -297,11 +293,11 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           />
           <button
             onClick={() => sendMessage(input)}
-            disabled={isLoading || !input.trim()}
+            disabled={online !== true || isLoading || !input.trim()}
             className="flex items-center gap-1.5 rounded-[var(--radius-pill)] px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
             style={{ background: "var(--teal)", color: "var(--white)" }}
           >
-            Send
+            Gửi
             <Send className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -313,7 +309,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           <button
             key={label}
             onClick={() => sendMessage(prompt)}
-            disabled={isLoading}
+            disabled={online !== true || isLoading}
             className="flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3.5 py-2 text-xs font-medium transition-transform hover:-translate-y-0.5 disabled:opacity-50"
             style={{ background: "var(--white)", color: "var(--slate)", boxShadow: "var(--shadow-card)" }}
           >

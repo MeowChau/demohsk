@@ -112,26 +112,22 @@ export function ClosingCTA() {
           <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-teal/10 blur-3xl pointer-events-none" />
 
           <div className="relative">
-            <h2 className="text-3xl md:text-5xl lg:text-7xl font-black tracking-tighter text-white max-w-3xl mx-auto leading-none">
-              Your next practice test is one click away.
-            </h2>
+            <h2 className="text-3xl md:text-5xl lg:text-7xl font-black tracking-tighter text-white max-w-3xl mx-auto leading-[1.2]">
+               Bắt đầu học tiếng Trung ngay hôm nay. </h2>
 
             <p className="mt-4 text-lg text-white/70 max-w-xl mx-auto font-medium">
-              Join 12,000+ test takers. Free forever. No credit card required.
-            </p>
+               Tạo tài khoản để học từ vựng và luyện tập theo mục tiêu HSK của bạn. </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <MagneticConfettiButton href="/signup">
-                Create your free account
-                <ArrowRight className="h-5 w-5" />
+              <MagneticConfettiButton href="/register">
+                 Tạo tài khoản học HSK <ArrowRight className="h-5 w-5" />
               </MagneticConfettiButton>
 
               <Link
                 href="/login"
                 className="btn-brutalist-outline bg-white/10 text-white border-white/30 hover:bg-white/20 hover:border-white/50"
               >
-                I already have an account
-              </Link>
+                 Tôi đã có tài khoản </Link>
             </div>
           </div>
         </motion.div>

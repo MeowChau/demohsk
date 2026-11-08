@@ -7,59 +7,53 @@ import { TiltCard } from "@/components/ui/tilt-card"
 
 const testimonials = [
   {
-    quote:
-      "The instant granular feedback on Writing Task 2 saved me weeks of aimless rewriting. I went from stuck at 7.0 to an 8.5 in less than two months.",
-    name: "Nawfat Haidar Chaudhury",
-    score: "8.5",
-    location: "Dhaka",
-    image: "/avatar/Nawfat.jpeg",
-    gradient: "from-navy to-teal",
+    "quote": "Xin chào! · Nǐ hǎo!",
+    "name": "你好",
+    "score": "Chào hỏi",
+    "location": "Giao tiếp hằng ngày",
+    "image": "",
+    "gradient": "from-navy to-teal"
   },
   {
-    quote:
-      "The timed practice mode and real-time Band Score breakdowns felt exactly like taking the actual test. I hit my target score on my first attempt!",
-    name: "Fabiha Sanjeda Nuva",
-    score: "8.0",
-    location: "Sylhet",
-    image: "/avatar/Nuva.jpeg",
-    gradient: "from-teal to-cyan",
+    "quote": "Cảm ơn. · Xièxie.",
+    "name": "谢谢",
+    "score": "Lịch sự",
+    "location": "Giao tiếp hằng ngày",
+    "image": "",
+    "gradient": "from-teal to-cyan"
   },
   {
-    quote:
-      "Keeping up with the daily practice streak kept me accountable. The immediate AI analysis for Speaking fluency gave me the confidence I needed.",
-    name: "Jannatul Ferdous Nishat",
-    score: "8.0",
-    location: "Chittagong",
-    image: "/avatar/Jannat.jpeg",
-    gradient: "from-violet to-navy",
+    "quote": "Tôi học tiếng Trung. · Wǒ xuéxí Zhōngwén.",
+    "name": "我学习中文。",
+    "score": "Học tập",
+    "location": "Câu ví dụ",
+    "image": "",
+    "gradient": "from-violet to-navy"
   },
   {
-    quote:
-      "The reading section explanations break down why every wrong answer is wrong. It completely transformed how I handle true/false/not given questions.",
-    name: "Shakila Jahan Tasnia",
-    score: "7.5",
-    location: "Dhaka",
-    image: "/avatar/Tasnia.jpeg",
-    gradient: "from-navy to-violet",
+    "quote": "Tạm biệt! · Zàijiàn!",
+    "name": "再见",
+    "score": "Chào tạm biệt",
+    "location": "Giao tiếp hằng ngày",
+    "image": "",
+    "gradient": "from-navy to-violet"
   },
   {
-    quote:
-      "I loved the flexible micro-tests. Being able to practice 15-minute Speaking modules between classes helped me jump a full band score effortlessly.",
-    name: "Monisha Hossain",
-    score: "7.5",
-    location: "Sylhet",
-    image: "/avatar/Monisha.jpeg",
-    gradient: "from-cyan to-teal",
+    "quote": "Bạn tên là gì? · Nǐ jiào shénme míngzi?",
+    "name": "你叫什么名字？",
+    "score": "Giới thiệu",
+    "location": "Câu ví dụ",
+    "image": "",
+    "gradient": "from-cyan to-teal"
   },
   {
-    quote:
-      "The structured layout and gamified feedback made studying less stressful. The instant writing evaluations pinpointed my exact grammar errors.",
-    name: "Syeda Nafisa Tasnim",
-    score: "7.0",
-    location: "Dhaka",
-    image: "/avatar/Nafisa.jpeg",
-    gradient: "from-teal to-navy",
-  },
+    "quote": "Cố lên! · Jiāyóu!",
+    "name": "加油",
+    "score": "Động viên",
+    "location": "Giao tiếp hằng ngày",
+    "image": "",
+    "gradient": "from-teal to-navy"
+  }
 ]
 
 /**
@@ -195,7 +189,7 @@ function TestimonialCard({
       >
         <div className="group relative flex h-full flex-col rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-1 hover:shadow-brutalist">
           {/* Rating */}
-          <StarBurst />
+          <span className="text-xs font-bold text-teal">汉字 · Pinyin · Tiếng Việt</span>
 
           {/* Quote icon */}
           <Quote className="mt-3 mb-2 h-5 w-5 text-teal/30" />
@@ -210,15 +204,7 @@ function TestimonialCard({
             <div
               className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gradient-to-br ${testimonial.gradient} ring-2 ring-mist`}
             >
-              <img
-                src={testimonial.image}
-                alt={testimonial.name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-                onError={(event) => {
-                  event.currentTarget.style.display = "none"
-                }}
-              />
+              <span className="flex h-full w-full items-center justify-center text-xl font-bold text-white" lang="zh-CN">{testimonial.name.slice(0,1)}</span>
             </div>
 
             <div className="min-w-0">
@@ -227,7 +213,7 @@ function TestimonialCard({
               </div>
 
               <div className="text-xs font-bold text-slate">
-                Scored {testimonial.score} · {testimonial.location}
+                {testimonial.score} · {testimonial.location}
               </div>
             </div>
           </div>
@@ -277,7 +263,7 @@ export function SocialProof() {
 
   return (
     <section
-      id="testimonials"
+      id="chinese-phrases"
       className="relative overflow-hidden"
     >
       {/* =========================================================
@@ -292,13 +278,12 @@ export function SocialProof() {
             transition={{ duration: 0.6 }}
           >
             <ScrambleText
-              text="Band scores you'll hit. Guaranteed."
-              className="mb-6 text-5xl font-black leading-none tracking-tighter text-ink md:text-7xl lg:text-8xl"
+              text="Mỗi ngày một chút tiếng Trung."
+              className="mb-6 text-5xl font-black leading-[1.12] tracking-tighter text-ink md:text-7xl lg:text-8xl"
             />
 
             <p className="mx-auto max-w-2xl text-lg font-medium text-slate md:text-xl">
-              Thousands of learners across Bangladesh trust IELTS Beta to
-              reach their target score. Here's what they have to say.
+              Cùng làm quen với những cách nói ngắn gọn qua chữ Hán, pinyin và nghĩa từ.
             </p>
           </motion.div>
         </div>
@@ -317,11 +302,11 @@ export function SocialProof() {
             transition={{ duration: 0.5 }}
           >
             <span className="mb-2 inline-block text-sm font-black uppercase tracking-widest text-teal">
-              Testimonials
+              Góc tiếng Trung
             </span>
 
             <h3 className="text-3xl font-black tracking-tighter text-ink md:text-4xl">
-              Loved by students across Bangladesh
+              Những câu giao tiếp để bắt đầu
             </h3>
           </motion.div>
         </div>

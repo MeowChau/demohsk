@@ -1,0 +1,14 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { serverApi } from "@/lib/api/server";
+import { publicMedia } from "@/lib/api/config";
+import { ApiError } from "@/lib/api/client";
+import type { HskExam } from "@/lib/api/types";
+import { HskBadge, PageHeading } from "@/components/ui/catalog";
+export default async function ExamPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!/^\d+$/.test(id)) notFound();
+  let exam: HskExam;
+  try { exam = await serverApi<HskExam>(`exams/${id}`); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
+  return <div className="flex flex-col gap-6"><Link className="text-sm font-medium text-brand" href="/exams">← Danh sách đề thi</Link><PageHeading title={exam.title} description="Xem cấu trúc và nội dung đề trước khi tự luyện." /><div className="hsk-panel flex flex-col gap-4"><HskBadge level={exam.hskLevel} /><p className="whitespace-pre-line text-sm leading-7 text-slate">{exam.description || "Đề thi gồm các phần dưới đây."}</p><Link className="hsk-button w-fit" href={`/practice/attempt/exam-${id}?testid=exam-${id}`}>Bắt đầu tự luyện</Link></div><p className="hsk-notice">Bạn có thể tải câu trả lời sau khi làm bài. Đề tự luyện hiện chưa lưu lịch sử hoặc tính điểm thi chính thức.</p><div className="grid gap-4 md:grid-cols-2">{[...(exam.sections || [])].sort((a, b) => a.order - b.order).map(section => <section className="hsk-panel" key={section.id}><h2 className="hsk-section-title">{section.order}. {section.title}</h2><p className="mt-2 text-sm text-slate">{section.sectionQuestions.length} câu hỏi</p>{section.audioUrl && <audio className="mt-4 w-full" controls preload="none" src={publicMedia(section.audioUrl) || undefined} aria-label={`Âm thanh ${section.title}`} />}</section>)}</div></div>;
+}

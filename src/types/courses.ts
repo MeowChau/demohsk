@@ -49,6 +49,12 @@ export interface Content {
   created_at: string;
 }
 
+export interface StudentCourseView {
+  enrollid: string;
+  course: Course;
+  contents: Content[];
+}
+
 export interface LiveClass {
   classid: string;
   teachercourseid: string;

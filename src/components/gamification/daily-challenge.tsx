@@ -14,10 +14,10 @@ interface DailyChallengeProps {
 }
 
 const CHALLENGE_NAMES: Record<string, string> = {
-  complete_test: "Complete a practice test",
-  create_vocab: "Create vocabulary cards",
-  save_words: "Save new words",
-  study_lesson: "Study a lesson",
+  complete_test: "Hoàn thành một bài luyện",
+  create_vocab: "Tạo thẻ từ vựng",
+  save_words: "Học từ mới",
+  study_lesson: "Học một bài",
 };
 
 export function DailyChallengeCard({
@@ -78,8 +78,7 @@ export function DailyChallengeCard({
         {/* Challenge information */}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-black text-slate uppercase tracking-wider mb-1">
-            Daily Challenge
-          </p>
+             Mục tiêu trong ngày </p>
 
           <p className="font-display font-black text-ink">
             {CHALLENGE_NAMES[challenge.type] ||
@@ -143,8 +142,7 @@ export function DailyChallengeCard({
             }}
             className="mt-3 text-center text-sm font-black text-green-600"
           >
-            🎉 Challenge complete! +50 XP earned!
-          </motion.div>
+             🎉 Đã hoàn thành mục tiêu trong ngày! </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

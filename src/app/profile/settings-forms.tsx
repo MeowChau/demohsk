@@ -4,9 +4,12 @@ import { useActionState, useEffect, useState } from "react";
 import { Field } from "@/components/ui/field";
 import { updateSettingsAction, changePasswordAction, deleteAccountAction } from "./api-actions";
 import { notify } from "@/lib/toast";
-import type { UserSettings } from "@/lib/repositories/profile.repository";
+import type { UserSettings } from "@/types/profile";
+import { useValidatedForm } from "@/hooks/use-validated-form";
+import { changePasswordSchema } from "@/lib/validations/profile";
+import type { FormActionState } from "@/lib/validations/form-errors";
 
-type ActionResult = { error?: string; success?: boolean } | null;
+type ActionResult = FormActionState;
 
 async function settingsSubmit(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   return updateSettingsAction(formData);
@@ -19,7 +22,7 @@ export function SettingsForm({ settings }: { settings: UserSettings | null }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(settingsSubmit, null);
 
   useEffect(() => {
-    if (state?.success) notify.success("Preferences saved.");
+    if (state?.success) notify.success("Đã lưu tùy chọn.");
     if (state?.error) notify.error(state.error);
   }, [state]);
 
@@ -27,24 +30,24 @@ export function SettingsForm({ settings }: { settings: UserSettings | null }) {
     <form action={formAction} className="flex flex-col gap-4">
       <Toggle
         name="emailNotifications"
-        label="Email notifications"
-        description="Course updates, results, and announcements"
+        label="Thông báo qua email"
+        description="Cập nhật bài học, kết quả và thông báo"
         defaultChecked={settings?.email_notifications ?? true}
       />
       <Toggle
         name="streakReminders"
-        label="Streak reminders"
-        description="A nudge if you're about to lose your streak"
+        label="Nhắc lịch học"
+        description="Nhắc bạn duy trì chuỗi ngày học"
         defaultChecked={settings?.streak_reminders ?? true}
       />
       {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-      {state?.success && <p className="text-xs text-success">Preferences saved.</p>}
+      {state?.success && <p className="text-xs text-success"> Đã lưu tùy chọn. </p>}
       <button
         type="submit"
         disabled={pending}
         className="mt-2 w-fit rounded-pill bg-teal px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {pending ? "Saving..." : "Save preferences"}
+        {pending ? "Đang lưu…" : "Lưu tùy chọn"}
       </button>
     </form>
   );
@@ -79,25 +82,26 @@ function Toggle({
 
 export function ChangePasswordForm() {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(passwordSubmit, null);
+  const validation = useValidatedForm(changePasswordSchema, state);
 
   useEffect(() => {
-    if (state?.success) notify.success("Password updated.");
+    if (state?.success) notify.success("Đã cập nhật mật khẩu.");
     if (state?.error) notify.error(state.error);
   }, [state]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
-      <Field label="Current password" id="oldPassword" name="oldPassword" type="password" autoComplete="current-password" required />
-      <Field label="New password" id="password" name="password" type="password" required minLength={8} />
-      <Field label="Confirm new password" id="confirmPassword" name="confirmPassword" type="password" required />
-      {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-      {state?.success && <p className="text-xs text-success">Password updated.</p>}
+    <form action={formAction} {...validation.formProps} className="flex flex-col gap-4">
+      <Field label="Mật khẩu hiện tại" id="oldPassword" name="oldPassword" type="password" autoComplete="current-password" required maxLength={72} error={validation.errors.oldPassword} />
+      <Field label="Mật khẩu mới" id="password" name="password" type="password" autoComplete="new-password" required minLength={6} maxLength={72} error={validation.errors.password} hint="Từ 6 đến 72 ký tự." />
+      <Field label="Xác nhận mật khẩu mới" id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={72} error={validation.errors.confirmPassword} />
+      {validation.serverError && <p className="text-xs text-danger" role="alert">{validation.serverError}</p>}
+      {state?.success && <p className="text-xs text-success"> Đã cập nhật mật khẩu. </p>}
       <button
         type="submit"
         disabled={pending}
         className="mt-2 w-fit rounded-pill border border-mist px-5 py-2 text-sm font-semibold text-ink transition-colors hover:border-teal hover:text-teal disabled:opacity-50"
       >
-        {pending ? "Updating..." : "Update password"}
+        {pending ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
       </button>
     </form>
   );
@@ -108,7 +112,7 @@ export function DeleteAccountSection() {
 
   function handleDeleteClick() {
     notify.confirm(
-      "Permanently delete your account? This can't be undone.",
+      "Xác nhận xóa tài khoản? Thao tác này không thể hoàn tác.",
       async () => {
         setPending(true);
         const result = await deleteAccountAction();
@@ -117,27 +121,25 @@ export function DeleteAccountSection() {
           setPending(false);
           return;
         }
-        notify.goodbye("Account deleted. Take care!");
+        notify.goodbye("Đã xóa tài khoản.");
         window.location.href = "/login";
       },
-      "Delete forever"
+      "Xác nhận xóa"
     );
   }
 
   return (
     <div className="rounded-md border border-danger/30 bg-danger-soft p-4">
-      <p className="text-sm font-semibold text-danger">Delete account</p>
+      <p className="text-sm font-semibold text-danger"> Xóa tài khoản </p>
       <p className="mt-1 text-xs text-slate">
-        This permanently removes your account and everything linked to it — courses, results, XP, everything.
-        This can't be undone.
-      </p>
+         Yêu cầu này xóa tài khoản của bạn trên hệ thống HSK. Hãy cân nhắc trước khi xác nhận vì không thể hoàn tác. </p>
       <button
         type="button"
         onClick={handleDeleteClick}
         disabled={pending}
         className="mt-3 rounded-pill border border-danger px-4 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-white disabled:opacity-50"
       >
-        {pending ? "Deleting..." : "Delete my account"}
+        {pending ? "Đang xóa…" : "Xóa tài khoản của tôi"}
       </button>
     </div>
   );

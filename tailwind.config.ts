@@ -1,26 +1,41 @@
 import type { Config } from "tailwindcss";
 
+const color = (name: string) => `rgb(var(--${name}-rgb) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.125rem" }],
+        sm: ["0.875rem", { lineHeight: "1.375rem" }],
+        base: ["1rem", { lineHeight: "1.625rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.875rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],
+        "3xl": ["1.875rem", { lineHeight: "2.375rem" }],
+        "4xl": ["2.25rem", { lineHeight: "2.75rem" }],
+        "5xl": ["3rem", { lineHeight: "1.12" }],
+        "6xl": ["3.75rem", { lineHeight: "1.12" }],
+        "7xl": ["4.5rem", { lineHeight: "1.12" }],
+        "8xl": ["6rem", { lineHeight: "1.12" }],
+      },
       colors: {
-        navy: { DEFAULT: "var(--navy)", deep: "var(--navy-deep)" },
-        teal: { DEFAULT: "var(--teal)", deep: "var(--teal-deep)" },
-        violet: { DEFAULT: "var(--violet)", deep: "var(--violet-deep)" },
-        coral: { DEFAULT: "var(--coral)", deep: "var(--coral-deep)" },
-        cyan: 'var(--cyan)',
-        ink: "var(--ink)",
-        slate: { DEFAULT: "var(--slate)", soft: "var(--slate-soft)" },
-        mist: "var(--mist)",
-        paper: "var(--paper)",
-        surface: "var(--white)",
-        success: { DEFAULT: "var(--success)", soft: "var(--success-soft)" },
-        warning: { DEFAULT: "var(--warning)", soft: "var(--warning-soft)" },
-        danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
-        xp: { DEFAULT: "var(--xp)", deep: "var(--xp-deep)" },
-        gems: { DEFAULT: "var(--gems)", deep: "var(--gems-deep)" },
+        brand: { DEFAULT: color("brand"), hover: color("brand-hover"), soft: color("brand-soft") },
+        navy: { DEFAULT: color("navy"), deep: color("navy-deep") },
+        teal: { DEFAULT: color("teal"), deep: color("teal-deep") },
+        violet: { DEFAULT: color("violet"), deep: color("violet-deep") },
+        coral: { DEFAULT: color("coral"), deep: color("coral-deep") },
+        cyan: { DEFAULT: color("cyan"), light: color("cyan-light") },
+        ink: color("ink"), slate: { DEFAULT: color("slate"), soft: color("slate-soft") },
+        mist: color("mist"), paper: color("paper"), surface: color("white"),
+        success: { DEFAULT: color("success"), soft: color("success-soft") },
+        warning: { DEFAULT: color("warning"), soft: color("warning-soft") },
+        danger: { DEFAULT: color("danger"), soft: color("danger-soft") },
+        xp: { DEFAULT: color("xp"), deep: color("xp-deep") },
+        gems: { DEFAULT: color("gems"), deep: color("gems-deep") },
+        flame: { DEFAULT: color("flame"), deep: color("flame-deep") },
       },
       fontFamily: {
         display: ["var(--font-display)"],

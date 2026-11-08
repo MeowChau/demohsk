@@ -7,59 +7,46 @@ import {
   profileInfoSchema,
   changePasswordSchema,
 } from "@/lib/validations/profile";
+import { errorFields, issuesToFieldErrors } from "@/lib/validations/form-errors";
+import { avatarFileError } from "@/lib/validations/files";
+
+function refreshProfilePages() {
+  revalidatePath("/", "layout");
+}
 
 export async function updateProfileInfoAction(form: FormData) {
-  await requireApiUser();
-  const parsed = profileInfoSchema
-    .omit({ currentBand: true, targetBand: true })
-    .safeParse(Object.fromEntries(form));
+  const user = await requireApiUser();
+  const submittedUsername = form.get("username");
+  if (submittedUsername !== null && (typeof submittedUsername !== "string" || submittedUsername.trim() !== user.username))
+    return { error: "Tên người dùng do quản trị viên quản lý. Mục này chỉ lưu mục tiêu học tập.", fieldErrors: { username: "Tên người dùng không thể thay đổi qua API hồ sơ hiện tại." } };
+  const parsed = profileInfoSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success)
-    return { error: parsed.error.issues[0]?.message || "Invalid profile." };
-  const current = String(form.get("currentBand") || "");
-  const target = String(form.get("targetBand") || "");
-  if (
-    [current, target].some(
-      (value) =>
-        value &&
-        (!Number.isInteger(Number(value)) ||
-          Number(value) < 1 ||
-          Number(value) > 9),
-    )
-  )
-    return { error: "Cấp độ HSK phải là số nguyên từ 1 đến 9." };
+    return { error: "Vui lòng kiểm tra các ô nhập trong hồ sơ.", fieldErrors: issuesToFieldErrors(parsed.error.issues) };
+  const { currentHskLevel, targetHskLevel, dailyStudyTime } = parsed.data;
+  const goals = {
+    ...(currentHskLevel !== undefined && currentHskLevel !== user.currentHskLevel ? { currentHskLevel } : {}),
+    ...(targetHskLevel !== undefined && targetHskLevel !== user.targetHskLevel ? { targetHskLevel } : {}),
+    ...(dailyStudyTime !== undefined && dailyStudyTime !== user.dailyStudyTime ? { dailyStudyTime } : {}),
+  };
   try {
-    await serverApi("auth/me", {
-      method: "PATCH",
-      body: JSON.stringify({
-        firstName: parsed.data.firstName,
-        lastName: parsed.data.lastName,
-      }),
-    });
-    if (current || target)
+    if (Object.keys(goals).length)
       await serverApi("users/me/study-goals", {
         method: "PATCH",
-        body: JSON.stringify({
-          ...(current ? { currentHskLevel: Number(current) } : {}),
-          ...(target ? { targetHskLevel: Number(target) } : {}),
-        }),
+        body: JSON.stringify(goals),
       });
-    revalidatePath("/profile");
-    revalidatePath("/dashboard");
-    revalidatePath("/");
+    refreshProfilePages();
     return { success: true };
   } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Không lưu được hồ sơ.",
-    };
+    const message = error instanceof Error ? error.message : "Không lưu được mục tiêu học.";
+    return { error: message, fieldErrors: errorFields(error) };
   }
 }
 export async function uploadAvatarAction(form: FormData) {
   await requireApiUser();
   const file = form.get("avatar");
-  if (!(file instanceof File) || !file.size)
-    return { error: "No file provided" };
-  if (!file.type.startsWith("image/") || file.size > 3 * 1024 * 1024)
-    return { error: "Chọn ảnh nhỏ hơn 3MB." };
+  if (!(file instanceof File)) return { error: "Vui lòng chọn tệp ảnh." };
+  const fileError = avatarFileError(file);
+  if (fileError) return { error: fileError };
   try {
     const payload = new FormData();
     payload.set("file", file);
@@ -71,8 +58,7 @@ export async function uploadAvatarAction(form: FormData) {
       method: "PATCH",
       body: JSON.stringify({ photo: { id: uploaded.file.id } }),
     });
-    revalidatePath("/profile");
-    revalidatePath("/");
+    refreshProfilePages();
     return {
       success: true,
       avatarUrl: publicMedia(uploaded.file.path) || undefined,
@@ -89,19 +75,18 @@ export async function updateSettingsAction(_form: FormData) {
 export async function changePasswordAction(form: FormData) {
   await requireApiUser();
   const parsed = changePasswordSchema.safeParse(Object.fromEntries(form));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
-  const oldPassword = String(form.get("oldPassword") || "");
-  if (!oldPassword) return { error: "Nhập mật khẩu hiện tại để xác nhận." };
+  if (!parsed.success) return { error: "Vui lòng kiểm tra thông tin mật khẩu.", fieldErrors: issuesToFieldErrors(parsed.error.issues) };
   try {
     await serverApi("auth/me", {
       method: "PATCH",
-      body: JSON.stringify({ oldPassword, password: parsed.data.password }),
+      body: JSON.stringify({ oldPassword: parsed.data.oldPassword, password: parsed.data.password }),
     });
     return { success: true };
   } catch (error) {
     return {
       error:
         error instanceof Error ? error.message : "Không đổi được mật khẩu.",
+      fieldErrors: errorFields(error),
     };
   }
 }

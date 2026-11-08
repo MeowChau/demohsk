@@ -46,11 +46,11 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
       await apiAction("auth/logout");
 
       setOpen(false);
-      notify.goodbye("Logged out. See you next time!");
+      notify.goodbye("Đã đăng xuất. Hẹn gặp lại bạn!");
       router.push("/login");
       router.refresh();
     } catch {
-      notify.error("Something went wrong.");
+      notify.error("Có lỗi xảy ra. Vui lòng thử lại.");
       setLoading(false);
     }
   }, [router]);
@@ -65,7 +65,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
           "inline-flex items-center justify-center rounded-full border border-mist px-4 py-2 text-sm font-medium text-slate transition-all duration-200 hover:border-danger hover:text-danger dark:border-slate/20 dark:text-slate-soft dark:hover:border-danger dark:hover:text-danger"
         }
       >
-        {children ?? "Log out"}
+        {children ?? "Đăng xuất"}
       </button>
 
       {open && (
@@ -103,11 +103,9 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
                 </div>
 
                 <h3 className="text-lg font-black text-ink dark:text-white">
-                  Log Out
-                </h3>
+                   Đăng xuất </h3>
                 <p className="mt-2 text-center text-sm leading-relaxed text-slate dark:text-slate-soft">
-                  Are you sure you want to log out of your IELTS Beta account?
-                </p>
+                   Bạn muốn đăng xuất khỏi tài khoản TriceHSK? </p>
 
                 <div className="mt-7 flex w-full gap-3">
                   <button
@@ -116,8 +114,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
                     disabled={loading}
                     className="flex-1 rounded-xl border-2 border-ink/10 bg-mist px-4 py-2.5 text-sm font-black text-ink transition-colors hover:bg-slate/20 active:scale-[0.98] disabled:opacity-50 dark:border-white/10 dark:bg-slate/10 dark:text-slate-soft dark:hover:bg-slate/20"
                   >
-                    Stay logged in
-                  </button>
+                     Tiếp tục học </button>
                   <button
                     type="button"
                     onClick={handleConfirm}
@@ -145,10 +142,9 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           />
                         </svg>
-                        Logging out...
-                      </span>
+                         Đang đăng xuất… </span>
                     ) : (
-                      "Yes, log out"
+                      "Xác nhận đăng xuất"
                     )}
                   </button>
                 </div>

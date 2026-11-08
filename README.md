@@ -1,123 +1,56 @@
-# IELTS-Beta-WebApp-Next
+﻿# TriceHSK — Web học tiếng Trung
 
-> **Local integration hiện tại:** giao diện gốc được giữ nguyên; các luồng user đã nối REST/JWT tới backend HSK ở `../Trice_HSK_Admin/backend`. Chạy `npm run dev`, frontend ở `http://localhost:3000`; cấu hình trong `.env.example`. Không cần tài khoản hoặc key Supabase để chạy các luồng này. Xem [BACKEND_INTEGRATION.md](BACKEND_INTEGRATION.md). Phần mô tả Supabase bên dưới là tài liệu kiến trúc của bản IELTS gốc.
+Frontend dành cho học viên, giao diện tiếng Việt và nội dung học tiếng Trung/HSK. Giữ bố cục, màu, cỡ chữ và font của dự án gốc: Plus Jakarta Sans cho tiêu đề, Inter cho nội dung. Chỉ tăng giãn dòng để dấu tiếng Việt không chạm dòng trên. Trang chủ dùng giao diện sáng để tránh trộn màu dark mode với các khối nền trắng. Favicon lấy từ `../Trice_HSK_Admin/fe_admin/dashboard/src/app/favicon.ico`.
 
-<video src="https://github.com/user-attachments/assets/8d61846a-5737-4941-a485-1bea358b2e18" controls autoplay muted playsinline loop width="100%"></video>
+## Chạy dự án
 
-IELTS-Beta-WebApp-Next is a full-stack IELTS learning platform developed as a university capstone project.
-The application is an **ERD-driven Next.js + Supabase rebuild** focused on IELTS learning, assessment, progress tracking, and role-based experiences for Students, Teachers, and Administrators.
-
----
-
-🔗 **[Live Demo](https://ielts-beta-webapp-next.vercel.app/)**
-
-> ⚠️ **Note:** The AI Tutor feature is deployed separately (FastAPI + LangGraph) on a free-tier
-> host and currently crashes on startup due to that tier's memory limit — it will show as
-> offline on the live demo. The feature is fully functional when run locally; see
-> [Setup](#setup) below.
-
-🎥 **[Full Walkthrough Video](#)** — Student, Teacher, and Admin flows *(link pending)*
-
-## Features
-
-- Student dashboard with band and skill progress analytics
-- IELTS Listening, Reading, Writing, and Speaking workflows
-- Course browsing, enrollment, and learning content
-- Practice tests, attempts, and results
-- Live classes and announcements
-- Support tickets
-- Student, Teacher, and Admin portals
-- Profile and account settings
-- Supabase Storage profile image uploads
-- Role-based access control with RLS
-- Responsive light/dark interface
-- Toast notifications and interactive UI
-
----
-
-## Technology Stack
-
-- **Next.js 15** — App Router
-- **React 19** + **TypeScript**
-- **Tailwind CSS** + **shadcn/ui**
-- **Framer Motion**
-- **Supabase Auth + PostgreSQL + Storage**
-- **Zustand**
-- **TanStack Query**
-- **React Hook Form + Zod**
-- **Recharts**
-- **Sonner**
-
----
-
-## Database Design
-
-The application follows the approved **ERD as the primary source of truth** for its relational database architecture.
-
-**Final ERD:**  
-[`View ERD`](./docs/assets/ERD/final-ERD.png)
-
----
-
-## Design Patterns
-
-Five software design patterns are implemented in the application:
-
-1. Repository
-2. Factory Method
-3. Strategy
-4. Facade
-5. Observer
-
-**Design Patterns:** [`DESIGN-PATTERNS.md`](./DESIGN-PATTERNS.md)
-
----
-
-## Testing
- 
-Automated tests (Jest) cover the scoring, validation, repository, and service layers, with mocking/stubbing of external dependencies (the Supabase client, and repository-level dependencies) and 50%+ line/branch coverage on the tested backend logic.
- 
-**Testing:** [`TESTING.md`](./TESTING.md)
- 
----
-
-## Setup
-
-```bash
+```powershell
 npm install
-```
-
-`.env.local` needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. 
-
-(Supabase dashboard → Settings → API → `service_role` key.) Without this, submitting a practice test will throw on purpose — scoring needs it to read `answer_options.is_correct`, which RLS correctly hides from students otherwise. It's also required for account deletion (Settings → Delete account), which calls the Supabase Admin API.
-
-Run `supabase/run_all.sql` in your Supabase project's SQL Editor before testing anything that touches the database.
-
----
-
-## Run
-
-```bash
+Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Visit `http://localhost:3000`. Sign up as a student and as a teacher (two accounts) to test both sides — admin accounts aren't self-serve by design: promote a user's role to `admin` from `/admin/users` once you have at least one admin account, or set one directly in Supabase's table editor for the very first admin.
+Chỉ sao chép `.env.example` khi chưa có cấu hình riêng trong `.env.local`.
 
-## Suggested test path
+- Web học viên: http://localhost:3002
+- Admin riêng: http://localhost:3000
+- Backend NestJS: http://localhost:3001/api/v1
 
-1. Sign up as a teacher → sign up as an admin (or promote an existing account) → from `/admin`, create a course and assign the teacher to it, add content, and add a practice test with questions/options.
-2. Sign up as a student → browse courses and enroll (self-serve, no manual DB edits needed) → `/learning` to see lessons, `/practice` to take the test, `/results/[attemptId]` to see the graded outcome, `/rewards` to see the XP it awarded.
-3. Check `/admin/logs` for the matching log entry from the same submission.
+Production: `npm run build` rồi `npm start`, vẫn dùng cổng 3002.
 
----
+Frontend gọi REST API/JWT qua `/api/hsk`; PostgreSQL được backend quản lý. Không cần kết nối database trực tiếp từ web user.
 
-## Screenshots
+## Các trang chính
 
-> Screenshots of the final interface will be added here after the visual refinement phase.
+| Đường dẫn | Nội dung |
+| --- | --- |
+| `/` | Giới thiệu TriceHSK, chủ đề và số lượng nội dung thực tế từ backend |
+| `/register` | Đăng ký học viên bằng tên người dùng, email và mật khẩu; chờ admin duyệt |
+| `/signup` | Chuyển tới `/register` |
+| `/login` | Đăng nhập |
+| `/forgot-password`, `/reset-password` | Khôi phục mật khẩu |
+| `/confirm-email`, `/confirm-new-email` | Tương thích liên kết email của backend; không phải điều kiện kích hoạt tài khoản học viên |
+| `/dashboard` | Tổng quan tài khoản, thời gian học, thống kê từ vựng và mục tiêu HSK |
+| `/learning` | Các chủ đề bài học, tên Việt, tên Trung và pinyin |
+| `/vocabulary` | Lật thẻ/danh sách, chữ Hán, pinyin, nghĩa từ; ghi nhận đã học/đã nhớ/chưa nhớ |
+| `/practice` | Luyện nghe, nói, đọc, viết; lọc theo cấp độ, chủ đề, tìm kiếm và phân trang |
+| `/exams` | Đề thi và các phần thi từ admin, mở bài tự luyện |
+| `/games` | Trò chơi từ vựng, lưu điểm và xem điểm cao của tài khoản |
+| `/games/pk` | Tìm đối thủ, sẵn sàng, trả lời theo lượt và lịch sử PK |
+| `/leaderboard` | Xếp hạng chuỗi ngày học và tổng EXP |
+| `/assessment` | Chấm bài viết và phát âm qua backend hiện có |
+| `/tutor` | Chuyển tới trang chấm bài |
+| `/rewards` | EXP, cấp độ, chuỗi ngày học và EXP từ lịch sử PK |
+| `/profile` | Hồ sơ, ảnh đại diện, mật khẩu, mục tiêu HSK và số phút học mỗi ngày |
 
----
+Web này chỉ chứa giao diện học viên. Các đường dẫn admin/teacher cũ được chuyển sang ứng dụng quản trị riêng.
 
-## Academic Context
+Đối chiếu API, cấu hình liên kết email và giới hạn hiện tại: [BACKEND_INTEGRATION.md](BACKEND_INTEGRATION.md).
 
-**Project:** IELTS-Beta-WebApp-Next  
-**Type:** University Capstone Project 
+## Kiểm tra
+
+```powershell
+npm test -- --runInBand
+npm run typecheck
+npm run build
+```

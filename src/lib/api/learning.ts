@@ -10,12 +10,13 @@ import type {
   HskUser,
   PageData,
 } from "./types";
-import type { StudentCourseView } from "@/lib/services/course-service";
-import type { ProfileDetail } from "@/lib/repositories/profile.repository";
+import type { StudentCourseView } from "@/types/courses";
+import type { ProfileDetail } from "@/types/profile";
 import type { VocabWord } from "@/types/vocab";
-import type { TestWithQuestions } from "@/lib/services/assessment-service";
+import type { TestWithQuestions } from "@/types/assessment";
 import type { Skill, Question } from "@/types/assessment";
 import { apiRole } from "./config";
+import { writingPractice } from "@/lib/writing-practice";
 
 export async function allPages<T>(path: string): Promise<T[]> {
   const separator = path.includes("?") ? "&" : "?";
@@ -44,21 +45,21 @@ export async function learningViews(
     allPages<HskPractice>(`practice-sets?hskLevel=${level}`),
   ]);
   return topics.map((topic) => ({
-    enrollid: topic.topic,
+    enrollid: topic.topicKey,
     course: {
-      courseid: topic.topic,
-      course_code: topic.topic,
-      title: topic.titleVi || topic.titleCn || topic.topic,
+      courseid: topic.topicKey,
+      course_code: topic.topicKey,
+      title: topic.titleVi || topic.titleCn || topic.topicKey,
       description: `${topic.titleCn} · ${topic.pinyin}`,
       level: `HSK ${topic.hskLevel}`,
       duration: null,
       created_at: "",
     },
     contents: sets
-      .filter((set) => set.topic === topic.topic)
+      .filter((set) => set.topic === topic.topicKey)
       .map((set) => ({
         contentid: String(set.id),
-        courseid: topic.topic,
+        courseid: topic.topicKey,
         title: set.title,
         content_type: "Notes" as const,
         youtube_link: null,
@@ -82,7 +83,7 @@ export function levelInfo(user: HskUser) {
   const threshold = level * 1000;
   return {
     level,
-    title: `Level ${level}`,
+    title: `Cấp ${level}`,
     currentXp: user.currentExp || 0,
     xpForNextLevel: threshold,
     progressPercent: Math.min(
@@ -130,12 +131,11 @@ export function profileDetail(user: HskUser): ProfileDetail {
   return {
     userid: String(user.id),
     email: user.email || "",
+    username: user.username,
     role: apiRole(user),
     display_id: user.studentCode ? String(user.studentCode) : null,
     created_at: user.createdAt || "",
     personid: String(user.id),
-    first_name: user.firstName || user.fullName || user.username,
-    last_name: user.lastName || "",
     dob: null,
     gender: null,
     phone: null,
@@ -143,6 +143,7 @@ export function profileDetail(user: HskUser): ProfileDetail {
     avatar_url: publicMedia(user.photo?.path),
     target_band: user.targetHskLevel || null,
     current_band: user.currentHskLevel || null,
+    daily_study_time: user.dailyStudyTime || null,
   };
 }
 export async function practiceTests(skill: Skill) {
@@ -160,7 +161,7 @@ export async function testForTaking(
   reference: string,
 ): Promise<TestWithQuestions> {
   const match = /^(set|exam)-(\d+)$/.exec(reference);
-  if (!match) throw new Error("Invalid HSK practice reference.");
+  if (!match) throw new Error("Mã bài luyện HSK không hợp lệ.");
   const kind = match[1];
   const id = match[2];
   const data =
@@ -199,37 +200,55 @@ export async function testForTaking(
       if (!q) continue;
       const skill = (q.skill.slice(0, 1) +
         q.skill.slice(1).toLowerCase()) as Skill;
-      const payload = q.payload;
-      const question = {
+      const payload = q.payload || {};
+      const question: Question = {
         questionid: String(q.id),
         testid: reference,
-        question: payload.text || "Complete the exercise.",
+        question: payload.text || "Hoàn thành bài tập tiếng Trung.",
         passageid,
         skill,
         marks: 1,
+        type: q.type,
+        templateId: typeof payload.templateId === "string" ? payload.templateId : undefined,
+        hskLevel: q.hskLevel,
+        pinyin: payload.pinyin,
+        translation: payload.translation,
         image_url: publicMedia(payload.imageUrl),
         context_image_url: publicMedia(payload.contextImageUrl),
         continuation_image_url: publicMedia(payload.continuationImageUrl),
         audio_url: publicMedia(payload.audioUrl || group.audioUrl),
-      } as Question;
+      };
+      if (writingPractice(question)) question.audio_url = null;
+      const texts = Array.isArray(payload.options) ? payload.options : [];
+      const images = Array.isArray(payload.optionImages) ? payload.optionImages : [];
+      const optionCount = Math.max(texts.length, images.length);
+      const options = Array.from({ length: optionCount }, (_, index) => ({
+        optionid: String.fromCharCode(65 + index),
+        option_text: texts[index] || String.fromCharCode(65 + index),
+        image_url: publicMedia(images[index]),
+      }));
+      if (q.type === "TRUE_FALSE" && options.length === 0) {
+        options.push(
+          { optionid: "A", option_text: "对 · Đúng", image_url: null },
+          { optionid: "B", option_text: "错 · Sai", image_url: null },
+        );
+      }
       questionsBySkill[skill] ||= [];
       questionsBySkill[skill]!.push({
         question,
-        options: (payload.options || []).map((text, index) => ({
-          optionid: String.fromCharCode(65 + index),
-          option_text: text || String.fromCharCode(65 + index),
-          image_url: publicMedia(payload.optionImages?.[index]),
-        })),
+        options,
       });
     }
   }
+  const items = Object.values(questionsBySkill).flatMap(questions => questions || []);
+  const tracingOnly = items.length > 0 && items.every(item => writingPractice(item.question) !== null);
   return {
     test: {
       testid: reference,
       courseid: "",
-      audio_url: kind === "set" ? publicMedia(set.audioUrl) : null,
+      audio_url: kind === "set" && !tracingOnly ? publicMedia(set.audioUrl) : null,
       title: data.title,
-      category: "General",
+      category: `HSK ${data.hskLevel}`,
       duration: 0,
       total_marks: Object.values(questionsBySkill).reduce(
         (sum, items) => sum + (items?.length || 0),

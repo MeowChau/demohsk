@@ -13,18 +13,25 @@ import { ClosingCTA } from "@/components/landing/closing-cta"
 import { LandingFooter } from "@/components/landing/landing-footer"
 import { ScrollToTop } from "@/components/landing/scroll-to-top"
 import type { NavRole } from "@/components/shell/top-nav"
+import { getCatalogOverview } from "@/lib/api/catalog"
+import { userDisplayName } from "@/lib/user-display"
 
 export default async function LandingPage() {
-  const user = await getLegacyUser().catch(() => null)
-  const displayName = user ? user.fullName || [user.firstName,user.lastName].filter(Boolean).join(" ") || user.username : ""
+  const [user, catalog] = await Promise.all([getLegacyUser().catch(() => null), getCatalogOverview()])
+  const displayName = user ? userDisplayName(user) : ""
   const role: NavRole = user ? apiRole(user) : "student"
   const avatarUrl = publicMedia(user?.photo?.path)
 
   return (
     <main className="min-h-screen">
       <LandingNav user={user} displayName={displayName} role={role} avatarUrl={avatarUrl} />
-      <Hero />
-      <TrustBar />
+      <Hero catalog={catalog} />
+      <TrustBar stats={[
+        { label: "Từ vựng", value: catalog.words },
+        { label: "Bộ luyện tập", value: catalog.practices },
+        { label: "Đề thi", value: catalog.exams },
+        { label: "Chủ đề bài học", value: catalog.topics.length || (catalog.available ? 0 : null) },
+      ]} />
       <HowItWorks />
       <FeatureShowcase />
       <ForTeachers />

@@ -1,49 +1,85 @@
 :root {
-  /* Brand */
+  /* Original project palette */
+  --brand: #123C6B;
+  --brand-rgb: 18 60 107;
+  --brand-hover: #0B2545;
+  --brand-hover-rgb: 11 37 69;
+  --brand-soft: #F0FDFC;
+  --brand-soft-rgb: 240 253 252;
   --navy: #123C6B;
+  --navy-rgb: 18 60 107;
   --navy-deep: #0B2545;
+  --navy-deep-rgb: 11 37 69;
   --teal: #0EA599;
+  --teal-rgb: 14 165 153;
   --teal-deep: #0B7A6E;
+  --teal-deep-rgb: 11 122 110;
 
   /* Secondary accent */
   --violet: #9B8AFB;
+  --violet-rgb: 155 138 251;
   --violet-deep: #7C6AE8;
+  --violet-deep-rgb: 124 106 232;
 
   /* Premium accent */
   --coral: #FF6B4A;
+  --coral-rgb: 255 107 74;
   --coral-deep: #E5502F;
+  --coral-deep-rgb: 229 80 47;
 
   /* Hero / Marketing cyan — approved for landing page v3 */
   --cyan: #9EFFF5;
+  --cyan-rgb: 158 255 245;
   --cyan-light: #F0FDFC;
+  --cyan-light-rgb: 240 253 252;
 
   /* Neutrals */
   --ink: #0F1720;
+  --ink-rgb: 15 23 32;
   --slate: #47566B;
+  --slate-rgb: 71 86 107;
   --slate-soft: #8593A6;
+  --slate-soft-rgb: 133 147 166;
   --mist: #EEF2F6;
+  --mist-rgb: 238 242 246;
   --paper: #F7F9FB;
+  --paper-rgb: 247 249 251;
   --white: #FFFFFF;
+  --white-rgb: 255 255 255;
 
   /* Semantic */
   --success: #1BA672;
+  --success-rgb: 27 166 114;
   --success-soft: #E4F6EE;
+  --success-soft-rgb: 228 246 238;
   --warning: #E0A62B;
+  --warning-rgb: 224 166 43;
   --warning-soft: #FCF3DD;
+  --warning-soft-rgb: 252 243 221;
   --danger: #E0524B;
+  --danger-rgb: 224 82 75;
   --danger-soft: #FBE7E6;
+  --danger-soft-rgb: 251 231 230;
 
   /* Gamification */
   --xp: #F5A524;
+  --xp-rgb: 245 165 36;
   --xp-deep: #C6810E;
+  --xp-deep-rgb: 198 129 14;
   --gems: #3FC7EB;
+  --gems-rgb: 63 199 235;
   --gems-deep: #1F9CBD;
+  --gems-deep-rgb: 31 156 189;
   --flame: #FF6B35;
+  --flame-rgb: 255 107 53;
   --flame-deep: #E5502F;
+  --flame-deep-rgb: 229 80 47;
 
   /* Type */
-  --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --text-body-leading: 1.6;
+  --text-heading-leading: 1.25;
 
   /* Radii / elevation */
   --radius-sm: 8px;
@@ -59,11 +95,17 @@
 
 .dark {
   --ink: #F2F5F9;
+  --ink-rgb: 242 245 249;
   --slate: #C3CEDB;
+  --slate-rgb: 195 206 219;
   --slate-soft: #7C8CA1;
+  --slate-soft-rgb: 124 140 161;
   --mist: #14141B;
+  --mist-rgb: 20 20 27;
   --paper: #0A0A0F;
+  --paper-rgb: 10 10 15;
   --white: #0F0F14;
+  --white-rgb: 15 15 20;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.45);
   --shadow-hard: 4px 4px 0px 0px rgba(255, 255, 255, 0.1);

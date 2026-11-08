@@ -2,40 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { STUDENT_NAV, PUBLIC_NAV } from "@/lib/navigation"
 import { Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "@/components/shell/logout-button"
 import type { NavRole } from "@/components/shell/top-nav"
-
-const navLinks = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "For teachers", href: "#for-teachers" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Testimonials", href: "#testimonials" },
-  { label: "FAQ", href: "#faq" },
-]
-
-const ROLE_LINKS: Record<NavRole, { label: string; href: string }[]> = {
-  student: [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "AI Tutor", href: "/tutor" },
-    { label: "Learning", href: "/learning" },
-    { label: "Practice", href: "/practice" },
-  ],
-  teacher: [
-    { label: "Courses", href: "/teacher/courses" },
-    { label: "Students", href: "/teacher/students" },
-    { label: "Live Classes", href: "/teacher/live-classes" },
-  ],
-  admin: [
-    { label: "Users", href: "/admin/users" },
-    { label: "Courses", href: "/admin/courses" },
-    { label: "Content", href: "/admin/content" },
-  ],
-}
 
 function getInitials(name: string) {
   if (!name) return "U"
@@ -81,7 +54,8 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
   }, [])
 
   const isLoggedIn = !!user
-  const roleLinks = role ? ROLE_LINKS[role] : []
+  const roleLinks = STUDENT_NAV.slice(0, 5)
+  const navLinks = PUBLIC_NAV
 
   return (
     <>
@@ -99,19 +73,19 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
           <div className="flex h-20 items-center justify-between py-5">
             <Link href="/" className="flex items-center gap-2">
               <Image
-                src="/logo.png"
-                alt="IELTS Beta"
+                src="/favicon.ico" unoptimized
+                alt="TriceHSK"
                 width={90}
                 height={30}
-                className="h-[90px] w-auto object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
+                className="h-12 w-12 object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
               />
               <span className="text-xl font-extrabold tracking-tight text-[var(--navy)] dark:text-white">
-                IELTS Beta
+                TriceHSK
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden xl:flex items-center gap-8">
               {isLoggedIn ? (
                 <>
                   <Link
@@ -120,8 +94,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                       scrolled ? "text-[var(--slate)] hover:text-[var(--navy)]" : "text-[#0F1720]/80 hover:text-[#0F1720]"
                     } ${pathname === "/" ? "text-[var(--navy)]" : ""}`}
                   >
-                    Home
-                  </Link>
+                     Trang chủ </Link>
                   {roleLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -130,27 +103,27 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                         scrolled ? "text-[var(--slate)] hover:text-[var(--navy)]" : "text-[#0F1720]/80 hover:text-[#0F1720]"
                       } ${pathname === link.href ? "text-[var(--navy)]" : ""}`}
                     >
-                      {link.label}
+                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </Link>
                   ))}
                 </>
               ) : (
                 navLinks.map((link) => (
                   <a
-                    key={link.label}
+                    key={link.href}
                     href={link.href}
                     className={`text-sm font-semibold transition-colors ${
                       scrolled ? "text-[var(--slate)] hover:text-[var(--navy)]" : "text-[#0F1720]/80 hover:text-[#0F1720]"
                     }`}
                   >
-                    {link.label}
+                    <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                   </a>
                 ))
               )}
             </nav>
 
             {/* Right side */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden xl:flex items-center gap-3">
               {isLoggedIn ? (
                 <div className="relative" ref={userRef}>
                   <button
@@ -210,8 +183,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                             {displayName}
                           </p>
                           <p className="text-xs text-[var(--slate)] dark:text-slate-soft truncate">
-                            Signed in
-                          </p>
+                             Đã đăng nhập </p>
                         </div>
                       </div>
                       <div className="h-px bg-[var(--mist)] dark:bg-slate/20" />
@@ -222,16 +194,14 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        Profile & settings
-                      </Link>
+                         Hồ sơ và cài đặt </Link>
                       <div className="h-px bg-[var(--mist)] dark:bg-slate/20" />
                       <div className="px-1 py-1">
                         <LogoutButton className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-[var(--slate)] transition-colors hover:bg-[var(--mist)] hover:text-[var(--ink)] dark:text-slate-soft dark:hover:bg-white/5 dark:hover:text-white">
                           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
-                          Log out
-                        </LogoutButton>
+                           Đăng xuất </LogoutButton>
                       </div>
                     </div>
                   )}
@@ -246,23 +216,21 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                         : "text-[#0F1720] border-[#0F1720]/20 hover:border-[#0F1720]/40"
                     }`}
                   >
-                    Log in
-                  </Link>
+                     Đăng nhập </Link>
                   <Link
-                    href="/signup"
+                    href="/register"
                     className="text-sm font-bold text-white bg-[var(--navy)] hover:bg-[var(--navy-deep)] transition-colors px-6 py-2.5 rounded-full border-2 border-[var(--navy)]"
                   >
-                    Get started
-                  </Link>
+                     Bắt đầu học </Link>
                 </>
               )}
             </div>
 
             {/* Mobile toggle */}
             <button
-              className="md:hidden p-2 text-[#0F1720]"
+              className="xl:hidden p-2 text-[#0F1720]"
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
+              aria-label="Mở hoặc đóng điều hướng"
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -277,7 +245,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-[var(--white)] pt-24 px-6 md:hidden"
+            className="fixed inset-0 z-40 overflow-y-auto bg-[var(--white)] px-6 pb-8 pt-24 xl:hidden"
           >
             <nav className="flex flex-col gap-4">
               {isLoggedIn ? (
@@ -298,7 +266,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                     </div>
                     <div>
                       <p className="text-base font-bold text-[var(--navy)]">{displayName}</p>
-                      <p className="text-xs text-[var(--slate)]">Signed in</p>
+                      <p className="text-xs text-[var(--slate)]"> Đã đăng nhập </p>
                     </div>
                   </div>
                   <Link
@@ -306,8 +274,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                     onClick={() => setMobileOpen(false)}
                     className="text-lg font-bold text-[var(--navy)] py-3 border-b-2 border-[var(--mist)]"
                   >
-                    Home
-                  </Link>
+                     Trang chủ </Link>
                   {roleLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -315,7 +282,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                       onClick={() => setMobileOpen(false)}
                       className="text-lg font-bold text-[var(--navy)] py-3 border-b-2 border-[var(--mist)]"
                     >
-                      {link.label}
+                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </Link>
                   ))}
                   <Link
@@ -323,24 +290,22 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                     onClick={() => setMobileOpen(false)}
                     className="text-lg font-bold text-[var(--navy)] py-3 border-b-2 border-[var(--mist)]"
                   >
-                    Profile & settings
-                  </Link>
+                     Hồ sơ và cài đặt </Link>
                   <div className="mt-4">
                     <LogoutButton className="w-full text-center text-base font-bold text-[var(--danger)] border-2 border-[var(--danger)]/20 rounded-full py-3">
-                      Log out
-                    </LogoutButton>
+                       Đăng xuất </LogoutButton>
                   </div>
                 </>
               ) : (
                 <>
                   {navLinks.map((link) => (
                     <a
-                      key={link.label}
+                      key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className="text-lg font-bold text-[var(--navy)] py-3 border-b-2 border-[var(--mist)]"
                     >
-                      {link.label}
+                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </a>
                   ))}
                   <div className="mt-4 flex flex-col gap-3">
@@ -348,14 +313,12 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
                       href="/login"
                       className="w-full text-center text-base font-bold text-[var(--navy)] border-2 border-[var(--navy)]/10 rounded-full py-3"
                     >
-                      Log in
-                    </Link>
+                       Đăng nhập </Link>
                     <Link
-                      href="/signup"
+                      href="/register"
                       className="w-full text-center text-base font-bold text-white bg-[var(--navy)] rounded-full py-3"
                     >
-                      Get started
-                    </Link>
+                       Bắt đầu học </Link>
                   </div>
                 </>
               )}

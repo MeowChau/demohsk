@@ -3,5 +3,5 @@
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return <ErrorState error={error} reset={reset} label="Couldn't load this page" />;
+  return <ErrorState error={error} reset={reset} label="Chưa tải được trang này" />;
 }

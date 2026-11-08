@@ -90,7 +90,7 @@ function MysteryChest() {
         },
         colors: [
           "#3FC7EB",
-          "#78FFF9",
+          "#0EA599",
           "#F5A524",
           "#FFD700",
         ],
@@ -101,10 +101,10 @@ function MysteryChest() {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className={`rounded-2xl border-3 p-6 shadow-hard transition-all cursor-pointer ${
+      className={`rounded-2xl border p-6 shadow-hard transition-all cursor-pointer ${
         opened
           ? "bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400"
-          : "bg-white border-ink"
+          : "bg-surface border-mist"
       }`}
       onClick={handleOpen}
     >
@@ -124,14 +124,14 @@ function MysteryChest() {
         </motion.div>
 
         <div className="flex-1">
-          <p className="text-sm font-black text-ink uppercase tracking-wider mb-1">
-            {opened ? "Chest Opened!" : "Mystery Chest"}
+          <p className="text-sm font-semibold text-ink uppercase tracking-wider mb-1">
+            {opened ? "Đã mở rương!" : "Rương quà"}
           </p>
 
           <p className="text-xs font-bold text-slate">
             {opened
               ? `You unlocked a +${gems} bonus! 🎉`
-              : "Tap to open your daily reward"}
+              : "Chạm để xem phần thưởng trong ngày"}
           </p>
         </div>
 
@@ -143,7 +143,7 @@ function MysteryChest() {
               type: "spring",
               stiffness: 300,
             }}
-            className="flex items-center gap-1 text-gems font-black text-lg"
+            className="flex items-center gap-1 text-gems font-semibold text-lg"
           >
             <Gift className="h-5 w-5" />
             +{gems}
@@ -165,18 +165,16 @@ function StreakHeatmap({
   );
 
   return (
-    <div className="rounded-2xl border-3 border-ink bg-white p-5 shadow-hard">
+    <div className="rounded-2xl border border-mist bg-surface p-5 shadow-hard">
       <div className="flex items-center gap-3 mb-3">
         <AnimatedFlame size={28} />
 
         <div>
-          <p className="text-sm font-black text-ink uppercase tracking-wider">
-            Streak Heatmap
-          </p>
+          <p className="text-sm font-semibold text-ink uppercase tracking-wider">
+             Lịch học tập </p>
 
           <p className="text-xs font-bold text-slate">
-            {streak} days strong 🔥
-          </p>
+            {streak}  ngày học liên tục 🔥 </p>
         </div>
       </div>
 
@@ -221,7 +219,7 @@ function LevelUpModal({
         "#F5A524",
         "#FFD700",
         "#FF6B4A",
-        "#78FFF9",
+        "#0EA599",
       ],
     });
 
@@ -259,28 +257,26 @@ function LevelUpModal({
         >
           <LevelBadge
             level={level}
-            title="LEVEL UP!"
+            title="LÊN CẤP!"
             size="lg"
           />
         </motion.div>
 
-        <h2 className="text-5xl font-black text-white mt-6 tracking-tighter">
-          LEVEL UP!
-        </h2>
+        <h2 className="text-3xl font-semibold text-white mt-6 tracking-tighter">
+           LÊN CẤP! </h2>
 
         <p className="text-xl text-white/80 font-bold mt-2">
-          You reached Level {level}
+           Bạn đã đạt cấp {level}
         </p>
 
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-4 flex items-center justify-center gap-2 text-gems font-black text-2xl"
+          className="mt-4 flex items-center justify-center gap-2 text-gems font-semibold text-2xl"
         >
           <Gift className="h-6 w-6" />
-          +100 Bonus
-        </motion.div>
+           +100 thưởng </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -319,7 +315,7 @@ export default function RewardsClient({
           "#F5A524",
           "#FFD700",
           "#0EA599",
-          "#78FFF9",
+          "#0EA599",
         ],
       });
     }
@@ -416,14 +412,12 @@ export default function RewardsClient({
         </motion.div>
 
         <div className="flex-1">
-          <h1 className="font-display text-3xl md:text-4xl font-black text-navy dark:text-white tracking-tighter">
-            Rewards Arcade 🎮
-          </h1>
+          <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink dark:text-white tracking-tighter">
+             Thành tích học tập 🎮 </h1>
 
           <p className="text-sm font-bold text-slate mt-1">
             {stats.levelInfo.title} ·{" "}
-            {stats.xpTotal.toLocaleString()} XP total
-          </p>
+            {stats.xpTotal.toLocaleString()}  Tổng EXP </p>
         </div>
       </motion.div>
 
@@ -443,19 +437,19 @@ export default function RewardsClient({
           y: 0,
         }}
         transition={{ delay: 0.2 }}
-        className="rounded-2xl border-3 border-ink bg-white p-6 shadow-hard"
+        className="rounded-2xl border border-mist bg-surface p-6 shadow-hard"
       >
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-black text-slate uppercase tracking-wider">
-            Level {stats.levelInfo.level}
+          <span className="text-sm font-semibold text-slate uppercase tracking-wider">
+             Cấp {stats.levelInfo.level}
           </span>
 
-          <span className="text-sm font-black text-slate uppercase tracking-wider">
-            Level {stats.levelInfo.level + 1}
+          <span className="text-sm font-semibold text-slate uppercase tracking-wider">
+             Cấp {stats.levelInfo.level + 1}
           </span>
         </div>
 
-        <div className="h-6 bg-mist rounded-full overflow-hidden border-2 border-ink relative">
+        <div className="h-6 bg-mist rounded-full overflow-hidden border border-mist relative">
           <motion.div
             className="h-full bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 rounded-full relative"
             initial={{ width: 0 }}
@@ -472,10 +466,8 @@ export default function RewardsClient({
           </motion.div>
 
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-black text-ink drop-shadow-sm">
-              {progressToNextLevel.toLocaleString()} XP
-              {" "}to next level
-            </span>
+            <span className="text-xs font-semibold text-ink drop-shadow-sm">
+              {progressToNextLevel.toLocaleString()}  EXP {" "} để lên cấp tiếp theo </span>
           </div>
         </div>
       </motion.div>
@@ -500,7 +492,7 @@ export default function RewardsClient({
             y: -5,
             scale: 1.02,
           }}
-          className="rounded-2xl border-3 border-ink bg-white p-6 shadow-hard"
+          className="rounded-2xl border border-mist bg-surface p-6 shadow-hard"
         >
           <div className="flex items-center gap-4">
             <div className="animate-gem-sparkle">
@@ -508,11 +500,10 @@ export default function RewardsClient({
             </div>
 
             <div>
-              <p className="text-xs font-black text-slate uppercase tracking-wider">
-                Total XP
-              </p>
+              <p className="text-xs font-semibold text-slate uppercase tracking-wider">
+                 Tổng EXP </p>
 
-              <motion.p className="font-display text-4xl font-black text-green-600">
+              <motion.p className="font-display text-4xl font-semibold text-green-600">
                 {stats.xpTotal.toLocaleString()}
               </motion.p>
             </div>
@@ -533,21 +524,19 @@ export default function RewardsClient({
             delay: 0.4,
             type: "spring",
           }}
-          className="rounded-2xl border-3 border-orange-300 bg-gradient-to-br from-orange-50 to-red-50 p-6 shadow-hard"
+          className="rounded-2xl border border-orange-300 bg-gradient-to-br from-orange-50 to-red-50 p-6 shadow-hard"
         >
           <div className="flex items-center gap-4">
             <AnimatedFlame size={48} />
 
             <div>
-              <p className="text-xs font-black text-orange-600 uppercase tracking-wider">
-                Current Streak
-              </p>
+              <p className="text-xs font-semibold text-orange-600 uppercase tracking-wider">
+                 Chuỗi ngày học </p>
 
-              <p className="font-display text-4xl font-black text-orange-600">
+              <p className="font-display text-4xl font-semibold text-orange-600">
                 {currentStreak}{" "}
                 <span className="text-base font-normal text-orange-400">
-                  days
-                </span>
+                   ngày </span>
               </p>
             </div>
           </div>
@@ -557,11 +546,11 @@ export default function RewardsClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="text-xs text-orange-500 mt-2 font-black"
+              className="text-xs text-orange-500 mt-2 font-semibold"
             >
               {currentStreak >= 7
-                ? "🔥 You're on fire! Keep the streak alive!"
-                : "🔥 Keep it going! Don't break the chain!"}
+                ? "🔥 Bạn đang học rất đều. Tiếp tục nhé!"
+                : "🔥 Tiếp tục duy trì thói quen học nhé!"}
             </motion.p>
           )}
         </motion.div>
@@ -585,7 +574,7 @@ export default function RewardsClient({
             delay: 0.5,
             type: "spring",
           }}
-          className="rounded-2xl border-3 border-ink bg-white p-6 shadow-hard"
+          className="rounded-2xl border border-mist bg-surface p-6 shadow-hard"
         >
           <div className="flex items-center gap-4">
             <div className="text-teal animate-pulse-glow">
@@ -593,15 +582,13 @@ export default function RewardsClient({
             </div>
 
             <div>
-              <p className="text-xs font-black text-slate uppercase tracking-wider">
-                Longest Streak
-              </p>
+              <p className="text-xs font-semibold text-slate uppercase tracking-wider">
+                 Chuỗi ngày dài nhất </p>
 
-              <p className="font-display text-4xl font-black text-navy dark:text-white">
+              <p className="font-display text-4xl font-semibold text-ink dark:text-white">
                 {longestStreak}{" "}
                 <span className="text-base font-normal text-slate">
-                  days
-                </span>
+                   ngày </span>
               </p>
             </div>
           </div>
@@ -615,11 +602,9 @@ export default function RewardsClient({
 
       {/* Achievements */}
       <section>
-        <h2 className="mb-4 font-display text-2xl font-black text-ink flex items-center gap-2 tracking-tighter">
+        <h2 className="mb-4 font-display text-2xl font-semibold text-ink flex items-center gap-2 tracking-tighter">
           <Trophy className="h-6 w-6 text-xp" />
-          Achievements
-
-          <span className="text-sm font-normal text-slate">
+           Huy hiệu <span className="text-sm font-normal text-slate">
             ({stats.achievements.length}/
             {allAchievementCodes.length})
           </span>
@@ -632,8 +617,8 @@ export default function RewardsClient({
                 🏅
               </span>
             }
-            title="No badges yet"
-            body="Keep practicing to unlock your first one!"
+            title="Chưa có huy hiệu"
+            body="Huy hiệu sẽ xuất hiện khi hệ thống ghi nhận thành tích."
           />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
@@ -656,15 +641,14 @@ export default function RewardsClient({
 
       {/* Recent Activity */}
       <section>
-        <h2 className="mb-4 font-display text-2xl font-black text-ink tracking-tighter">
-          Recent Activity
-        </h2>
+        <h2 className="mb-4 font-display text-2xl font-semibold text-ink tracking-tighter">
+           Hoạt động gần đây </h2>
 
         {stats.recentXp.length === 0 ? (
           <EmptyState
             icon={<TrendingUp size={28} />}
-            title="No XP earned yet"
-            body="Complete a practice test or create flashcards to start earning!"
+            title="Chưa có lịch sử EXP"
+            body="Các hoạt động được ghi nhận sẽ xuất hiện khi hệ thống cung cấp dữ liệu."
           />
         ) : (
           <div className="flex flex-col gap-2">
@@ -685,14 +669,14 @@ export default function RewardsClient({
                     type: "spring",
                     stiffness: 200,
                   }}
-                  className="flex items-center justify-between rounded-xl border-2 border-ink bg-white px-5 py-3 shadow-hard"
+                  className="flex items-center justify-between rounded-xl border border-mist bg-surface px-5 py-3 shadow-hard"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border-2 border-green-200">
+                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border border-green-200">
                       <XpGem size={16} />
                     </div>
 
-                    <span className="text-sm font-black text-ink">
+                    <span className="text-sm font-semibold text-ink">
                       {humanize(
                         entry.reason
                       )}
@@ -703,12 +687,11 @@ export default function RewardsClient({
                     whileHover={{
                       scale: 1.1,
                     }}
-                    className="font-black text-green-600 bg-green-50 border-2 border-green-200 px-3 py-1 rounded-full text-xs"
+                    className="font-semibold text-green-600 bg-green-50 border border-green-200 px-3 py-1 rounded-full text-xs"
                   >
                     +
                     {entry.amount.toLocaleString()}{" "}
-                    XP
-                  </motion.span>
+                     EXP </motion.span>
                 </motion.div>
               )
             )}

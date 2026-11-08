@@ -22,7 +22,7 @@ export async function toggleSaveWordAction(
   if (currentlySaved) return { success: true };
   const vocabularyId = Number(wordid);
   if (!Number.isSafeInteger(vocabularyId) || vocabularyId < 1)
-    return { error: "Invalid word." };
+    return { error: "Từ vựng không hợp lệ." };
   try {
     await serverApi("analytics/vocabulary-progress", {
       method: "POST",

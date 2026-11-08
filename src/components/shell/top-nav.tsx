@@ -4,53 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { STUDENT_NAV, isActiveRoute } from "@/lib/navigation";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { LogoutButton } from "@/components/shell/logout-button";
+import { FeatureMenu } from "./feature-menu";
 
 export type NavRole = "student" | "teacher" | "admin";
-
-interface NavItem {
-  label: string;
-  href: string;
-}
-
-const STUDENT_NAV: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "AI Tutor", href: "/tutor" },
-  { label: "Learning", href: "/learning" },
-  { label: "Practice", href: "/practice" },
-  { label: "Live Classes", href: "/live-classes" }, 
-  { label: "Rewards", href: "/rewards" },
-  { label: "Announcements", href: "/announcements" },
-  { label: "Support", href: "/support" },
-];
-
-const TEACHER_NAV: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Courses", href: "/teacher/courses" },
-  { label: "Students", href: "/teacher/students" },
-  { label: "Live Classes", href: "/teacher/live-classes" },
-  { label: "Announcements", href: "/announcements" },
-];
-
-const ADMIN_NAV: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Users", href: "/admin/users" },
-  { label: "Courses", href: "/admin/courses" },
-  { label: "Content", href: "/admin/content" },
-  { label: "Practice Tests", href: "/admin/practice-tests" },
-  { label: "Live Classes", href: "/admin/live-classes" }, 
-  { label: "Announcements", href: "/admin/announcements" },
-  { label: "Support", href: "/admin/support" },
-  { label: "Logs", href: "/admin/logs" },
-];
-
-const NAV_BY_ROLE: Record<NavRole, NavItem[]> = {
-  student: STUDENT_NAV,
-  teacher: TEACHER_NAV,
-  admin: ADMIN_NAV,
-};
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false);
@@ -87,7 +46,7 @@ export function TopNav({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
-  const items = NAV_BY_ROLE[role];
+  const items = STUDENT_NAV;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -113,36 +72,37 @@ export function TopNav({
           <div className="flex items-center gap-2.5">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
-                src="/logo.png"
-                alt="IELTS Beta"
+                src="/favicon.ico" unoptimized
+                alt="TriceHSK"
                 width={60}
                 height={30}
-                className="h-[60px] w-auto object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
+                className="h-10 w-10 object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
               />
-              <span className="text-xl font-extrabold tracking-tight text-navy">
-                IELTS Beta
+              <span className="text-xl font-extrabold tracking-tight text-navy dark:text-white">
+                TriceHSK
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex md:items-center md:gap-1">
-            {items.map((item) => {
-              const isActive = pathname === item.href;
+          <nav className="hidden xl:flex xl:items-center xl:gap-1">
+            {items.slice(0, 6).map((item) => {
+              const isActive = isActiveRoute(pathname, item.href);
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
-                  className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  href={item.href} aria-current={isActive ? "page" : undefined}
+                  className={`relative inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-paper text-ink shadow-sm ring-1 ring-mist dark:bg-white/[0.06] dark:text-white dark:ring-white/10"
                       : "text-slate hover:bg-mist/60 hover:text-ink dark:text-slate-soft dark:hover:bg-white/5 dark:hover:text-white"
                   }`}
                 >
-                  {item.label}
+                  <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />{item.label}
                 </Link>
               );
             })}
+            <FeatureMenu />
           </nav>
 
           {/* Right Utilities */}
@@ -154,7 +114,7 @@ export function TopNav({
             {/* User Dropdown */}
             <div className="relative" ref={userRef}>
               <button
-                onClick={() => setUserOpen(!userOpen)}
+                onClick={() => setUserOpen(!userOpen)} aria-label="Mở menu tài khoản" aria-expanded={userOpen}
                 className={`flex items-center gap-2 rounded-full p-1 pr-3 transition-colors ${
                   userOpen
                     ? "bg-mist dark:bg-white/10"
@@ -215,8 +175,7 @@ export function TopNav({
                         {displayName}
                       </p>
                       <p className="text-xs text-slate dark:text-slate-soft truncate">
-                        Signed in
-                      </p>
+                         Đã đăng nhập </p>
                     </div>
                   </div>
                   <div className="h-px bg-mist dark:bg-slate/20" />
@@ -237,8 +196,7 @@ export function TopNav({
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
-                    Profile & settings
-                  </Link>
+                     Hồ sơ và cài đặt </Link>
                   <div className="h-px bg-mist dark:bg-slate/20" />
                   <div className="px-1 py-1">
                     <div className="px-1 py-1">
@@ -256,8 +214,7 @@ export function TopNav({
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                           />
                         </svg>
-                        Log out
-                      </LogoutButton>
+                         Đăng xuất </LogoutButton>
                     </div>
                   </div>
                 </div>
@@ -266,8 +223,8 @@ export function TopNav({
 
             {/* Mobile Menu Toggle */}
             <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate transition-colors hover:bg-mist dark:text-slate-soft dark:hover:bg-white/5 md:hidden"
+              onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Đóng điều hướng" : "Mở điều hướng"} aria-expanded={mobileOpen}
+              className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate transition-colors hover:bg-mist dark:text-slate-soft dark:hover:bg-white/5 xl:hidden"
             >
               {mobileOpen ? (
                 <svg
@@ -305,22 +262,22 @@ export function TopNav({
 
       {/* Mobile Navigation Sheet */}
       {mobileOpen && (
-        <div className="fixed inset-x-0 top-16 z-40 border-b border-mist bg-surface/98 p-4 shadow-lg backdrop-blur-xl dark:border-slate/20 dark:bg-navy-deep/98 md:hidden">
+        <div className="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-mist bg-surface p-4 shadow-lg dark:border-slate/20 xl:hidden">
           <nav className="flex flex-col gap-1">
             {items.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isActiveRoute(pathname, item.href);
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href} aria-current={isActive ? "page" : undefined}
                   onClick={() => setMobileOpen(false)}
-                  className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
                       ? "bg-paper text-ink shadow-sm ring-1 ring-mist dark:bg-white/[0.06] dark:text-white dark:ring-white/10"
                       : "text-slate hover:bg-mist/60 hover:text-ink dark:text-slate-soft dark:hover:bg-white/5 dark:hover:text-white"
                   }`}
                 >
-                  {item.label}
+                  <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />{item.label}
                 </Link>
               );
             })}

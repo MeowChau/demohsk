@@ -2,8 +2,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { ACCESS_COOKIE, backendUrl, apiRole } from "./config";
-import { ApiError, errorMessage } from "./client";
+import { ACCESS_COOKIE, backendEndpoint, apiRole } from "./config";
+import { ApiError, backendFieldErrors, errorMessage } from "./client";
 import type { HskUser } from "./types";
 
 export async function serverApi<T>(
@@ -17,7 +17,7 @@ export async function serverApi<T>(
     headers.set("Content-Type", "application/json");
   let response: Response;
   try {
-    response = await fetch(`${backendUrl()}/${path.replace(/^\/+/, "")}`, {
+    response = await fetch(backendEndpoint(path), {
       ...init,
       headers,
       cache: "no-store",
@@ -32,7 +32,7 @@ export async function serverApi<T>(
   const data: unknown =
     response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok)
-    throw new ApiError(errorMessage(data, response.status), response.status);
+    throw new ApiError(errorMessage(data, response.status), response.status, backendFieldErrors(data));
   return data as T;
 }
 export const getApiUser = cache(async (): Promise<HskUser | null> => {

@@ -24,7 +24,8 @@ export interface PageData<T> {
   totalPages: number;
 }
 export interface HskTopic {
-  topic: string;
+  id: string;
+  topicKey: string;
   titleCn: string;
   titleVi: string;
   pinyin: string;
@@ -32,6 +33,11 @@ export interface HskTopic {
   totalSets: number;
   totalQuestions: number;
   vocabularyCount: number;
+  icon?: string;
+  listeningCount: number;
+  speakingCount: number;
+  readingCount: number;
+  writingCount: number;
 }
 export interface HskWord {
   id: number;
@@ -47,6 +53,7 @@ export interface HskQuestion {
   skill: string;
   hskLevel: number;
   payload: {
+    templateId?: string;
     text?: string;
     imageUrl?: string;
     contextImageUrl?: string;
@@ -56,6 +63,8 @@ export interface HskQuestion {
     optionImages?: string[];
     pinyin?: string;
     manualGrading?: boolean;
+    translation?: string;
+    audioTimestamp?: number;
   };
 }
 export interface HskPractice {
@@ -91,6 +100,9 @@ export interface HskExam {
   }[];
 }
 export interface HskAnalytics {
+  timeZone: string;
+  studyDate: string;
+  checkedInToday: boolean;
   timeTodaySeconds: number;
   time7DaysSeconds: number;
   timeTotalSeconds: number;
@@ -98,10 +110,48 @@ export interface HskAnalytics {
   chart7Dates: string[];
   longestStreak: number;
   totalDaysStudied: number;
+  weekDaysStudied: number;
+  weekAverageSeconds: number;
+  weekLongestStreak: number;
+  activityTimes: { review: number; practice: number; exam: number; pk: number };
   vocabularyStats: {
     learnedCount: number;
     masteredCount: number;
     learningCount: number;
     reviewCount: number;
   };
+}
+
+export interface LeaderboardRow {
+  id: number;
+  fullName: string;
+  studentCode: number | null;
+  level: number;
+  currentExp: number;
+  currentHskLevel: number | null;
+  targetHskLevel: number | null;
+  photo: { id?: string; path: string } | null;
+  currentStreak: number;
+  longestStreak: number;
+  totalDays: number;
+  totalHours: number;
+  totalExp?: number;
+  rank?: number;
+}
+export interface LeaderboardData {
+  leaderboard: LeaderboardRow[];
+  myRank?: number | null;
+  myTotalExp?: number | null;
+  summary: { totalStudents: number; totalStudyHours: number; activeStreaksCount: number; allTimeRecord: number };
+}
+export interface OfflineScore { id: number; score: number; playedAt: string }
+export interface PkHistory {
+  id: string; matchIndex: number; hskLevel: number; opponentName: string;
+  score: number; correctCount: number; totalQuestions: number; isWin: boolean;
+  isDraw: boolean; xpEarned: number; reason: string; completedAt: string | null;
+}
+export interface WritingAssessment { score: number; grammarErrors: { error: string; correction: string }[]; feedback: string }
+export interface PronunciationAssessment {
+  score: number; accuracyScore: number; fluencyScore: number; completenessScore: number;
+  recognizedText: string; feedback: string; words: { word: string; accuracyScore: number | null; errorType: string }[];
 }

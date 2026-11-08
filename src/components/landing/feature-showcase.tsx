@@ -54,9 +54,9 @@ function AutoGradedDemo() {
   }, [scanning])
 
   const sections = [
-    "Section 1: Conversation",
-    "Section 2: Monologue",
-    "Section 3: Discussion",
+    "AI 小语，你好！",
+    "我叫李文",
+    "我是中国人",
   ]
 
   return (
@@ -70,8 +70,7 @@ function AutoGradedDemo() {
         <div className="h-2 w-2 rounded-full bg-green-400" />
 
         <div className="text-[10px] text-slate font-medium ml-2">
-          Practice Test — Listening
-        </div>
+           Minh họa bài luyện nghe HSK </div>
       </div>
 
       <div className="space-y-2">
@@ -121,7 +120,7 @@ function AutoGradedDemo() {
         animate={score > 0 ? { scale: 1 } : {}}
         transition={{ type: "spring", stiffness: 300 }}
       >
-        Score: {score}/3
+         Đã xem: {score}/3
       </motion.div>
     </div>
   )
@@ -136,25 +135,25 @@ function SkillModulesDemo() {
     {
       icon: Headphones,
       color: "bg-teal",
-      label: "Listening",
+      label: "Nghe hiểu",
       pct: 78,
     },
     {
       icon: BookOpen,
       color: "bg-navy",
-      label: "Reading",
+      label: "Đọc hiểu",
       pct: 65,
     },
     {
       icon: PenLine,
       color: "bg-xp",
-      label: "Writing",
+      label: "Viết tiếng Trung",
       pct: 52,
     },
     {
       icon: Mic,
       color: "bg-violet",
-      label: "Speaking",
+      label: "Luyện nói",
       pct: 45,
     },
   ]
@@ -309,12 +308,10 @@ function VocabDemo() {
             }}
           >
             <div className="text-xs font-black text-ink">
-              Aberration
-            </div>
+               学习 </div>
 
             <div className="text-[8px] text-slate mt-0.5">
-              noun
-            </div>
+               xuéxí · động từ </div>
           </div>
         </motion.div>
       </motion.div>
@@ -325,8 +322,7 @@ function VocabDemo() {
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ delay: 1 }}
       >
-        Click to flip ↻
-      </motion.div>
+         Bấm để lật thẻ ↻ </motion.div>
     </div>
   )
 }
@@ -339,7 +335,7 @@ function AiTutorDemo() {
   const [text, setText] = useState("")
 
   const fullText =
-    "Your Writing Task 2 response has been reviewed. I can help you understand the band score, identify weaknesses, and improve your answer."
+    "学习 (xuéxí) nghĩa là học tập. Ví dụ: 我每天学习中文。Wǒ měitiān xuéxí Zhōngwén. Tôi học tiếng Trung mỗi ngày."
 
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, {
@@ -375,14 +371,12 @@ function AiTutorDemo() {
         </div>
 
         <span className="text-[10px] font-black text-ink">
-          AI Tutor
-        </span>
+           Góc học tiếng Trung </span>
       </div>
 
       <div className="flex-1 space-y-2">
         <div className="bg-mist rounded-lg p-2 text-[9px] text-ink font-medium self-start max-w-[80%]">
-          Can you grade my Writing Task 2?
-        </div>
+           学习 có nghĩa là gì? </div>
 
         <motion.div
           className="bg-teal/10 rounded-lg p-2 text-[9px] text-ink font-medium self-end max-w-[90%] border border-teal/20"
@@ -409,9 +403,9 @@ function AiTutorDemo() {
 
       <div className="mt-2 flex gap-1">
         {[
-          "Grade Writing",
-          "Task 1",
-          "Task 2",
+          "Ví dụ cách dùng",
+          "Chữ Hán",
+          "Pinyin",
         ].map((button) => (
           <div
             key={button}
@@ -426,10 +420,10 @@ function AiTutorDemo() {
 }
 
 // -----------------------------------------------------------------------------
-// 5. Cambridge resources demo
+// 5. HSK resources preview
 // -----------------------------------------------------------------------------
 
-function CambridgeDemo() {
+function HskResourcesDemo() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, {
     once: true,
@@ -440,35 +434,35 @@ function CambridgeDemo() {
     {
       height: "h-16",
       color: "bg-navy",
-      label: "Tests",
+      label: "Bài luyện",
     },
     {
       height: "h-20",
       color: "bg-teal",
-      label: "AWL",
+      label: "汉字",
     },
     {
       height: "h-14",
       color: "bg-violet",
-      label: "Rubric",
+      label: "Pinyin",
     },
     {
       height: "h-18",
       color: "bg-xp",
-      label: "Models",
+      label: "Nghĩa Việt",
     },
   ]
 
   return (
     <div
       ref={ref}
-      className="w-full aspect-[4/3] bg-white rounded-xl border-3 border-ink overflow-hidden shadow-hard p-4 flex items-center justify-center"
+      className="w-full aspect-[4/3] bg-surface rounded-xl border border-mist overflow-hidden shadow-hard p-4 flex items-center justify-center"
     >
       <div className="flex gap-2 items-end">
         {resources.map((resource, i) => (
           <motion.div
             key={resource.label}
-            className={`w-10 ${resource.height} ${resource.color} rounded border-2 border-ink shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-end pb-1 relative`}
+            className={`w-10 ${resource.height} ${resource.color} rounded border border-mist shadow-card flex flex-col items-center justify-end pb-1 relative`}
             initial={{
               opacity: 0,
               y: 30,
@@ -491,7 +485,7 @@ function CambridgeDemo() {
               scale: 1.05,
             }}
           >
-            <span className="text-[7px] font-black text-white/90 writing-mode-vertical">
+            <span className="text-[7px] font-semibold text-white/90 writing-mode-vertical">
               {resource.label}
             </span>
 
@@ -554,12 +548,12 @@ function GamifiedDemo() {
 
   const progress = [
     {
-      label: "Listening",
+      label: "Nghe hiểu",
       color: "bg-teal",
       pct: 78,
     },
     {
-      label: "Reading",
+      label: "Đọc hiểu",
       color: "bg-navy",
       pct: 65,
     },
@@ -577,8 +571,7 @@ function GamifiedDemo() {
           </div>
 
           <span className="text-sm font-black text-ink">
-            {xpCount.toLocaleString()} XP
-          </span>
+            {xpCount.toLocaleString()}  EXP </span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -587,8 +580,7 @@ function GamifiedDemo() {
           </div>
 
           <span className="text-xs font-bold text-flame">
-            12 days
-          </span>
+             12 ngày </span>
         </div>
       </div>
 
@@ -629,8 +621,7 @@ function GamifiedDemo() {
         transition={{ delay: 1.2 }}
       >
         <TrendingUp className="h-3 w-3" />
-        Track your IELTS progress over time
-      </motion.div>
+         Minh họa mục tiêu học tiếng Trung </motion.div>
     </div>
   )
 }
@@ -641,9 +632,9 @@ function GamifiedDemo() {
 
 const features = [
   {
-    tag: "Auto-graded",
-    title: "Practice tests that grade themselves",
-    desc: "Listening and Reading scored the moment you submit. Writing and Speaking can be reviewed through teacher-led feedback. Know exactly where you stand.",
+    tag: "Tự luyện",
+    title: "Luyện tập theo từng chủ đề HSK",
+    desc: "Chọn bài luyện đã xuất bản theo kỹ năng. Đọc câu hỏi, nghe âm thanh và thực hành với nội dung tiếng Trung từ hệ thống.",
     bg: "bg-navy",
     text: "text-white",
     tagBg: "bg-teal/20",
@@ -653,9 +644,9 @@ const features = [
     demo: AutoGradedDemo,
   },
   {
-    tag: "All 4 skills",
-    title: "Skill modules built for real progress",
-    desc: "Targeted exercises for Listening, Reading, Writing, and Speaking, organized around the four core IELTS skills.",
+    tag: "Bốn kỹ năng",
+    title: "Nghe, nói, đọc, viết tiếng Trung",
+    desc: "Chọn kỹ năng bạn muốn rèn luyện và thực hành theo cấp độ HSK. Học từng bước, theo nhịp độ của bạn.",
     bg: "bg-white",
     text: "text-ink",
     tagBg: "bg-teal/10",
@@ -665,9 +656,9 @@ const features = [
     demo: SkillModulesDemo,
   },
   {
-    tag: "Vocabulary",
-    title: "Master academic vocabulary with flashcards",
-    desc: "Interactive flashcards with difficulty levels and custom word creation help you build the vocabulary you need for stronger IELTS answers.",
+    tag: "Từ vựng",
+    title: "Ghi nhớ chữ Hán cùng pinyin",
+    desc: "Lật thẻ để xem chữ Hán, cách đọc pinyin và nghĩa từ. Đánh dấu từ đã học để ghi nhận hoạt động học tập.",
     bg: "bg-white",
     text: "text-ink",
     tagBg: "bg-teal/10",
@@ -677,9 +668,9 @@ const features = [
     demo: VocabDemo,
   },
   {
-    tag: "AI Powered",
-    title: "24/7 AI tutor for instant feedback",
-    desc: "Ask questions, get IELTS explanations, and submit Writing Task 1 or Task 2 responses for AI-powered grading and feedback.",
+    tag: "Học qua ví dụ",
+    title: "Kết nối chữ Hán với cách sử dụng",
+    desc: "Học một từ không chỉ qua mặt chữ: đọc pinyin, hiểu nghĩa từ và luyện dùng trong ngữ cảnh. Khung bên cạnh là ví dụ minh họa.",
     bg: "bg-navy",
     text: "text-white",
     tagBg: "bg-teal/20",
@@ -689,21 +680,21 @@ const features = [
     demo: AiTutorDemo,
   },
   {
-    tag: "Official",
-    title: "Cambridge resources, curated",
-    desc: "Official practice tests, band descriptors, academic word lists, and model answers — all organized and downloadable in one place.",
+    tag: "Kho nội dung HSK",
+    title: "Từ vựng và bài luyện theo cấp độ",
+    desc: "Nội dung được quản lý trên hệ thống HSK hiện có. Khám phá các chủ đề và chọn bài luyện phù hợp với mục tiêu của bạn.",
     bg: "bg-navy",
     text: "text-white",
     tagBg: "bg-teal/20",
     tagText: "text-cyan",
     tagBorder: "border-teal/30",
     checkColor: "text-cyan",
-    demo: CambridgeDemo,
+    demo: HskResourcesDemo,
   },
   {
-    tag: "Gamified",
-    title: "Progress you can actually see",
-    desc: "XP for learning activity, streaks that remember you showed up, and progress tracking that shows your IELTS preparation journey over time.",
+    tag: "Theo dõi học tập",
+    title: "Mục tiêu rõ ràng, học đều mỗi ngày",
+    desc: "Xem cấp độ, EXP và chuỗi ngày học từ tài khoản. Đặt cấp độ HSK hiện tại và mục tiêu để định hướng việc học.",
     bg: "bg-cyan-light",
     text: "text-ink",
     tagBg: "bg-teal/10",
@@ -715,9 +706,9 @@ const features = [
 ]
 
 const checkItems = [
-  "Instant scoring",
-  "Teacher feedback",
-  "Progress tracking",
+  "Bài luyện HSK",
+  "Từ vựng tiếng Trung",
+  "Mục tiêu cá nhân",
 ]
 
 // -----------------------------------------------------------------------------
@@ -770,7 +761,7 @@ export function FeatureShowcase() {
                     </div>
 
                     <h3
-                      className={`text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter ${feature.text} mb-4 leading-tight`}
+                      className={`text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter ${feature.text} mb-4 leading-[1.2]`}
                     >
                       {feature.title}
                     </h3>

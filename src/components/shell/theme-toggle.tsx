@@ -15,7 +15,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
       className="relative flex h-9 w-16 items-center rounded-pill border border-mist bg-mist/60 px-1 transition-colors"
     >
       <span

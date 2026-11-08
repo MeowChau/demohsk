@@ -15,11 +15,9 @@ export function ProfileTabs({
     <div>
       <div className="mb-6 flex gap-1 rounded-pill bg-mist p-1 w-fit">
         <TabButton active={tab === "info"} onClick={() => setTab("info")}>
-          Personal info
-        </TabButton>
+           Thông tin cá nhân </TabButton>
         <TabButton active={tab === "settings"} onClick={() => setTab("settings")}>
-          Settings
-        </TabButton>
+           Cài đặt </TabButton>
       </div>
       {tab === "info" ? personalInfo : settings}
     </div>
@@ -40,7 +38,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={`rounded-pill px-4 py-1.5 text-sm font-semibold transition-colors ${
-        active ? "bg-surface text-navy shadow-card" : "text-slate hover:text-navy"
+        active ? "bg-surface text-ink shadow-card" : "text-slate hover:text-ink"
       }`}
     >
       {children}
