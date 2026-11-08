@@ -20,7 +20,7 @@ it("opens the writing lesson list before the handwriting exercise", async () => 
   expect(getPracticeSets).toHaveBeenCalledWith(expect.objectContaining({ skill: "WRITING", hskLevel: "3", topic: "HSK3-26" }));
   expect(getWords).not.toHaveBeenCalled();
   expect(html).toContain("Ôn từ vựng 26");
-  expect(html).toContain('/practice/attempt/set-250?testid=set-250');
+  expect(html).toContain('/practice/sets/250/attempt');
   expect(html).toContain("Mở bài luyện");
   expect(html).not.toContain("Ô luyện viết chữ");
 });

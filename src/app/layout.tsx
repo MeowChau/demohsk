@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/shell/theme-provider";
+import { NavigationProtectionProvider } from "@/components/shell/navigation-protection";
 import "./globals.css";
 
 const body = Inter({
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="vi" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased">
         <ThemeProvider>
+          <NavigationProtectionProvider>
           {children}
           <Toaster
             position="top-right"
@@ -43,6 +45,7 @@ export default function RootLayout({
               },
             }}
           />
+          </NavigationProtectionProvider>
         </ThemeProvider>
       </body>
     </html>

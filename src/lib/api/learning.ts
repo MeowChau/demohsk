@@ -1,4 +1,5 @@
 import "server-only";
+import { practiceSetAttemptHref } from "@/lib/attempt-routes";
 import { serverApi, requireApiUser } from "./server";
 import { publicMedia } from "./config";
 import type {
@@ -17,6 +18,11 @@ import type { TestWithQuestions } from "@/types/assessment";
 import type { Skill, Question } from "@/types/assessment";
 import { apiRole } from "./config";
 import { writingPractice } from "@/lib/writing-practice";
+const answerValues = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.flatMap(answerValues);
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return [String(value)];
+  return [];
+};
 
 export async function allPages<T>(path: string): Promise<T[]> {
   const separator = path.includes("?") ? "&" : "?";
@@ -63,7 +69,7 @@ export async function learningViews(
         title: set.title,
         content_type: "Notes" as const,
         youtube_link: null,
-        file_url: `/practice/attempt/set-${set.id}?testid=set-${set.id}`,
+        file_url: practiceSetAttemptHref(set.id),
         created_at: "",
       })),
   }));
@@ -201,32 +207,77 @@ export async function testForTaking(
       const skill = (q.skill.slice(0, 1) +
         q.skill.slice(1).toLowerCase()) as Skill;
       const payload = q.payload || {};
+      const speechText = [
+        payload.character,
+        payload.hanzi,
+        payload.source?.sourceWord,
+        payload.sentence,
+        payload.text,
+        payload.questionText,
+      ].find((value): value is string => typeof value === "string" && /\p{Script=Han}/u.test(value));
+      const answerKey = q.correctAnswer || {};
+      const hasTextAnswers = q.skill === "WRITING" || ["FILL_IN_BLANK", "SHORT_ANSWER", "ESSAY"].includes(q.type);
+      const answerValuesForQuestion = hasTextAnswers
+        ? [
+            ...answerValues(answerKey.answer),
+            ...answerValues(answerKey.answers),
+          ]
+        : answerValues(
+            answerKey.optionId ??
+            answerKey.id ??
+            answerKey.correctOptionId ??
+            answerKey.answer ??
+            payload.correctOptionId,
+          );
+      const correctAnswers = [...new Set(answerValuesForQuestion.map(answer => answer.trim()).filter(Boolean))];
       const question: Question = {
         questionid: String(q.id),
         testid: reference,
-        question: payload.text || "Hoàn thành bài tập tiếng Trung.",
+        question: payload.text || (q.skill === "SPEAKING" ? speechText : undefined) || "Hoàn thành bài tập tiếng Trung.",
         passageid,
         skill,
         marks: 1,
         type: q.type,
         templateId: typeof payload.templateId === "string" ? payload.templateId : undefined,
         hskLevel: q.hskLevel,
+        acceptedAnswers: correctAnswers,
+        speechText: q.skill === "SPEAKING" ? speechText : undefined,
+        manualGrading: Boolean(payload.manualGrading || (q.skill === "WRITING" && answerKey.rubric)),
         pinyin: payload.pinyin,
-        translation: payload.translation,
+        translation: payload.translation || payload.meaning,
         image_url: publicMedia(payload.imageUrl),
         context_image_url: publicMedia(payload.contextImageUrl),
         continuation_image_url: publicMedia(payload.continuationImageUrl),
         audio_url: publicMedia(payload.audioUrl || group.audioUrl),
+        sharedAudio: q.skill !== "SPEAKING" && Boolean(
+          payload.audioScope === "source-track" ||
+          (!payload.audioUrl && group.audioUrl) ||
+          (group.audioUrl && publicMedia(payload.audioUrl) === publicMedia(group.audioUrl)),
+        ),
       };
-      if (writingPractice(question)) question.audio_url = null;
-      const texts = Array.isArray(payload.options) ? payload.options : [];
+      if (writingPractice(question)) {
+        question.audio_url = null;
+        question.sharedAudio = false;
+        question.manualGrading = true;
+      }
+      const rawOptions = Array.isArray(payload.options) ? payload.options : [];
       const images = Array.isArray(payload.optionImages) ? payload.optionImages : [];
-      const optionCount = Math.max(texts.length, images.length);
-      const options = Array.from({ length: optionCount }, (_, index) => ({
-        optionid: String.fromCharCode(65 + index),
-        option_text: texts[index] || String.fromCharCode(65 + index),
-        image_url: publicMedia(images[index]),
-      }));
+      const optionCount = Math.max(rawOptions.length, images.length);
+      const options = Array.from({ length: optionCount }, (_, index) => {
+        const raw = rawOptions[index];
+        const option = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
+        const fallbackId = String.fromCharCode(65 + index);
+        return {
+          optionid: String(option?.id ?? option?.optionId ?? option?.label ?? fallbackId),
+          option_text: typeof raw === "string"
+            ? raw
+            : String(option?.text ?? option?.label ?? option?.id ?? fallbackId),
+          image_url: publicMedia(
+            (typeof option?.imageUrl === "string" ? option.imageUrl : undefined) ||
+            (typeof images[index] === "string" ? images[index] as string : undefined),
+          ),
+        };
+      });
       if (q.type === "TRUE_FALSE" && options.length === 0) {
         options.push(
           { optionid: "A", option_text: "对 · Đúng", image_url: null },

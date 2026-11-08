@@ -16,3 +16,18 @@ export const writingAssessmentSchema = z.object({
 export const pronunciationAssessmentSchema = z.object({
   referenceText: z.string({ required_error: "Nhập nội dung cần đọc." }).trim().min(1, "Nhập nội dung cần đọc.").max(5000, "Nội dung cần đọc tối đa 5.000 ký tự."),
 });
+
+const pronunciationScore = z.number().finite().min(0).max(100);
+export const pronunciationResultSchema = z.object({
+  score: pronunciationScore,
+  accuracyScore: pronunciationScore,
+  fluencyScore: pronunciationScore,
+  completenessScore: pronunciationScore,
+  recognizedText: z.string(),
+  feedback: z.string(),
+  words: z.array(z.object({
+    word: z.string(),
+    accuracyScore: pronunciationScore.nullable(),
+    errorType: z.string(),
+  })),
+});

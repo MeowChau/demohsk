@@ -2,6 +2,13 @@ import type { Question } from "@/types/assessment";
 import { hanziCharacters } from "./hanzi-data";
 
 export type HandwritingProgress = { text: string; completedPositions: number[]; totalCharacters: number };
+export type HandwritingStrokeProgress = { correctStrokes: number; totalStrokes: number; mistakes: number };
+
+export function sameHandwritingStrokes(previous: HandwritingStrokeProgress | null | undefined, next: HandwritingStrokeProgress): boolean {
+  return previous?.correctStrokes === next.correctStrokes
+    && previous?.totalStrokes === next.totalStrokes
+    && previous?.mistakes === next.mistakes;
+}
 
 function targetCharacters(value: string): string | null {
   const text = value.trim();

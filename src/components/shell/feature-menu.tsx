@@ -9,6 +9,7 @@ export function FeatureMenu() {
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+  useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
     const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } };

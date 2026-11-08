@@ -30,12 +30,16 @@ export interface Question {
   type?: string;
   templateId?: string;
   hskLevel?: number;
+  acceptedAnswers?: string[];
+  speechText?: string;
+  manualGrading?: boolean;
   pinyin?: string;
   translation?: string;
   image_url?: string | null;
   context_image_url?: string | null;
   continuation_image_url?: string | null;
   audio_url?: string | null;
+  sharedAudio?: boolean;
 }
 
 export interface AnswerOptionPublic {

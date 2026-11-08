@@ -54,6 +54,7 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
   }, [])
 
   const isLoggedIn = !!user
+  const homeHref = isLoggedIn ? "/dashboard" : "/"
   const roleLinks = STUDENT_NAV.slice(0, 5)
   const navLinks = PUBLIC_NAV
 
@@ -71,7 +72,13 @@ export function LandingNav({ user, displayName = "", role = "student", avatarUrl
       >
         <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between py-5">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={homeHref} aria-label="Trang chính TriceHSK" className="flex items-center gap-2"
+              onClick={event => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                setMobileOpen(false);
+                setUserOpen(false);
+                if (pathname === homeHref) window.scrollTo({ top: 0, behavior: "instant" });
+              }}>
               <Image
                 src="/favicon.ico" unoptimized
                 alt="TriceHSK"

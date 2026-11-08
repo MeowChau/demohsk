@@ -7,8 +7,11 @@ import {
   apiRole,
 } from "@/lib/api/config";
 import { clearSession, refreshSession, setSession } from "@/lib/api/session";
+import { canonicalAttemptHref } from "@/lib/attempt-routes";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const canonical = canonicalAttemptHref(pathname, request.nextUrl.searchParams);
+  if (canonical) return NextResponse.redirect(new URL(canonical, request.url), 308);
   if (pathname === "/signup")
     return NextResponse.redirect(new URL("/register", request.url));
   if (
@@ -79,7 +82,6 @@ export const config = {
     "/exams/:path*",
     "/leaderboard/:path*",
     "/games/:path*",
-    "/assessment/:path*",
     "/results/:path*",
     "/rewards/:path*",
     "/support/:path*",

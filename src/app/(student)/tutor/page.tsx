@@ -1,2 +1,2 @@
 import { redirect } from "next/navigation";
-export default function TutorPage(){redirect("/assessment");}
+export default function TutorPage(){redirect("/practice");}

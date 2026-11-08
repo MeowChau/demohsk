@@ -49,6 +49,11 @@ export function TopNav({
   const items = STUDENT_NAV;
 
   useEffect(() => {
+    setMobileOpen(false);
+    setUserOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) {
         setUserOpen(false);
@@ -70,7 +75,13 @@ export function TopNav({
         <div className="mx-auto flex h-16 max-w-full items-center justify-between px-2 sm:px-3 lg:px-4">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link href="/dashboard" aria-label="Trang chính TriceHSK" className="flex items-center gap-2.5"
+              onClick={event => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                setMobileOpen(false);
+                setUserOpen(false);
+                if (pathname === "/dashboard") window.scrollTo({ top: 0, behavior: "instant" });
+              }}>
               <Image
                 src="/favicon.ico" unoptimized
                 alt="TriceHSK"

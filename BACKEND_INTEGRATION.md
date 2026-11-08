@@ -40,7 +40,6 @@ Backend gửi liên kết email theo `FRONTEND_DOMAIN`. Cấu hình `FRONTEND_DO
 | Đề thi | `GET exams`, `GET exams/:id` |
 | Thống kê học tập | `GET analytics/dashboard`, `POST analytics/ping` |
 | Bảng xếp hạng | `GET leaderboard/streak` với metric `streak`/`exp`, timeframe `all`/`month`/`week` |
-| Trò chơi từ vựng | `GET game/offline/words`, `POST game/offline/submit`, `GET game/offline/top-scores` |
 | Lịch sử PK | `GET game/pk/history` |
 | Chấm viết | **`POST /api/ai/writing-assessment`** — không có `/v1` |
 | Chấm phát âm | `POST ai/speaking/pronunciation-assessment` — multipart `audio`, `referenceText` |
@@ -95,23 +94,48 @@ Cả bốn kỹ năng dùng route `/practice/{listening|speaking|reading|writing
 
 Nút **Luyện viết chữ này** trên từ vựng mở riêng `/practice/writing/words` cho từ đã chọn. Danh sách từ, pinyin, nghĩa và cấp độ lấy từ API từ vựng hiện có của admin. Học viên chọn từng chữ trong từ, xem mẫu thứ tự nét, nhận gợi ý, viết lại và bật/tắt chữ mẫu mờ. Trang này có liên kết quay về danh sách bài luyện viết.
 
-Các câu `WRITING` có `payload.templateId = write-tracing` trong bộ bài biên soạn cũng dùng ô Hanzi Writer ngay tại `/practice/attempt/...`. Ví dụ `Luyện viết: 发烧` tách thành hai chữ để luyện lần lượt. Mapper giữ `templateId` từ payload công khai, bỏ audio của câu luyện nét và audio chung nếu cả bộ chỉ có luyện nét; renderer thay textarea bằng ô viết. Prompt biên soạn cũ có nhãn `Luyện viết:` được nhận diện khi thiếu template. Các dạng viết đoạn văn, trả lời ngắn khác và bài nghe/đọc vẫn theo loại câu riêng. Trường hợp chỉ có ảnh và không có chữ mẫu văn bản sẽ báo thiếu dữ liệu mẫu, không suy diễn từ đáp án ẩn.
+Các câu `WRITING` có `payload.templateId = write-tracing` trong bộ bài biên soạn cũng dùng ô Hanzi Writer ngay tại `/practice/sets/[id]/attempt`. Ví dụ `Luyện viết: 发烧` tách thành hai chữ để luyện lần lượt. Mapper giữ `templateId` từ payload công khai, bỏ audio của câu luyện nét và audio chung nếu cả bộ chỉ có luyện nét; renderer thay textarea bằng ô viết. Prompt biên soạn cũ có nhãn `Luyện viết:` được nhận diện khi thiếu template. Các dạng viết đoạn văn, trả lời ngắn khác và bài nghe/đọc vẫn theo loại câu riêng. Trường hợp chỉ có ảnh và không có chữ mẫu văn bản sẽ báo thiếu dữ liệu mẫu, không suy diễn từ đáp án ẩn.
 
-Tải bản sao bài tự luyện xuất câu trả lời gõ trong `answers` và tiến độ nét trong `handwriting` (chữ mẫu, vị trí chữ đã hoàn thành, tổng số chữ). Tiến độ nét không được biến thành đáp án gõ hoặc điểm chấm.
+Tải bản sao bài tự luyện xuất câu trả lời gõ trong `answers` và tiến độ nét trong `handwriting` (chữ mẫu, vị trí chữ đã hoàn thành, tổng số chữ). Khi nộp bài luyện nét, web hiển thị số nét viết đúng, lượt nét chưa khớp và số chữ hoàn thành từ Hanzi Writer; không quy đổi tiến độ thành điểm bài viết. Phần nói trong bài luyện dùng micro thay ô nhập, chuyển bản ghi sang WAV mono PCM16 / 16 kHz và gọi API phát âm Azure hiện có. Kết quả có nội dung nhận diện, điểm và nhận xét; bản ghi được giữ trong phiên để nghe lại hoặc thử chấm lại khi lỗi.
 
 Ô viết dùng hanzi-writer@3.6.1. Website tải dữ liệu nét theo từng chữ từ hanzi-writer-data@2.0.1 qua jsDelivr, tự chuyển sang unpkg nếu nguồn đầu lỗi; trình duyệt cache các request trong phiên. Các JSON nét không nằm trong repository, nhưng lần tải đầu cần có Internet. Nguồn dữ liệu Hanzi Writer Data / Make Me a Hanzi; giấy phép ARPHIC và giấy phép MIT của thư viện được giữ trong public/hanzi-data.
 
 Ô viết dùng extension point `rendererOverride.createRenderTarget` của thư viện với Pointer Events, hỗ trợ chuột/cảm ứng/bút, giữ đúng tọa độ khi đổi kích thước và hủy toàn bộ listener khi rời chữ/trang. Hoàn thành chữ và số lần viết chưa khớp chỉ hiển thị trong phiên; đây là luyện nét, không phải điểm thi hay kết quả chấm AI. Thời gian tương tác dùng module `practice_writing` của API analytics đang có.
 
+Mục Game PK tại `/games` mở trực tiếp sảnh thi đấu 1 vs 1, dùng cấp HSK của hồ sơ làm mặc định, có nút bắt đầu tìm người, xác nhận sẵn sàng, câu hỏi theo lượt, kết quả, EXP và lịch sử trận. Web và app ghép trận qua cùng backend; trang này không tải từ vựng hoặc điểm game offline. Cấp HSK bị khóa trong khi đang tìm hoặc thi đấu. Lịch sử bị lỗi vẫn cho phép mở sảnh và tìm trận. Các link xem lịch sử dùng `/games`; `/games/pk` cũ chuyển về đây và giữ cấp HSK/trang lịch sử.
+
 Backend có Socket.IO namespace `/game`. `/api/pk` mở kết nối từ server web với JWT trong HttpOnly và chuyển sự kiện sang trình duyệt bằng SSE; thao tác gửi qua POST có danh sách lệnh cho phép. Token không xuất hiện trong EventSource URL hoặc localStorage. Server backend quyết định lượt, hạn giờ, đáp án, điểm, kết quả và EXP. Web nhận các sự kiện `match_found`, `player_ready_update`, `game_started`, `turn_changed`, `answer_result`, `game_finished`, `match_cancelled`.
 
 Chấm viết dùng Gemini trên backend (`GEMINI_API_KEY`). Chấm phát âm dùng Azure Speech (`AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`). Web hỗ trợ ghi âm/tải tệp và chuyển thành WAV PCM16 mono 16kHz tối đa 30 giây; backend kiểm tra định dạng và trả điểm/nhận xét. Nếu dịch vụ chưa cấu hình hoặc lỗi, web hiển thị lỗi thật và không tạo điểm thay thế.
 
+## Đường dẫn học và làm bài
+
+| Luồng | Đường dẫn |
+| --- | --- |
+| Danh sách đề thi | /exams |
+| Chi tiết đề thi | /exams/[id] |
+| Làm đề thi | /exams/[id]/attempt |
+| Danh sách bài luyện theo kỹ năng | /practice/listening, /practice/speaking, /practice/reading, /practice/writing |
+| Làm bộ bài luyện | /practice/sets/[id]/attempt |
+| Luyện viết từng từ | /practice/writing/words |
+
+Các link mở bài ở danh sách đề, danh sách luyện tập, nội dung bài học và server action đều dùng bộ tạo đường dẫn trong src/lib/attempt-routes.ts. Form làm bài được dùng chung ở src/components/learning/attempt-form.tsx; dữ liệu vẫn đọc từ API exams và practice-sets đang có.
+
+Đường dẫn cũ /practice/attempt/exam-2?testid=exam-2 chuyển hướng 308 sang /exams/2/attempt; bộ bài set-39 chuyển sang /practice/sets/39/attempt. Mã hợp lệ trong path được ưu tiên khi query cũ có mã khác; testid được loại khỏi query. Middleware chuẩn hóa URL trước bước đăng nhập để redirectTo cũng giữ đường dẫn mới. Tải trang làm bài chỉ lấy mã từ path. Menu Đề thi và Luyện tập nhận trạng thái theo namespace tương ứng.
+
+## Xác nhận thoát và nộp bài
+
+Màn làm đề và bài luyện dùng chung hai popup: rời bài có tiến độ chưa nộp và xác nhận nộp bài. Cảnh báo thoát áp dụng cho link trong web, logo/menu và Back/Forward trong cùng phiên điều hướng. Hủy giữ lại URL, câu trả lời, bản ghi và nét viết; xác nhận mới điều hướng. Đóng tab hoặc tải lại dùng cảnh báo native của trình duyệt khi có tiến độ. Sau khi nộp, cảnh báo tiến độ được gỡ. Đăng xuất dùng popup hiện có với lời nhắc mất tiến độ, không mở thêm popup thứ hai.
+
+Popup nộp bài hiển thị số câu hoàn thành và số câu còn thiếu. Viết theo mẫu phải hoàn thành toàn bộ chữ; nói phải có kết quả chấm. Khi còn ghi âm/chấm nói, nút nộp bị khóa như trước. Hết giờ ở bài có giới hạn thời gian vẫn tự nộp. Các thao tác làm lại, ghi âm lại và viết lại giữ nguyên.
+
+NavigationProtectionProvider chỉ gắn cảnh báo beforeunload khi có dữ liệu cần giữ; bộ theo dõi history bảo toàn state của Next, không chèn bản sao trang để chặn Back. Popup dùng native dialog, giữ focus trong hộp thoại, Escape/X để hủy và màu từ token hiện có cho cả light/dark.
+
 ## Giới hạn
 
-- Backend hiện chưa có controller nộp bài thi/luyện tập, chấm trắc nghiệm hoặc đọc lịch sử bài thi của học viên. Màn hình làm bài là tự luyện, hỗ trợ hình, audio cho dạng nghe, pinyin, nghĩa, lựa chọn/nhập câu trả lời theo loại câu và ô luyện nét cho `write-tracing`; cho tải bản sao câu trả lời và tiến độ nét. Chấm viết/phát âm riêng nằm tại `/assessment`.
+- Màn hình luyện tập và đề thi đọc đáp án đã có trong dữ liệu bài học để tự chấm trên website khi nộp bài; câu cần rubric hoặc thiếu đáp án được đánh dấu chưa tự chấm. Website không tạo API nộp bài và hiện chưa lưu điểm luyện tập thành lịch sử trên tài khoản. Phát âm được chấm ngay trong bài luyện nói; luyện viết theo mẫu nhận phản hồi từ phần nhận diện nét. Kết quả và phản hồi hiển thị ngay trong bài luyện.
 - Không có API cho thẻ tự tạo, nhắc học, ticket, thông báo hoặc lớp trực tuyến. Các trang cũ tương ứng báo rõ trạng thái; không xuất hiện trong menu học chính.
-- Hội thoại AI chung chưa có API; `/tutor` chuyển tới chấm bài.
+- Hội thoại AI chung chưa có API; `/tutor` chuyển tới luyện tập.
 - Không tạo huy hiệu/thử thách hoặc lịch sử EXP giả. Trang tiến bộ dùng cấp độ, EXP và lịch sử PK thực tế.
 
 ## Kiểm tra

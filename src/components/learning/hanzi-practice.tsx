@@ -5,22 +5,30 @@ import { Play, RotateCcw, Lightbulb, Check } from "lucide-react";
 import type HanziWriter from "hanzi-writer";
 import { hanziCharacters, loadHanziData } from "@/lib/hanzi-data";
 import { hanziRenderTarget } from "@/lib/hanzi-render-target";
-import type { HandwritingProgress } from "@/lib/writing-practice";
+import { sameHandwritingStrokes, type HandwritingProgress, type HandwritingStrokeProgress } from "@/lib/writing-practice";
 
 type BoardState = { status: "loading" | "practice" | "preview" | "complete" | "error"; total: number; correct: number; mistakes: number; message: string };
 const initialState: BoardState = { status: "loading", total: 0, correct: 0, mistakes: 0, message: "Đang tải nét chữ…" };
 
-function CharacterBoard({ character, onComplete, onInteraction }: { character: string; onComplete: () => void; onInteraction?: () => void }) {
+function CharacterBoard({ character, onComplete, onInteraction, onStrokeProgress }: { character: string; onComplete: () => void; onInteraction?: () => void; onStrokeProgress?: (progress: HandwritingStrokeProgress) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const writer = useRef<HanziWriter | null>(null);
   const activeCharacter = useRef(character);
   activeCharacter.current = character;
-  const callbacks = useRef({ onComplete, onInteraction });
-  callbacks.current = { onComplete, onInteraction };
+  const callbacks = useRef({ onComplete, onInteraction, onStrokeProgress });
+  callbacks.current = { onComplete, onInteraction, onStrokeProgress };
   const [state, setState] = useState<BoardState>(initialState);
   const [retry, setRetry] = useState(0);
   const [outline, setOutline] = useState(true);
   const outlineRef = useRef(true);
+
+  const lastReportedStrokes = useRef<HandwritingStrokeProgress | null>(null);
+  useEffect(() => {
+    const progress = { correctStrokes: state.correct, totalStrokes: state.total, mistakes: state.mistakes };
+    if (sameHandwritingStrokes(lastReportedStrokes.current, progress)) return;
+    lastReportedStrokes.current = progress;
+    callbacks.current.onStrokeProgress?.(progress);
+  }, [state.correct, state.total, state.mistakes]);
 
   const startQuiz = useCallback(async (instance: HanziWriter, expectedCharacter: string) => {
     const active = () => writer.current === instance && activeCharacter.current === expectedCharacter;
@@ -119,24 +127,38 @@ function CharacterBoard({ character, onComplete, onInteraction }: { character: s
   </div>;
 }
 
-function WordPractice({ text, onInteraction, onProgress }: { text: string; onInteraction?: () => void; onProgress?: (progress: HandwritingProgress) => void }) {
+function WordPractice({ text, onInteraction, onProgress, onStrokeProgress }: { text: string; onInteraction?: () => void; onProgress?: (progress: HandwritingProgress) => void; onStrokeProgress?: (progress: HandwritingStrokeProgress) => void }) {
   const characters = hanziCharacters(text);
   const [index, setIndex] = useState(0);
   const [completed, setCompleted] = useState<number[]>([]);
+  const [strokeProgress, setStrokeProgress] = useState<Record<number, HandwritingStrokeProgress>>({});
   const progressCallback = useRef(onProgress);
   progressCallback.current = onProgress;
+  const strokeProgressCallback = useRef(onStrokeProgress);
+  strokeProgressCallback.current = onStrokeProgress;
   useEffect(() => {
     progressCallback.current?.({ text, completedPositions: completed, totalCharacters: characters.length });
   }, [text, completed, characters.length]);
+  const strokeValues = Object.values(strokeProgress);
+  const correctStrokes = strokeValues.reduce((sum, item) => sum + item.correctStrokes, 0);
+  const totalStrokes = strokeValues.reduce((sum, item) => sum + item.totalStrokes, 0);
+  const mistakes = strokeValues.reduce((sum, item) => sum + item.mistakes, 0);
+  const lastReportedStrokes = useRef<HandwritingStrokeProgress | null>(null);
+  useEffect(() => {
+    const progress = { correctStrokes, totalStrokes, mistakes };
+    if (sameHandwritingStrokes(lastReportedStrokes.current, progress)) return;
+    lastReportedStrokes.current = progress;
+    strokeProgressCallback.current?.(progress);
+  }, [correctStrokes, totalStrokes, mistakes]);
   const character = characters[index];
   if (!character) return <p className="hsk-notice">Từ này chưa có chữ Hán để luyện viết. Hãy chọn một từ khác.</p>;
   return <div className="flex flex-col gap-5">
     <div className="flex flex-wrap justify-center gap-2" aria-label="Chọn chữ trong từ">{characters.map((item, position) => <button type="button" key={position} onClick={() => setIndex(position)} aria-pressed={index === position} aria-label={`Viết chữ ${item}, vị trí ${position + 1}`} className={`relative flex h-12 min-w-12 items-center justify-center rounded-lg border px-3 text-2xl transition ${index === position ? "border-brand bg-brand/10 text-brand" : "border-mist text-ink hover:border-brand"}`} lang="zh-CN">{item}{completed.includes(position) && <Check className="absolute -right-1 -top-1 rounded-full bg-surface text-brand" size={14} />}</button>)}</div>
-    <CharacterBoard key={index} character={character} onInteraction={onInteraction} onComplete={() => setCompleted(previous => previous.includes(index) ? previous : [...previous, index])} />
+    <CharacterBoard key={index} character={character} onInteraction={onInteraction} onStrokeProgress={progress => setStrokeProgress(previous => sameHandwritingStrokes(previous[index], progress) ? previous : { ...previous, [index]: progress })} onComplete={() => setCompleted(previous => previous.includes(index) ? previous : [...previous, index])} />
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist pt-4"><span className="text-xs text-slate">Đã viết {completed.length}/{characters.length} chữ trong từ này</span><button type="button" className="hsk-button" disabled={index === characters.length - 1} onClick={() => setIndex(previous => previous + 1)}>Chữ tiếp theo</button></div>
   </div>;
 }
 
-export function HanziPractice(props: { text: string; onInteraction?: () => void; onProgress?: (progress: HandwritingProgress) => void }) {
+export function HanziPractice(props: { text: string; onInteraction?: () => void; onProgress?: (progress: HandwritingProgress) => void; onStrokeProgress?: (progress: HandwritingStrokeProgress) => void }) {
   return <WordPractice key={props.text} {...props} />;
 }

@@ -1,4 +1,4 @@
-﻿# TriceHSK — Web học tiếng Trung
+# TriceHSK — Web học tiếng Trung
 
 Frontend dành cho học viên, giao diện tiếng Việt và nội dung học tiếng Trung/HSK. Giữ bố cục, màu, cỡ chữ và font của dự án gốc: Plus Jakarta Sans cho tiêu đề, Inter cho nội dung. Chỉ tăng giãn dòng để dấu tiếng Việt không chạm dòng trên. Trang chủ dùng giao diện sáng để tránh trộn màu dark mode với các khối nền trắng. Favicon lấy từ `../Trice_HSK_Admin/fe_admin/dashboard/src/app/favicon.ico`.
 
@@ -35,11 +35,10 @@ Frontend gọi REST API/JWT qua `/api/hsk`; PostgreSQL được backend quản l
 | `/vocabulary` | Lật thẻ/danh sách, chữ Hán, pinyin, nghĩa từ; ghi nhận đã học/đã nhớ/chưa nhớ |
 | `/practice` | Luyện nghe, nói, đọc, viết; lọc theo cấp độ, chủ đề, tìm kiếm và phân trang |
 | `/exams` | Đề thi và các phần thi từ admin, mở bài tự luyện |
-| `/games` | Trò chơi từ vựng, lưu điểm và xem điểm cao của tài khoản |
-| `/games/pk` | Tìm đối thủ, sẵn sàng, trả lời theo lượt và lịch sử PK |
+| `/games` | Game PK 1 vs 1: tìm người cùng HSK, sẵn sàng, đấu theo lượt, kết quả và lịch sử thi đấu |
+| `/games/pk` | Đường dẫn cũ chuyển về sảnh Game PK tại `/games` |
 | `/leaderboard` | Xếp hạng chuỗi ngày học và tổng EXP |
-| `/assessment` | Chấm bài viết và phát âm qua backend hiện có |
-| `/tutor` | Chuyển tới trang chấm bài |
+| `/tutor` | Chuyển tới phần luyện tập |
 | `/rewards` | EXP, cấp độ, chuỗi ngày học và EXP từ lịch sử PK |
 | `/profile` | Hồ sơ, ảnh đại diện, mật khẩu, mục tiêu HSK và số phút học mỗi ngày |
 

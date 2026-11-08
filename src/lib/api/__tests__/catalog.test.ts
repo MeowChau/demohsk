@@ -19,7 +19,7 @@ describe("real admin catalog shape", () => {
     const user: HskUser = { id: 2, username: "learner", email: null, level: 1, currentExp: 0, currentHskLevel: 1 };
     const result = await learningViews(user);
     expect(result[0]?.course.courseid).toBe("HSK1-L01");
-    expect(result[0]?.contents[0]?.file_url).toBe("/practice/attempt/set-7?testid=set-7");
+    expect(result[0]?.contents[0]?.file_url).toBe("/practice/sets/7/attempt");
     expect(result[0]?.course.description).toContain("AI 小语，你好！");
   });
   it("keeps partial catalog failures visible without fabricating statistics", async () => {

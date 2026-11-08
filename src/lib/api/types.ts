@@ -55,17 +55,34 @@ export interface HskQuestion {
   payload: {
     templateId?: string;
     text?: string;
+    sentence?: string;
+    questionText?: string;
+    character?: string;
+    hanzi?: string;
+    meaning?: string;
+    source?: { sourceWord?: string };
     imageUrl?: string;
     contextImageUrl?: string;
     continuationImageUrl?: string;
     audioUrl?: string;
-    options?: string[];
-    optionImages?: string[];
+    options?: unknown[];
+    optionImages?: unknown[];
     pinyin?: string;
     manualGrading?: boolean;
+    reviewRequired?: boolean;
+    correctOptionId?: string;
     translation?: string;
     audioTimestamp?: number;
+    audioScope?: string;
   };
+  correctAnswer?: {
+    optionId?: unknown;
+    correctOptionId?: unknown;
+    id?: unknown;
+    answer?: unknown;
+    answers?: unknown;
+    rubric?: unknown;
+  } | null;
 }
 export interface HskPractice {
   id: number;

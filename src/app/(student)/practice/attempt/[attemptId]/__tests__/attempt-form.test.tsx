@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { AttemptForm } from "../attempt-form";
+import { AttemptForm } from "@/components/learning/attempt-form";
 import type { TestWithQuestions } from "@/types/assessment";
 
 const data: TestWithQuestions = {

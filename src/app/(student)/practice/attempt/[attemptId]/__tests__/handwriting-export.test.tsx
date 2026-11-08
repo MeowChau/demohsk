@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { HandwritingProgress } from "@/lib/writing-practice";
 import type { TestWithQuestions } from "@/types/assessment";
-import { AttemptForm } from "../attempt-form";
+import { AttemptForm } from "@/components/learning/attempt-form";
 
 jest.mock("@/components/learning/hanzi-practice", () => ({ HanziPractice: ({ text, onProgress }: { text: string; onProgress: (progress: HandwritingProgress) => void }) => <button type="button" onClick={() => onProgress({ text, completedPositions: [0, 1], totalCharacters: 2 })}>Hoàn thành luyện nét</button> }));
 

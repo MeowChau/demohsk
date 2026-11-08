@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiAction } from "@/lib/api/client";
 import { notify } from "@/lib/toast";
+import { useHasUnsavedChanges } from "@/components/shell/navigation-protection";
 
 interface LogoutButtonProps {
   className?: string;
@@ -12,6 +13,7 @@ interface LogoutButtonProps {
 
 export function LogoutButton({ className, children }: LogoutButtonProps) {
   const router = useRouter();
+  const hasUnsavedChanges = useHasUnsavedChanges();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
@@ -105,7 +107,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
                 <h3 className="text-lg font-black text-ink dark:text-white">
                    Đăng xuất </h3>
                 <p className="mt-2 text-center text-sm leading-relaxed text-slate dark:text-slate-soft">
-                   Bạn muốn đăng xuất khỏi tài khoản TriceHSK? </p>
+                  {hasUnsavedChanges ? "Bài đang làm chưa được lưu. Nếu đăng xuất, tiến độ trong lượt này sẽ bị mất. Bạn vẫn muốn đăng xuất?" : "Bạn muốn đăng xuất khỏi tài khoản TriceHSK?"} </p>
 
                 <div className="mt-7 flex w-full gap-3">
                   <button

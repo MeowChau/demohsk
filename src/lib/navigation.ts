@@ -1,4 +1,4 @@
-import { LayoutDashboard, BookOpen, Languages, Headphones, Trophy, FileText, Gamepad2, BarChart3, Sparkles } from "lucide-react";
+import { LayoutDashboard, BookOpen, Languages, Headphones, Trophy, FileText, Gamepad2, BarChart3 } from "lucide-react";
 
 export const STUDENT_NAV = [
   { label: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
@@ -6,9 +6,8 @@ export const STUDENT_NAV = [
   { label: "Từ vựng", href: "/vocabulary", icon: Languages },
   { label: "Luyện tập", href: "/practice", icon: Headphones },
   { label: "Đề thi", href: "/exams", icon: FileText },
-  { label: "Trò chơi", href: "/games", icon: Gamepad2 },
+  { label: "Game PK", href: "/games", icon: Gamepad2 },
   { label: "Xếp hạng", href: "/leaderboard", icon: BarChart3 },
-  { label: "Chấm bài", href: "/assessment", icon: Sparkles },
   { label: "Thành tích", href: "/rewards", icon: Trophy },
 ];
 
