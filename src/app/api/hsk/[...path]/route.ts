@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { ACCESS_COOKIE, REFRESH_COOKIE, backendEndpoint } from "@/lib/api/config";
 import {
   clearSession,
@@ -14,6 +15,7 @@ const allowed: Record<string, RegExp[]> = {
     /^practice-sets(?:\/topics|\/summary|\/\d+)?$/,
     /^exams(?:\/\d+)?$/,
     /^analytics\/dashboard$/,
+    /^learning-scores$/,
     /^leaderboard\/streak$/,
     /^game\/offline\/(words|top-scores)$/,
     /^game\/pk\/history$/,
@@ -21,6 +23,7 @@ const allowed: Record<string, RegExp[]> = {
   POST: [
     /^auth\/(email\/(login|register|confirm|resend|confirm\/new)|forgot\/password|reset\/password|logout)$/,
     /^analytics\/(ping|vocabulary-progress)$/,
+    /^learning-scores\/submit$/,
     /^game\/offline\/submit$/,
     /^ai\/(writing-assessment|speaking\/pronunciation-assessment)$/,
   ],
@@ -94,6 +97,8 @@ async function handle(
       renewed = login;
       data = { user: login.user };
     }
+    if (request.method === "POST" && path === "learning-scores/submit" && upstream.ok)
+      revalidatePath("/", "layout");
     const response =
       upstream.status === 204
         ? new NextResponse(null, { status: 204 })

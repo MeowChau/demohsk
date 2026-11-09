@@ -19,6 +19,8 @@ export const pronunciationAssessmentSchema = z.object({
 
 const pronunciationScore = z.number().finite().min(0).max(100);
 export const pronunciationResultSchema = z.object({
+  progressSaved: z.boolean().optional(),
+  progressMessage: z.string().optional(),
   score: pronunciationScore,
   accuracyScore: pronunciationScore,
   fluencyScore: pronunciationScore,

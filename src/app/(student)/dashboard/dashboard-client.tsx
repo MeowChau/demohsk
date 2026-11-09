@@ -13,7 +13,8 @@ import { AnimatedFlame } from "@/components/gamification/animated-flame"
 import { LevelBadge } from "@/components/gamification/level-badge"
 import { BookIcon } from "@/components/icons/stat-icons"
 import type { LevelInfo } from "@/types/gamification"
-import type { Skill } from "@/types/assessment"
+import type { LearningScoreSummary } from "@/lib/learning-scores"
+import { apiFetch } from "@/lib/api/client"
 
 type DashboardView = {
   course: {
@@ -40,7 +41,7 @@ type DashboardClientProps = {
   xpTotal: number
   streak: StreakData
   levelInfo: LevelInfo
-  skillBands: Partial<Record<Skill, number>>
+  initialAssessment: LearningScoreSummary | null
 }
 
 function StatCard({
@@ -149,7 +150,7 @@ export default function DashboardClient({
   xpTotal,
   streak,
   levelInfo,
-  skillBands,
+  initialAssessment,
 }: DashboardClientProps) {
   const [confettiFired, setConfettiFired] = useState(false)
 
@@ -163,15 +164,23 @@ export default function DashboardClient({
   const currentStreak = streak?.current_streak ?? 0
   const longestStreak = streak?.longest_streak ?? 0
 
-  // Skill bands come from the student's latest graded attempts and may be
-  // partial (or entirely empty for a brand-new student) — default any
-  // skill with no attempt yet to 0 rather than crashing SkillProgress.
-  const resolvedSkillBands: Record<Skill, number> = {
-    Listening: skillBands.Listening ?? 0,
-    Reading: skillBands.Reading ?? 0,
-    Writing: skillBands.Writing ?? 0,
-    Speaking: skillBands.Speaking ?? 0,
-  }
+  const [assessment, setAssessment] = useState(initialAssessment)
+  const [assessmentError, setAssessmentError] = useState("")
+  const selectedLevel = assessment?.currentHskLevel ?? student?.current_band ?? 1
+  useEffect(() => {
+    let active = true
+    let sequence = 0
+    const refresh = () => {
+      const request = ++sequence
+      apiFetch<LearningScoreSummary>("learning-scores")
+        .then(data => { if (active && request === sequence) { setAssessment(data); setAssessmentError("") } })
+        .catch(cause => { if (active && request === sequence) setAssessmentError(cause instanceof Error ? cause.message : "Chưa tải được điểm học tập.") })
+    }
+    refresh()
+    window.addEventListener("hsk-scores-updated", refresh)
+    window.addEventListener("focus", refresh)
+    return () => { active = false; window.removeEventListener("hsk-scores-updated", refresh); window.removeEventListener("focus", refresh) }
+  }, [student?.current_band])
 
   useEffect(() => {
     if (
@@ -425,13 +434,12 @@ export default function DashboardClient({
 
           <BandProgressChart
             unit="HSK"
-            currentBand={student?.current_band ?? null}
+            currentBand={assessment?.currentHskLevel ?? student?.current_band ?? null}
             targetBand={student?.target_band ?? null}
           />
         </motion.section>
 
-        {/* REAL SKILL DATA — latest graded band per skill,
-            0 for any skill with no attempt yet */}
+        {/* Điểm tổng hợp theo cấp; kỹ năng chưa được chấm giữ trạng thái riêng. */}
 
         <motion.section
           initial={{
@@ -452,8 +460,9 @@ export default function DashboardClient({
           <h2 className="mb-5 font-display text-lg font-black tracking-tight text-navy dark:text-white">
              Các kỹ năng tiếng Trung </h2>
 
+          {assessmentError && <p className="mb-4 text-xs leading-5 text-slate" role="status">{assessmentError} · Điểm sẽ xuất hiện khi backend hỗ trợ chức năng này.</p>}
           <SkillProgress
-            bands={resolvedSkillBands}
+            summary={assessment} selectedLevel={selectedLevel}
           />
         </motion.section>
       </div>

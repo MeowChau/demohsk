@@ -7,7 +7,8 @@ import { encodeStudyWav } from "@/lib/audio-wav";
 import { pronunciationResultSchema } from "@/lib/validations/assessment";
 import type { PronunciationAssessment } from "@/lib/api/types";
 
-export function SpeakingRecorder({ referenceText, assessment, disabled, locked, onAssessmentChange, onBusyChange, onRecordingChange }: {
+export function SpeakingRecorder({ questionId, referenceText, assessment, disabled, locked, onAssessmentChange, onBusyChange, onRecordingChange }: {
+  questionId?: string;
   referenceText: string;
   assessment: PronunciationAssessment | null;
   disabled: boolean;
@@ -96,6 +97,7 @@ export function SpeakingRecorder({ referenceText, assessment, disabled, locked, 
       const form = new FormData();
       form.set("audio", audio);
       form.set("referenceText", referenceText.trim());
+      if (questionId) form.set("questionId", questionId);
       const response = await apiFetch<unknown>("ai/speaking/pronunciation-assessment", {
         method: "POST", body: form, signal: controller.signal,
       });
@@ -103,6 +105,7 @@ export function SpeakingRecorder({ referenceText, assessment, disabled, locked, 
       const parsed = pronunciationResultSchema.safeParse(response);
       if (!parsed.success) throw new Error("Kết quả chấm phát âm chưa hợp lệ. Hãy thử chấm lại.");
       callbacks.current.onAssessmentChange(parsed.data);
+      if (questionId && parsed.data.progressSaved === true) window.dispatchEvent(new Event("hsk-scores-updated"));
     } catch (cause) {
       if (alive.current) {
         setError(controller.signal.aborted
@@ -227,6 +230,7 @@ export function SpeakingRecorder({ referenceText, assessment, disabled, locked, 
       {audioUrl && <div className="w-full"><p className="mb-2 text-xs font-medium text-slate">Giọng của bạn</p>
         <audio controls className="w-full" src={audioUrl} aria-label="Nghe lại giọng của bạn" />
       </div>}
+      {assessment?.progressSaved === false && <p className="text-xs leading-5 text-danger" role="status">{assessment.progressMessage || "Đã chấm nhưng chưa lưu được điểm tổng hợp."}</p>}
       {assessment && (
         <div className="w-full rounded-lg border border-brand/20 bg-surface p-4" aria-live="polite">
           <p className="text-2xl font-semibold text-brand">{assessment.score}<span className="text-sm font-normal text-slate">/100</span></p>

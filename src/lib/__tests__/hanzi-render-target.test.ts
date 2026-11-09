@@ -56,7 +56,7 @@ it("accepts strokes in order and completes a character using the Hanzi Writer en
 it("grades pointer coordinates correctly when the board is displayed at half size", async () => {
   cssSize = 160;
   const correct = jest.fn(); await writer.quiz({ onCorrectStroke: correct });
-  await drawStroke(data.medians[0]);
+  await drawStroke(data.medians[0]!);
   expect(correct).toHaveBeenCalledTimes(1);
 });
 
@@ -67,7 +67,7 @@ it("rejects an incorrect stroke and removes input handlers on unmount", async ()
   expect(mistake).toHaveBeenCalledTimes(1);
   expect(correct).not.toHaveBeenCalled();
   events.abort();
-  await drawStroke(data.medians[0]);
+  await drawStroke(data.medians[0]!);
   expect(correct).not.toHaveBeenCalled();
   expect(mistake).toHaveBeenCalledTimes(1);
 });

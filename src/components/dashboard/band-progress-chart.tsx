@@ -38,7 +38,7 @@ export function BandProgressChart({
     margin: "-50px",
   });
 
-  const [displayBand, setDisplayBand] = useState(0);
+  const [displayBand, setDisplayBand] = useState(current);
 
   /*
    * Cinematic number animation.
@@ -209,7 +209,7 @@ export function BandProgressChart({
             className="font-display text-4xl font-black text-navy dark:text-white"
           >
             {current > 0
-              ? unit === "HSK" ? `HSK ${Math.round(displayBand)}` : displayBand.toFixed(1)
+              ? unit === "HSK" ? `HSK ${current}` : displayBand.toFixed(1)
               : "—"}
           </motion.span>
 

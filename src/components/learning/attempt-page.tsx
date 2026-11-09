@@ -29,7 +29,7 @@ export async function AttemptContent({ reference }: { reference: string }) {
         <h1 className="font-display text-2xl font-semibold text-ink dark:text-white">{data.test.title}</h1>
         <p className="text-sm text-slate-soft">{data.test.total_marks} câu hỏi · Tự luyện</p>
       </div>
-      <AttemptForm key={parsed.reference} attemptid={parsed.reference} testid={parsed.reference} data={data} />
+      <AttemptForm key={parsed.reference} attemptid={parsed.reference} testid={parsed.reference} data={data} recordScores />
     </div>
   );
 }

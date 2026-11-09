@@ -11,8 +11,9 @@ import {
   SpeakingIcon,
 } from "@/components/icons/stat-icons";
 import type { Skill } from "@/types/assessment";
+import type { LearningScoreSummary } from "@/lib/learning-scores";
 
-const MAX_BAND = 9;
+const MAX_SCORE = 100;
 
 const SKILL_META: Record<
   Skill,
@@ -45,9 +46,11 @@ const SKILL_META: Record<
 };
 
 export function SkillProgress({
-  bands,
+  summary,
+  selectedLevel = 1,
 }: {
-  bands: Partial<Record<Skill, number | null>>;
+  summary: LearningScoreSummary | null;
+  selectedLevel?: number;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -69,20 +72,16 @@ export function SkillProgress({
             gradient,
           } = SKILL_META[skill];
 
-          const band = bands[skill] ?? 0;
-
-          const pct = Math.min(
-            100,
-            Math.round(
-              (band / MAX_BAND) * 100
-            )
-          );
-
-          const hasScore = band > 0;
+          const score = summary?.skills[skill]?.score ?? null;
+          const hasScore = score !== null;
+          const tracing = skill === "Writing" && !hasScore && (summary?.writingProgress.total || 0) > 0
+            ? summary!.writingProgress : null;
+          const pct = Math.min(100, Math.max(0, score ?? (tracing ? tracing.completed / tracing.total * 100 : 0)));
 
           return (
             <motion.div
               key={SKILL_LABELS[skill]}
+              aria-label={SKILL_LABELS[skill] + " · HSK " + (summary?.hskLevel || selectedLevel)}
               initial={{
                 opacity: 0,
                 y: 20,
@@ -141,19 +140,19 @@ export function SkillProgress({
                   <span
                     className="text-2xl font-black tracking-tight tabular-nums"
                     style={{
-                      color: hasScore
+                      color: hasScore || tracing
                         ? color
                         : "var(--slate)",
                     }}
                   >
                     {hasScore
-                      ? band.toFixed(1)
-                      : "—"}
+                      ? score!.toFixed(1)
+                      : tracing ? tracing.completed + "/" + tracing.total : "—"}
                   </span>
 
                   {hasScore && (
                     <span className="ml-1 text-xs font-black text-slate">
-                      /{MAX_BAND}
+                      /{MAX_SCORE}
                     </span>
                   )}
                 </div>
@@ -163,14 +162,14 @@ export function SkillProgress({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-black text-slate">
                     {hasScore
-                      ? `${pct}% proficiency`
-                      : "Chưa đánh giá"}
+                      ? "Điểm trung bình"
+                      : tracing ? "Đã hoàn thành" : "Chưa đánh giá"}
                   </span>
 
                   <span className="font-black text-slate tabular-nums">
                     {hasScore
-                      ? band.toFixed(1)
-                      : "0.0"}
+                      ? score!.toFixed(1)
+                      : tracing ? Math.round(pct) + "%" : "0.0"}
                   </span>
                 </div>
 
@@ -219,9 +218,9 @@ export function SkillProgress({
                   )}
                 </div>
 
-                {/* Các mốc cấp độ HSK */}
+                {/* Các mốc trên thang điểm kỹ năng */}
                 <div className="relative h-3 w-full">
-                  {[3, 6, 9].map(
+                  {[30, 60, 100].map(
                     (milestone) => (
                       <div
                         key={milestone}
@@ -229,7 +228,7 @@ export function SkillProgress({
                         style={{
                           left: `${
                             (milestone /
-                              MAX_BAND) *
+                              MAX_SCORE) *
                             100
                           }%`,
                         }}
@@ -237,7 +236,7 @@ export function SkillProgress({
                         <div
                           className={`h-1 w-px transition-colors ${
                             hasScore &&
-                            band >= milestone
+                            score! >= milestone
                               ? "bg-slate dark:bg-slate-soft"
                               : "bg-mist dark:bg-slate/20"
                           }`}
@@ -246,7 +245,7 @@ export function SkillProgress({
                         <span
                           className={`text-[10px] font-black mt-0.5 ${
                             hasScore &&
-                            band >= milestone
+                            score! >= milestone
                               ? "text-slate dark:text-slate-soft"
                               : "text-slate/40 dark:text-slate/30"
                           }`}
