@@ -394,7 +394,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     }}>
       <input type="hidden" name="attemptid" value={attemptid} />
       <input type="hidden" name="testid" value={testid} />
-      <div ref={toolbarRef} className="sticky top-[4.5rem] z-30 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-mist bg-surface px-4 py-3 shadow-card">
+      <div ref={toolbarRef} className="sticky top-[5.5rem] z-30 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-mist bg-surface px-4 py-3 shadow-card">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{workedQuestionIds.size}/{questions.length} câu đã làm</p>
           <p className={"mt-0.5 text-xs " + (secondsLeft <= 60 && data.test.duration > 0 && !result ? "font-semibold text-danger" : "text-slate")}>
@@ -570,7 +570,7 @@ function QuestionBlock({ number, question, options, answer, onAnswerChange, onHa
 
   return (
     <article id={"practice-question-" + question.questionid} data-practice-question={question.questionid}
-      className="min-w-0 scroll-mt-[calc(4.5rem+var(--practice-toolbar-height,4.5rem)+1rem)] scroll-mb-[calc(var(--practice-shared-audio-height,0px)+1.5rem)] rounded-lg border border-mist bg-surface p-4 focus:outline-none sm:p-5">
+      className="min-w-0 scroll-mt-[calc(5.5rem+var(--practice-toolbar-height,4.5rem)+1rem)] scroll-mb-[calc(var(--practice-shared-audio-height,0px)+1.5rem)] rounded-lg border border-mist bg-surface p-4 focus:outline-none sm:p-5">
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-brand">Câu {number}</p>
         <button type="button" aria-label={bookmarked ? "Bỏ đánh dấu câu " + number : "Đánh dấu câu " + number + " để xem lại"}

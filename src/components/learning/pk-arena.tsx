@@ -15,6 +15,7 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
   const [match, setMatch] = useState<PkMatch | null>(null);
   const [result, setResult] = useState<PkResult | null>(null);
   const [answer, setAnswer] = useState<PkAnswer | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<{ roomId: string; questionId: number; optionId: string } | null>(null);
   const [submittedQuestion, setSubmittedQuestion] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -57,7 +58,7 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
           if (envelope.event !== "exception") { setReady(false); stream.close(); }
           return;
         }
-        if (envelope.event === "match_cancelled") { setQueueing(false); setMatch(null); setResult(null); setError(String(payload.message || "Trận đấu đã được hủy.")); try { sessionStorage.removeItem(storageKey); } catch {} return; }
+        if (envelope.event === "match_cancelled") { setQueueing(false); setMatch(null); setResult(null); setAnswer(null); setSelectedChoice(null); setSubmittedQuestion(null); setError(String(payload.message || "Trận đấu đã được hủy.")); try { sessionStorage.removeItem(storageKey); } catch {} return; }
         if (payload.roomId && typeof payload.revision === "number") {
           const incoming = payload as unknown as PkMatch;
           offset.current = incoming.serverNow - Date.now(); setNow(Date.now());
@@ -66,8 +67,8 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
             return { ...previous, ...incoming, questions: incoming.questions || (previous?.roomId === incoming.roomId ? previous.questions : []) };
           });
         }
-        if (envelope.event === "match_found") { setQueueing(false); setResult(null); setAnswer(null); setSubmittedQuestion(null); setError(""); try { sessionStorage.setItem(storageKey, String(payload.roomId)); } catch {} }
-        if (envelope.event === "game_started" || envelope.event === "turn_changed") { setQueueing(false); setAnswer(null); setSubmittedQuestion(null); }
+        if (envelope.event === "match_found") { setQueueing(false); setResult(null); setAnswer(null); setSelectedChoice(null); setSubmittedQuestion(null); setError(""); try { sessionStorage.setItem(storageKey, String(payload.roomId)); } catch {} }
+        if (envelope.event === "game_started" || envelope.event === "turn_changed") { setQueueing(false); setAnswer(null); setSelectedChoice(null); setSubmittedQuestion(null); }
         if (envelope.event === "answer_result") setAnswer(payload as unknown as PkAnswer);
         if (envelope.event === "game_finished") { setResult(payload as unknown as PkResult); setQueueing(false); try { sessionStorage.removeItem(storageKey); } catch {} router.refresh(); }
       };
@@ -78,7 +79,7 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
   async function command(event: PkCommand["event"], payload: Partial<PkCommand> = {}) {
     if (busy) return;
     setBusy(true); setError("");
-    if (event === "find_match") { setQueueing(true); setResult(null); setMatch(null); setAnswer(null); }
+    if (event === "find_match") { setQueueing(true); setResult(null); setMatch(null); setAnswer(null); setSelectedChoice(null); setSubmittedQuestion(null); }
     try { await post(event, payload); if (event === "cancel_match") { setQueueing(false); setMatch(null); } }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Thao tác chưa thành công."); if (event === "find_match") setQueueing(false); if (event === "submit_answer") setSubmittedQuestion(null); }
     finally { setBusy(false); }
@@ -88,6 +89,11 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
   const seconds = Math.max(0, Math.ceil(((match?.deadline || 0) - (now + offset.current)) / 1000));
   const myTurn = match?.turnUserId === userId;
   const myReward = result?.rewards?.find(reward => reward.userId === userId)?.expAwarded;
+  const currentAnswer = answer && answer.roomId === match?.roomId && answer.questionId === current?.id ? answer : null;
+  const selectedOptionId = currentAnswer ? currentAnswer.optionId
+    : selectedChoice && selectedChoice.roomId === match?.roomId && selectedChoice.questionId === current?.id ? selectedChoice.optionId : null;
+  const feedbackStyle = currentAnswer?.optionId === null ? "border-brand/20 bg-brand/5 text-brand"
+    : currentAnswer?.correct ? "border-success bg-success-soft text-success" : "border-danger bg-danger-soft text-danger";
   return <section className="hsk-panel flex flex-col gap-5"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="hsk-section-title">Phòng PK</h2><span className={`rounded-full px-3 py-1 text-xs font-medium ${ready ? "bg-success-soft text-success" : "bg-mist text-slate"}`}>{ready ? `Đã kết nối · ${online ?? "—"} học viên online` : "Chưa kết nối"}</span></div>
     <form action="/games" className="flex flex-wrap items-end gap-3 border-b border-mist pb-5">
       <label className="hsk-label">Cấp độ HSK
@@ -117,14 +123,50 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           {queueing ? <button type="button" className="hsk-button-secondary" disabled={busy} onClick={() => { void command("cancel_match"); }}>Hủy tìm trận</button>
             : <button type="button" className="hsk-button min-h-12 px-6" disabled={!ready || busy} onClick={() => { void command("find_match"); }}><Swords size={18} />{result ? "Đấu ván nữa" : "Bắt đầu tìm người"}</button>}
-          {result && <button type="button" className="hsk-button-secondary" onClick={() => { setResult(null); setMatch(null); setAnswer(null); setSubmittedQuestion(null); }}>Về sảnh</button>}
+          {result && <button type="button" className="hsk-button-secondary" onClick={() => { setResult(null); setMatch(null); setAnswer(null); setSelectedChoice(null); setSubmittedQuestion(null); }}>Về sảnh</button>}
         </div>
       </div>
     )}
 
     {match && <><div className="grid grid-cols-2 gap-3">{match.players.map(player => { const score = match.scores.find(item => item.userId === player.id); return <div className={`rounded-lg border p-4 ${player.id === userId ? "border-brand/30 bg-brand/5" : "border-mist"}`} key={player.id}><div className="flex items-center gap-2">{player.photoUrl && <img src={publicMedia(player.photoUrl) || undefined} className="h-8 w-8 rounded-full object-cover" alt="" />}<p className="text-sm font-medium text-ink">{player.name}{player.id === userId ? " (Bạn)" : ""}</p></div><p className="mt-3 text-2xl font-semibold text-brand">{score?.score ?? 0} <span className="text-xs font-normal text-slate">điểm</span></p><p className="mt-1 text-xs text-slate">Đúng {score?.correctCount ?? 0} câu</p></div>; })}</div>
       {match.stage === "waiting" && !result && <div className="flex flex-wrap items-center gap-4"><p className="text-sm text-slate">Xác nhận sẵn sàng trong {seconds} giây.</p><button type="button" className="hsk-button" disabled={!ready || busy || match.readyUserIds.includes(userId)} onClick={() => { void command("player_ready", { roomId: match.roomId }); }}><Check size={16} />{match.readyUserIds.includes(userId) ? "Đã sẵn sàng · Chờ đối thủ" : "Tôi đã sẵn sàng"}</button></div>}
-      {!result && current && (match.stage === "playing" || match.stage === "reveal") && <><div className="flex flex-wrap items-center justify-between gap-3 text-sm"><span className="text-slate">Câu {match.index + 1} / {match.questions.length} · {myTurn ? "Lượt của bạn" : "Lượt của đối thủ"}</span><span className="font-semibold text-brand">{seconds} giây</span></div><div className="rounded-lg bg-paper p-5 text-center"><p className="text-sm text-slate">{current.prompt}</p><p className="hsk-hanzi mt-3 text-ink" lang="zh-CN">{current.hanzi}</p><p className="mt-1 text-base text-brand">{current.pinyin}</p></div><div className="grid gap-3 sm:grid-cols-2">{current.options.map(option => <button type="button" key={option.id} disabled={!ready || busy || !myTurn || match.stage !== "playing" || seconds <= 0 || submittedQuestion === current.id} onClick={() => { setSubmittedQuestion(current.id); void command("submit_answer", { roomId: match.roomId, questionId: current.id, optionId: option.id }); }} className={`min-h-14 rounded-lg border p-4 text-left text-sm leading-6 transition disabled:cursor-default ${answer?.questionId === current.id && answer.correctOptionId === option.id ? "border-success bg-success-soft text-success" : "border-mist text-ink enabled:hover:border-brand enabled:hover:bg-brand/5"}`}><span className="mr-2 font-semibold">{option.id}.</span>{option.text}</button>)}</div>{answer?.questionId === current.id && <p className="hsk-notice">{answer.optionId === null ? "Đã hết thời gian." : answer.correct ? "Câu trả lời chính xác." : "Câu trả lời chưa đúng."} Đáp án: {answer.correctOptionId}.</p>}</>}
+      {!result && current && (match.stage === "playing" || match.stage === "reveal") && <>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <span className="text-slate">Câu {match.index + 1} / {match.questions.length} · {myTurn ? "Lượt của bạn" : "Lượt của đối thủ"}</span>
+          <span className="font-semibold text-brand">{seconds} giây</span>
+        </div>
+        <div className="rounded-lg bg-paper p-5 text-center">
+          <p className="text-sm text-slate">{current.prompt}</p>
+          <p className="hsk-hanzi mt-3 text-ink" lang="zh-CN">{current.hanzi}</p>
+          <p className="mt-1 text-base text-brand">{current.pinyin}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {current.options.map(option => {
+            const selected = selectedOptionId === option.id;
+            const correct = currentAnswer?.correctOptionId === option.id;
+            const color = correct ? "border-success bg-success-soft text-success"
+              : currentAnswer && selected ? "border-danger bg-danger-soft text-danger"
+                : selected ? "border-brand bg-brand/5 text-ink"
+                  : "border-mist text-ink enabled:hover:border-brand/40 enabled:hover:bg-brand/5";
+            return <button type="button" key={option.id} aria-pressed={selected}
+              disabled={!ready || busy || !myTurn || match.stage !== "playing" || seconds <= 0 || submittedQuestion === current.id}
+              onClick={() => {
+                setSelectedChoice({ roomId: match.roomId, questionId: current.id, optionId: option.id });
+                setSubmittedQuestion(current.id);
+                void command("submit_answer", { roomId: match.roomId, questionId: current.id, optionId: option.id });
+              }}
+              className={`flex min-h-14 min-w-0 items-start gap-3 rounded-lg border p-4 text-left text-sm leading-6 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-default ${color}`}>
+              <span aria-hidden="true" className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected && !currentAnswer ? "border-brand text-brand" : selected || correct ? "border-current" : "border-slate-soft"}`}>
+                {selected && <span className="h-2 w-2 rounded-full bg-current" />}
+              </span>
+              <span className="min-w-0 break-words"><span className="mr-2 font-semibold">{option.id}.</span>{option.text}</span>
+            </button>;
+          })}
+        </div>
+        {currentAnswer && <p role="status" aria-live="polite" aria-atomic="true" className={`rounded-lg border px-3 py-2 text-sm leading-6 ${feedbackStyle}`}>
+          {currentAnswer.optionId === null ? "Đã hết thời gian." : currentAnswer.correct ? "Câu trả lời chính xác." : "Câu trả lời chưa đúng."} Đáp án: {currentAnswer.correctOptionId}.
+        </p>}
+      </>}
     </>}
   </section>;
 }
