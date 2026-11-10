@@ -150,3 +150,12 @@ Mỗi SSE request sở hữu một socket để nhận sự kiện; mỗi POST m
 Route PK đặt `maxDuration = 300`. SSE vẫn chịu giới hạn thời gian của Vercel; khi luồng đóng sau thời gian dài hoặc do mạng, màn PK hiện nút Kết nối lại. Hai người cần dùng hai tài khoản khác nhau, chọn cùng HSK và cùng bấm tìm trận. Khi kết nối lại, mã phòng đã lưu được chuyển qua socket của lệnh để khôi phục trận.
 
 Sau khi sửa source, cần commit/push bản sửa và deploy từ commit mới. Giữ `HSK_API_URL` production đang dùng; không cần thêm biến môi trường trên Vercel.
+
+
+### Thư viện WebSocket khi build website
+
+`next.config.mjs` giữ `socket.io-client`, `engine.io-client` và `ws` trong `serverExternalPackages`. Các thư viện này được Node.js nạp trực tiếp ở server, tránh làm hỏng phần nạp native addon `bufferutil` khi đóng gói bằng Webpack.
+
+Lỗi đã tái hiện với API VPS: xác thực HTTP thành công, WebSocket mở được nhưng gói xác thực Socket.IO dài 331 byte không gửi được vì `TypeError: bufferUtil.mask is not a function`. Gói ping/pong ngắn vẫn đi được; VPS chờ namespace rồi đóng sau khoảng 45 giây. Sau khi dùng external packages, cùng tài khoản và cùng VPS đã nhận `pk_connected` trong khoảng 700 ms.
+
+Không cần thêm biến môi trường, tắt TLS hay đổi backend để sửa lỗi đóng gói này. Sau khi áp dụng cấu hình, deploy website từ commit mới.
