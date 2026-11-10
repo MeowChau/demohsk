@@ -15,7 +15,7 @@ export function parsePkCommand(value: unknown): PkCommand {
   const input = value as Record<string, unknown>;
   if (!Number.isInteger(input.hskLevel) || Number(input.hskLevel) < 1 || Number(input.hskLevel) > 9 || !["find_match", "cancel_match", "player_ready", "submit_answer"].includes(String(input.event))) throw new Error("Cấp độ hoặc thao tác PK không hợp lệ.");
   const command: PkCommand = { event: input.event as PkCommand["event"], hskLevel: Number(input.hskLevel) };
-  if (command.event === "player_ready" || command.event === "submit_answer") {
+  if (command.event === "player_ready" || command.event === "submit_answer" || (command.event === "find_match" && input.roomId !== undefined)) {
     if (typeof input.roomId !== "string" || !roomPattern.test(input.roomId)) throw new Error("Mã phòng không hợp lệ.");
     command.roomId = input.roomId;
   }

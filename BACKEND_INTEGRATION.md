@@ -6,8 +6,6 @@
 HSK_API_URL=http://localhost:3001/api/v1
 HSK_ADMIN_URL=http://localhost:3000
 NEXT_PUBLIC_HSK_MEDIA_ORIGIN=http://localhost:3001
-# Tùy chọn, mặc định suy ra từ HSK_API_URL:
-HSK_SOCKET_URL=http://localhost:3001/game
 ```
 
 Web học viên dùng cổng **3002**, admin riêng ở **3000**, backend ở **3001**. Frontend chỉ gọi API; PostgreSQL do backend quản lý. Không seed, migrate hoặc sao chép dữ liệu của admin vào frontend.
@@ -141,3 +139,14 @@ NavigationProtectionProvider chỉ gắn cảnh báo beforeunload khi có dữ l
 ## Kiểm tra
 
 Xem [TESTING.md](TESTING.md). Cần tài khoản học viên đã được admin duyệt để kiểm tra thao tác ghi thực tế, email và trận PK hai người; AI cần cấu hình nhà cung cấp trên backend. Các kiểm tra tự động không tạo tài khoản, ghi điểm hoặc thay đổi database thật.
+
+
+## Game PK khi deploy trên Vercel
+
+PK dùng trực tiếp origin của `HSK_API_URL`, giữ namespace `/game`. Ví dụ `HSK_API_URL=https://api.tricehsk.id.vn/api/v1` sẽ kết nối Socket.IO tới `https://api.tricehsk.id.vn/game`. Cấu hình local tương ứng là `http://localhost:3001/api/v1` và `http://localhost:3001/game`. Dùng các biến môi trường API, admin và media hiện có; không có biến riêng cho PK.
+
+Mỗi SSE request sở hữu một socket để nhận sự kiện; mỗi POST mở socket riêng, đợi `pk_connected`, gửi lệnh và đóng sau khi có xác nhận. Backend đã hỗ trợ nhiều socket cho cùng tài khoản và phát sự kiện qua phòng tài khoản, nên GET/POST có thể chạy trên các Function khác nhau. Không chia sẻ socket giữa request bằng Map/global. JWT vẫn được giữ ở phía server; không thêm endpoint backend.
+
+Route PK đặt `maxDuration = 300`. SSE vẫn chịu giới hạn thời gian của Vercel; khi luồng đóng sau thời gian dài hoặc do mạng, màn PK hiện nút Kết nối lại. Hai người cần dùng hai tài khoản khác nhau, chọn cùng HSK và cùng bấm tìm trận. Khi kết nối lại, mã phòng đã lưu được chuyển qua socket của lệnh để khôi phục trận.
+
+Sau khi sửa source, cần commit/push bản sửa và deploy từ commit mới. Giữ `HSK_API_URL` production đang dùng; không cần thêm biến môi trường trên Vercel.

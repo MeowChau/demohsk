@@ -48,7 +48,7 @@ export function PkArena({ userId, level }: { userId: number; level: number }) {
         const payload = envelope.payload || {};
         if (envelope.event === "pk_connected") {
           setReady(true); setOnline(Number(payload.count));
-          if (savedRoom) { savedRoom = ""; void post("find_match").catch(cause => setError(cause.message)); }
+          if (savedRoom) { const roomId = savedRoom; savedRoom = ""; void post("find_match", { roomId }).catch(cause => setError(cause.message)); }
           return;
         }
         if (envelope.event === "online_count_update") { if (Number(payload.hskLevel) === level) setOnline(Number(payload.count)); return; }

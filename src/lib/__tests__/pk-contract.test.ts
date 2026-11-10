@@ -7,11 +7,15 @@ describe("PK gateway command contract", () => {
   it.each([
     { event: "admin_update", hskLevel: 1 }, { event: "find_match", hskLevel: 10 },
     { event: "player_ready", hskLevel: 1, roomId: "../other-room" },
+    { event: "find_match", hskLevel: 1, roomId: "../other-room" },
     { event: "submit_answer", hskLevel: 1, roomId, questionId: 0, optionId: "A" },
     { event: "submit_answer", hskLevel: 1, roomId, questionId: 1, optionId: "" },
   ])("rejects malformed or unauthorized commands %j", command => expect(() => parsePkCommand(command)).toThrow());
   it("allows finding and cancelling matches without fabricated room IDs", () => {
     expect(parsePkCommand({ event: "find_match", hskLevel: 1 })).toEqual({ event: "find_match", hskLevel: 1 });
     expect(parsePkCommand({ event: "cancel_match", hskLevel: 1 })).toEqual({ event: "cancel_match", hskLevel: 1 });
+  });
+  it("preserves a validated resume room without forwarding caller-supplied identity", () => {
+    expect(parsePkCommand({ event: "find_match", hskLevel: 1, roomId, userId: 999 })).toEqual({ event: "find_match", hskLevel: 1, roomId });
   });
 });

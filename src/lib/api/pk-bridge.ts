@@ -1,74 +1,108 @@
 import "server-only";
-import { createHash } from "node:crypto";
-import { io, type Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { backendUrl } from "./config";
 import type { PkCommand } from "@/types/pk";
 
 type Envelope = { event: string; payload: unknown };
-type Bridge = { socket: Socket; listeners: Set<(message: Envelope) => void>; ready: boolean; connected?: Envelope; match?: Envelope; latest?: Envelope; cleanup?: NodeJS.Timeout };
-const globalBridge = globalThis as typeof globalThis & { hskPkConnections?: Map<string, Bridge> };
-const connections = globalBridge.hskPkConnections ||= new Map<string, Bridge>();
-const keyFor = (token: string, level: number) => createHash("sha256").update(token + ":" + level).digest("hex");
+type Reply = { ok: boolean; message?: string };
 const events = new Set(["pk_connected", "online_count_update", "match_found", "player_ready_update", "game_started", "turn_changed", "answer_result", "game_finished", "match_cancelled", "exception"]);
 
-function connection(token: string, level: number, roomId?: string) {
-  const key = keyFor(token, level);
-  let bridge = connections.get(key);
-  if (bridge) { if (bridge.cleanup) clearTimeout(bridge.cleanup); return { key, bridge }; }
-  if (connections.size >= 200) throw new Error("Phòng PK đang bận. Vui lòng thử lại sau.");
-  const socket = io(process.env.HSK_SOCKET_URL || new URL("/game", backendUrl()).toString(), { auth: { token }, query: { hskLevel: level, ...(roomId ? { roomId } : {}) }, transports: ["websocket"], timeout: 10000, reconnectionAttempts: 3, autoConnect: false });
-  bridge = { socket, listeners: new Set(), ready: false };
-  const current = bridge;
-  const publish = (message: Envelope) => { for (const listener of [...current.listeners]) listener(message); };
-  socket.onAny((event: string, payload: unknown) => {
-    if (!events.has(event)) return;
-    const message = { event, payload };
-    if (event === "pk_connected") { current.ready = true; current.connected = message; }
-    if (event === "match_found" || event === "game_started") current.match = message;
-    if (["player_ready_update", "turn_changed", "answer_result", "game_finished", "match_cancelled"].includes(event)) current.latest = message;
-    if (event === "match_found") current.latest = undefined;
-    publish(message);
+function createSocket(token: string, level: number, roomId?: string) {
+  return io(new URL("/game", backendUrl()).toString(), {
+    auth: { token },
+    query: { hskLevel: level, ...(roomId ? { roomId } : {}) },
+    transports: ["websocket"],
+    timeout: 10000,
+    reconnection: false,
+    forceNew: true,
+    autoConnect: false,
   });
-  socket.on("disconnect", () => { current.ready = false; publish({ event: "connection_closed", payload: { message: "Kết nối PK đã đóng. Bạn có thể kết nối lại để tiếp tục." } }); });
-  socket.on("connect_error", () => { current.ready = false; publish({ event: "connection_error", payload: { message: "Chưa kết nối được phòng PK. Vui lòng thử lại." } }); });
-  connections.set(key, current);
-  return { key, bridge: current };
 }
 
+// Vercel may route GET and POST to separate instances. Each HTTP request owns
+// its socket instead of depending on another request's process memory.
 export function pkEventStream(token: string, level: number, signal: AbortSignal, roomId?: string) {
-  const { key, bridge } = connection(token, level, roomId);
+  const socket = createSocket(token, level, roomId);
   const encoder = new TextEncoder();
   let detach = () => {};
   return new ReadableStream<Uint8Array>({
     start(controller) {
       let closed = false;
-      const send = (message: Envelope) => { if (!closed) try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`)); } catch { detach(); } };
-      const heartbeat = setInterval(() => { if (!closed) try { controller.enqueue(encoder.encode(": keep-alive\n\n")); } catch { detach(); } }, 15000);
-      heartbeat.unref();
+      let heartbeat: NodeJS.Timeout | undefined;
       detach = () => {
         if (closed) return;
-        closed = true; clearInterval(heartbeat); bridge.listeners.delete(send); signal.removeEventListener("abort", detach);
-        if (!bridge.listeners.size) {
-          bridge.cleanup = setTimeout(() => { if (!bridge.listeners.size && connections.get(key) === bridge) { connections.delete(key); bridge.socket.disconnect(); } }, 3000);
-          bridge.cleanup.unref();
-        }
+        closed = true;
+        clearInterval(heartbeat);
+        signal.removeEventListener("abort", detach);
+        socket.offAny();
+        socket.removeAllListeners();
+        socket.disconnect();
         try { controller.close(); } catch { /* Stream already cancelled. */ }
       };
+      const send = (message: Envelope) => {
+        if (!closed) try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`)); } catch { detach(); }
+      };
       if (signal.aborted) { detach(); return; }
-      bridge.listeners.add(send); signal.addEventListener("abort", detach, { once: true });
+      socket.onAny((event: string, payload: unknown) => {
+        if (events.has(event)) send({ event, payload });
+      });
+      socket.on("disconnect", () => {
+        send({ event: "connection_closed", payload: { message: "Kết nối PK đã đóng. Bạn có thể kết nối lại để tiếp tục." } });
+        detach();
+      });
+      socket.on("connect_error", () => {
+        send({ event: "connection_error", payload: { message: "Chưa kết nối được phòng PK. Vui lòng thử lại." } });
+        detach();
+      });
+      signal.addEventListener("abort", detach, { once: true });
+      heartbeat = setInterval(() => {
+        if (!closed) try { controller.enqueue(encoder.encode(": keep-alive\n\n")); } catch { detach(); }
+      }, 15000);
+      heartbeat.unref();
       send({ event: "connecting", payload: null });
-      if (bridge.connected && bridge.ready && bridge.socket.connected) send(bridge.connected);
-      if (bridge.match) send(bridge.match);
-      if (bridge.latest) send(bridge.latest);
-      if (!bridge.socket.connected) bridge.socket.connect();
+      socket.connect();
     },
     cancel() { detach(); },
   });
 }
 
-export async function sendPkCommand(token: string, command: PkCommand): Promise<{ ok: boolean; message?: string }> {
-  const bridge = connections.get(keyFor(token, command.hskLevel));
-  if (!bridge?.ready || !bridge.socket.connected || !bridge.listeners.size) throw new Error("Chưa kết nối phòng PK. Bấm Kết nối lại rồi thử lại.");
-  const payload = command.event === "submit_answer" ? { roomId: command.roomId, questionId: command.questionId, optionId: command.optionId } : command.event === "player_ready" ? { roomId: command.roomId } : {};
-  return bridge.socket.timeout(10000).emitWithAck(command.event, payload) as Promise<{ ok: boolean; message?: string }>;
+export function sendPkCommand(token: string, command: PkCommand): Promise<Reply> {
+  // The backend already broadcasts committed events to every socket in the
+  // authenticated account-room, including the independent SSE connection.
+  const socket = createSocket(token, command.hskLevel, command.roomId);
+  const payload = command.event === "submit_answer"
+    ? { roomId: command.roomId, questionId: command.questionId, optionId: command.optionId }
+    : command.event === "player_ready" ? { roomId: command.roomId } : {};
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (error?: Error, reply?: Reply) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      socket.offAny();
+      socket.removeAllListeners();
+      socket.disconnect();
+      if (error) reject(error);
+      else resolve(reply!);
+    };
+    const deadline = setTimeout(() => finish(new Error("Máy chủ PK chưa phản hồi. Vui lòng thử lại.")), 20000);
+    deadline.unref();
+    // Wait for authentication and Redis presence, not just transport connection.
+    socket.once("pk_connected", () => {
+      void socket.timeout(10000).emitWithAck(command.event, payload).then((value: unknown) => {
+        const reply = value as { ok?: unknown; message?: unknown } | null;
+        if (!reply || typeof reply.ok !== "boolean") {
+          finish(new Error("Máy chủ PK trả về phản hồi không hợp lệ."));
+          return;
+        }
+        finish(undefined, { ok: reply.ok, ...(typeof reply.message === "string" ? { message: reply.message } : {}) });
+      }).catch(() => finish(new Error("Chưa nhận được xác nhận từ máy chủ PK. Vui lòng thử lại.")));
+    });
+    socket.once("connect_error", () => finish(new Error("Chưa kết nối được phòng PK. Vui lòng thử lại.")));
+    socket.once("disconnect", () => finish(new Error("Kết nối PK bị gián đoạn. Vui lòng thử lại.")));
+    socket.once("exception", (value: { message?: unknown } | null) => finish(new Error(
+      typeof value?.message === "string" ? value.message : "Máy chủ chưa chấp nhận thao tác PK.",
+    )));
+    socket.connect();
+  });
 }

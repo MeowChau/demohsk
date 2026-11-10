@@ -5,6 +5,8 @@ import { pkEventStream, sendPkCommand } from "@/lib/api/pk-bridge";
 import { parsePkCommand, validPkRoom } from "@/types/pk";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Allow the SSE request to span a complete PK match on Vercel Hobby/Pro.
+export const maxDuration = 300;
 async function identity(request: NextRequest): Promise<{ token: string } | { response: NextResponse }> {
   try {
     const user = await getApiUser();
