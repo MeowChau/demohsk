@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiAction } from "@/lib/api/client";
-import { apiRole } from "@/lib/api/config";
+import { ApiError, apiAction } from "@/lib/api/client";
+import { loginDestination } from "@/lib/auth/login-destination";
+import { GoogleSignIn } from "@/components/auth/google-sign-in";
+import { AccountApprovalDialog } from "@/components/auth/account-approval-dialog";
 import type { HskUser } from "@/lib/api/types";
 import { loginSchema } from "@/lib/validations/auth";
 import { useValidatedForm } from "@/hooks/use-validated-form";
@@ -55,11 +57,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [approvalPending, setApprovalPending] = useState(false);
   const validation = useValidatedForm(loginSchema);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) return;
+    if (loading || googleBusy) return;
     setError("");
     const values = validation.validateForm(event.currentTarget);
     if (!values) return;
@@ -77,20 +81,14 @@ export default function LoginPage() {
         return;
       }
 
-      const actualRole = apiRole(user);
-
-
-      if (actualRole === "admin") {
-        router.push("/admin");
-      } else if (actualRole === "teacher") {
-        router.push("/teacher");
-      } else {
-        const target = searchParams.get("redirectTo") || "/dashboard";
-        router.push(target.startsWith("/") && !target.startsWith("//") && !target.includes("\\") ? target : "/dashboard");
-      }
+      router.push(loginDestination(user, searchParams.get("redirectTo")));
 
       router.refresh();
     } catch (error) {
+      if (error instanceof ApiError && error.code === "accountPendingApproval") {
+        setApprovalPending(true);
+        return;
+      }
       validation.applyServerError(error);
       setError(error instanceof Error ? error.message : "Không đăng nhập được. Vui lòng thử lại.");
     } finally {
@@ -175,12 +173,13 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || googleBusy}
           className="flex h-12 w-full items-center justify-center rounded-xl border-3 border-ink bg-teal px-5 text-sm font-black text-white shadow-hard transition-all duration-200 hover:shadow-brutalist focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>
       </form>
+      <GoogleSignIn disabled={loading} onBusyChange={setGoogleBusy} />
 
       <p className="mt-7 text-center text-sm text-slate">
          Chưa có tài khoản TriceHSK? {" "}
@@ -190,6 +189,7 @@ export default function LoginPage() {
         >
            Đăng ký tài khoản </Link>
       </p>
+      <AccountApprovalDialog open={approvalPending} onClose={() => setApprovalPending(false)} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { LayoutDashboard, BookOpen, Languages, Headphones, Trophy, FileText, Gamepad2, BarChart3 } from "lucide-react";
+import { LayoutDashboard, BookOpen, Languages, Headphones, Trophy, FileText, Gamepad2, BarChart3, History } from "lucide-react";
 
 export const STUDENT_NAV = [
   { label: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
@@ -9,6 +9,7 @@ export const STUDENT_NAV = [
   { label: "Game PK", href: "/games", icon: Gamepad2 },
   { label: "Xếp hạng", href: "/leaderboard", icon: BarChart3 },
   { label: "Thành tích", href: "/rewards", icon: Trophy },
+  { label: "Lịch sử bài làm", href: "/history", icon: History },
 ];
 
 export const PUBLIC_NAV = [

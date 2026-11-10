@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     "q": "Bài tự luyện có lưu điểm và lịch sử không?",
-    "a": "Hiện bạn có thể làm bài và tải câu trả lời về máy. Phần chấm điểm và lịch sử bài thi trong tài khoản chưa được hệ thống hỗ trợ."
+    "a": "Sau khi nộp và lưu thành công, kết quả được ghi vào Lịch sử bài làm theo tài khoản. Bạn có thể xem lại câu trả lời, tỷ lệ đúng và kết quả từng phần; luyện nói và luyện nét có chỉ số đánh giá riêng."
   },
   {
     "q": "Làm sao để ôn từ vựng?",

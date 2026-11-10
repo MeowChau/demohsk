@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api/client";
-import type { SubmittedLearningScore, LearningScoreSubmission } from "@/lib/learning-scores";
+import type { SubmittedLearningScore, LearningScoreSubmission, LearningAttemptContext } from "@/lib/learning-scores";
+import { historyHref, historyResultHref } from "@/lib/learning-history";
 import { Flag, LayoutGrid } from "lucide-react";
 import { SKILL_LABELS } from "@/lib/hsk";
 import type { TestWithQuestions, Skill, Question } from "@/types/assessment";
@@ -48,12 +50,18 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(() => Object.values(data.questionsBySkill).flatMap(items => items || [])[0]?.question.questionid ?? null);
   const [notice, setNotice] = useState("");
   const [result, setResult] = useState<PracticeScore | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const showQuestions = !result || reviewing;
   const [savedScore, setSavedScore] = useState<SubmittedLearningScore | null>(null);
   const [savingScore, setSavingScore] = useState(false);
   const [scoreError, setScoreError] = useState("");
   const scoreBusy = useRef(false);
   const scorePayload = useRef<LearningScoreSubmission | null>(null);
   const scoreAttemptId = useRef(globalThis.crypto?.randomUUID?.() || "attempt-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2));
+  const attemptStartedAt = useRef(Date.now());
+  const sourceReference = /^(exam|set)-(\d+)$/.exec(testid);
+  const attemptContext: LearningAttemptContext | undefined = recordScores && sourceReference
+    ? { attemptId: scoreAttemptId.current, kind: sourceReference[1] as "exam" | "set", sourceId: Number(sourceReference[2]) } : undefined;
   const isExam = /^exam-/.test(testid);
 
   const [secondsLeft, setSecondsLeft] = useState(data.test.duration * 60);
@@ -88,7 +96,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
   }, [result]);
 
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
+    if (!showQuestions || typeof IntersectionObserver === "undefined") return;
     const visible = new Set<HTMLElement>();
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
@@ -102,7 +110,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     }, { rootMargin: "-160px 0px -45% 0px", threshold: 0 });
     formRef.current?.querySelectorAll<HTMLElement>("[data-practice-question]").forEach(element => observer.observe(element));
     return () => observer.disconnect();
-  }, [questions, attemptVersion]);
+  }, [questions, attemptVersion, showQuestions]);
 
   useEffect(() => {
     const resumeScrollTracking = () => { keepSelectedQuestion.current = false; };
@@ -216,9 +224,10 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     return Boolean(answers[question.questionid]?.trim());
   }).length;
   const unfinishedCount = questions.length - completedQuestionCount;
-  const hasUnsavedChanges = !result && (workedQuestionIds.size > 0 || hasSpeakingWorkInProgress
+  const hasUnpersistedResult = Boolean(result && recordScores && scorePayload.current && !savedScore);
+  const hasUnsavedChanges = hasUnpersistedResult || (!result && (workedQuestionIds.size > 0 || hasSpeakingWorkInProgress
     || markedCount > 0 || speakingValues.length > 0
-    || (data.test.duration > 0 && secondsLeft < data.test.duration * 60));
+    || (data.test.duration > 0 && secondsLeft < data.test.duration * 60)));
 
   useBlockNavigation(hasUnsavedChanges, proceed => {
     pendingLeave.current = proceed;
@@ -237,7 +246,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     try {
       const saved = await apiFetch<SubmittedLearningScore>("learning-scores/submit", { method: "POST", body: JSON.stringify(payload) });
       setSavedScore(saved); setResult(saved);
-      setNotice("Đã cập nhật kết quả theo tài khoản.");
+      setNotice(saved.historyId ? "Đã lưu bài làm vào lịch sử theo tài khoản." : "Đã cập nhật điểm tổng hợp theo tài khoản.");
       window.dispatchEvent(new Event("hsk-scores-updated"));
     } catch (cause) {
       setScoreError(cause instanceof ApiError && cause.status === 404 ? "Backend chưa được cập nhật chức năng tính điểm này. Câu trả lời vẫn còn trên trang để thử lại."
@@ -248,6 +257,8 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
   function finishAttempt() {
     if (result || scoreBusy.current || activeSpeaking.current.size) return;
     closeConfirmation();
+    formRef.current?.querySelectorAll("audio").forEach(audio => audio.pause());
+    setReviewing(false);
     setNotice("");
     const separatelyTracked = new Set(questions
       .filter(item => item.question.skill === "Speaking" || writingPractice(item.question) !== null)
@@ -256,6 +267,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     const reference = /^(exam|set)-(\d+)$/.exec(testid);
     if (recordScores && reference) {
       const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers,
+        startedAt: new Date(attemptStartedAt.current).toISOString(), durationSeconds: Math.min(604800, Math.max(0, Math.floor((Date.now() - attemptStartedAt.current) / 1000))),
         writingProgress: Object.fromEntries(Object.entries(handwriting).map(([id, progress]) => [id, { completedPositions: progress.completedPositions,
           ...(strokeStats[id] || { correctStrokes: 0, totalStrokes: 0, mistakes: 0 }) }])) };
       scorePayload.current = payload; void persistScore(payload);
@@ -313,6 +325,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     if (scoreBusy.current) return;
     setSavedScore(null); setScoreError(""); scorePayload.current = null;
     scoreAttemptId.current = globalThis.crypto?.randomUUID?.() || "attempt-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+    attemptStartedAt.current = Date.now();
     setAnswers({});
     setHandwriting({});
     setStrokeStats({});
@@ -327,6 +340,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     setAttemptVersion(version => version + 1);
     setNotice("");
     setResult(null);
+    setReviewing(false);
     setSecondsLeft(data.test.duration * 60);
     autoSubmitted.current = false;
   }
@@ -355,6 +369,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
         onToggleBookmark={() => toggleBookmark(question.questionid)}
         submitted={Boolean(result)}
         persistScores={recordScores}
+        attemptContext={attemptContext}
       />
     );
   }
@@ -398,28 +413,38 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{workedQuestionIds.size}/{questions.length} câu đã làm</p>
           <p className={"mt-0.5 text-xs " + (secondsLeft <= 60 && data.test.duration > 0 && !result ? "font-semibold text-danger" : "text-slate")}>
-            {data.test.duration > 0 ? mm + ":" + ss : result ? "Đã nộp bài" : "Tự luyện"}
+            {result ? "Đã nộp bài" : data.test.duration > 0 ? mm + ":" + ss : "Tự luyện"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" aria-label="Mở danh sách câu hỏi" title="Mở danh sách câu hỏi"
+          {showQuestions && <button type="button" aria-label="Mở danh sách câu hỏi" title="Mở danh sách câu hỏi"
             aria-expanded={questionMenuOpen} aria-controls="practice-question-menu"
             onClick={() => setQuestionMenuOpen(true)}
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-mist text-brand hover:bg-brand/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand lg:hidden">
             <LayoutGrid size={20} aria-hidden="true" />
-          </button>
-          {result ? <button type="button" className="hsk-button" disabled={savingScore} onClick={resetAttempt}>Làm lại</button>
+          </button>}
+          {result ? <button type="button" className="hsk-button" disabled={savingScore || hasUnpersistedResult} onClick={resetAttempt}>Làm lại</button>
             : <button type="submit" className="hsk-button" disabled={hasSpeakingWorkInProgress}>Nộp bài</button>}
         </div>
       </div>
 
-      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className={showQuestions ? "grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_19rem]" : "min-w-0"}>
         <div className="flex min-w-0 flex-col gap-6">
 
 
       {result && (
         <section ref={resultRef} tabIndex={-1} aria-label="Kết quả luyện tập" className="hsk-panel flex scroll-mt-24 flex-col gap-4 outline-none">
           <h2 className="font-display text-lg font-semibold text-ink">Kết quả luyện tập</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            {savedScore?.historyId ? <>
+              <p className="text-sm font-medium text-success">Đã lưu vào lịch sử</p>
+              <Link className="hsk-button-secondary" href={historyResultHref(savedScore.historyId)}>Xem lại bài làm</Link>
+              <Link className="text-sm font-medium text-brand" href={historyHref({ kind: sourceReference?.[1] || "", sourceId: sourceReference?.[2] || "" })}>Lịch sử bài này →</Link>
+            </> : !savingScore && <button type="button" className="hsk-button-secondary" aria-expanded={reviewing}
+              aria-controls="practice-attempt-questions" onClick={() => setReviewing(current => !current)}>
+              {reviewing ? "Ẩn chi tiết bài làm" : "Xem lại bài làm"}
+            </button>}
+          </div>
           {savingScore && <p className="hsk-notice" role="status">Đang chấm theo đáp án và cập nhật điểm kỹ năng…</p>}
           {scoreError && <div className="rounded-lg border border-danger/20 bg-danger-soft p-3 text-sm text-danger" role="alert"><p>{scoreError}</p><button type="button" className="hsk-button-secondary mt-3" disabled={savingScore} onClick={() => { if (scorePayload.current) void persistScore(scorePayload.current); }}>Thử lưu điểm lại</button></div>}
           {savedScore && isExam && <div className="rounded-lg border border-brand/20 bg-brand/5 p-4">
@@ -467,6 +492,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
         </section>
       )}
 
+      <div id="practice-attempt-questions" hidden={!showQuestions} className={showQuestions ? "flex min-w-0 flex-col gap-6" : "hidden"}>
       {(Object.entries(data.questionsBySkill) as [Skill, typeof data.questionsBySkill[Skill]][]).map(([skill, items]) => {
         const byPassage = new Map<string, NonNullable<typeof items>>();
         const noPassage: NonNullable<typeof items> = [];
@@ -499,6 +525,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
           </section>
         );
       })}
+      </div>
 
       {notice && <p role="status" className="hsk-notice">{notice}</p>}
       <div className="flex flex-wrap gap-3">
@@ -506,9 +533,9 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
       </div>
       {hasSpeakingWorkInProgress && <p className="text-xs text-slate" role="status">Hoàn tất ghi âm và nhận diện giọng nói để nộp bài.</p>}
         </div>
-        <QuestionNavigator groups={navigationGroups} activeId={activeQuestionId} answeredCount={workedQuestionIds.size}
+        {showQuestions && <QuestionNavigator groups={navigationGroups} activeId={activeQuestionId} answeredCount={workedQuestionIds.size}
           totalCount={questions.length} markedCount={markedCount} reviewMode={Boolean(result)}
-          open={questionMenuOpen} onOpenChange={setQuestionMenuOpen} onSelect={selectQuestion} />
+          open={questionMenuOpen} onOpenChange={setQuestionMenuOpen} onSelect={selectQuestion} />}
       </div>
     </form>
     <ConfirmationDialog open={confirmation !== null}
@@ -531,7 +558,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
 }
 
 function QuestionBlock({ number, question, options, answer, onAnswerChange, onHandwritingProgress, onStrokeProgress, strokeStats,
-  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores }: {
+  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext }: {
   number: number;
   question: Question;
   options: Option[];
@@ -552,6 +579,7 @@ function QuestionBlock({ number, question, options, answer, onAnswerChange, onHa
   grade?: PracticeScore["questions"][number];
   submitted: boolean;
   persistScores: boolean;
+  attemptContext?: LearningAttemptContext;
 }) {
   const [sampleAudioError, setSampleAudioError] = useState("");
   const handwriting = writingPractice(question);
@@ -600,7 +628,7 @@ function QuestionBlock({ number, question, options, answer, onAnswerChange, onHa
       ))}
       {showIndividualAudio && question.audio_url && !handwriting && question.skill !== "Speaking" && <audio controls preload="none" src={publicMedia(question.audio_url) || undefined} className="mb-3 w-full" onPlay={event => pauseOtherPracticeAudio(event.currentTarget)} />}
       {question.skill === "Speaking" ? (
-        <SpeakingRecorder questionId={persistScores ? question.questionid : undefined} referenceText={question.speechText || ""} assessment={speechAssessment} disabled={submitted}
+        <SpeakingRecorder questionId={persistScores ? question.questionid : undefined} attemptContext={attemptContext} referenceText={question.speechText || ""} assessment={speechAssessment} disabled={submitted}
           locked={recordingLocked} onAssessmentChange={onSpeakingAssessmentChange} onBusyChange={onSpeakingBusyChange}
           onRecordingChange={onRecordingChange} />
       ) : handwriting ? (

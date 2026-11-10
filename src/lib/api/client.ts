@@ -3,6 +3,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public fieldErrors: Record<string, string> = {},
+    public code?: string,
   ) {
     super(message);
   }
@@ -56,6 +57,7 @@ export function errorMessage(body: unknown, status: number): string {
     "Pronunciation assessment is not configured": "Chức năng chấm phát âm chưa được cấu hình. Vui lòng thử lại sau.",
     "Failed to process writing assessment": "Chưa chấm được bài viết. Vui lòng thử lại sau.",
     accountNotActive: "Tài khoản chưa được kích hoạt hoặc đang chờ duyệt. Vui lòng liên hệ quản trị viên.",
+    wrongToken: "Thông tin đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
     incorrectOldPassword: "Mật khẩu hiện tại chưa đúng.",
     missingOldPassword: "Nhập mật khẩu hiện tại để xác nhận.",
     emailExists: "Email này đã được sử dụng.",
@@ -106,7 +108,7 @@ export async function apiFetch<T>(
   const data: unknown =
     response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok)
-    throw new ApiError(errorMessage(data, response.status), response.status, backendFieldErrors(data));
+    throw new ApiError(errorMessage(data, response.status), response.status, backendFieldErrors(data), typeof record(data)?.code === "string" ? record(data)!.code as string : undefined);
   return data as T;
 }
 export async function apiAction<T>(

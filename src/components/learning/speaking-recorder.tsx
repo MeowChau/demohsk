@@ -6,9 +6,11 @@ import { apiFetch } from "@/lib/api/client";
 import { encodeStudyWav } from "@/lib/audio-wav";
 import { pronunciationResultSchema } from "@/lib/validations/assessment";
 import type { PronunciationAssessment } from "@/lib/api/types";
+import type { LearningAttemptContext } from "@/lib/learning-scores";
 
-export function SpeakingRecorder({ questionId, referenceText, assessment, disabled, locked, onAssessmentChange, onBusyChange, onRecordingChange }: {
+export function SpeakingRecorder({ questionId, attemptContext, referenceText, assessment, disabled, locked, onAssessmentChange, onBusyChange, onRecordingChange }: {
   questionId?: string;
+  attemptContext?: LearningAttemptContext;
   referenceText: string;
   assessment: PronunciationAssessment | null;
   disabled: boolean;
@@ -98,6 +100,11 @@ export function SpeakingRecorder({ questionId, referenceText, assessment, disabl
       form.set("audio", audio);
       form.set("referenceText", referenceText.trim());
       if (questionId) form.set("questionId", questionId);
+      if (questionId && attemptContext) {
+        form.set("attemptId", attemptContext.attemptId);
+        form.set("kind", attemptContext.kind);
+        form.set("sourceId", String(attemptContext.sourceId));
+      }
       const response = await apiFetch<unknown>("ai/speaking/pronunciation-assessment", {
         method: "POST", body: form, signal: controller.signal,
       });

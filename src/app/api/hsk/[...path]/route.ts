@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ACCESS_COOKIE, REFRESH_COOKIE, backendEndpoint } from "@/lib/api/config";
+import { errorMessage } from "@/lib/api/client";
+import { googleClientId, GOOGLE_NONCE_COOKIE, matchesGoogleNonce } from "@/lib/auth/google";
 import {
   clearSession,
   refreshSession,
@@ -16,11 +18,13 @@ const allowed: Record<string, RegExp[]> = {
     /^exams(?:\/\d+)?$/,
     /^analytics\/dashboard$/,
     /^learning-scores$/,
+    /^learning-scores\/history(?:\/[0-9a-f-]{36})?$/i,
     /^leaderboard\/streak$/,
     /^game\/offline\/(words|top-scores)$/,
     /^game\/pk\/history$/,
   ],
   POST: [
+    /^auth\/google\/login$/,
     /^auth\/(email\/(login|register|confirm|resend|confirm\/new)|forgot\/password|reset\/password|logout)$/,
     /^analytics\/(ping|vocabulary-progress)$/,
     /^learning-scores\/submit$/,
@@ -35,12 +39,16 @@ async function handle(
   context: { params: Promise<{ path: string[] }> },
 ) {
   const path = (await context.params).path.join("/");
+  const isGoogleLogin = request.method === "POST" && path === "auth/google/login";
+  const isLogin = request.method === "POST" && (path === "auth/email/login" || isGoogleLogin);
   if (!allowed[request.method]?.some((rule) => rule.test(path)))
     return NextResponse.json(
       { message: "API này không dành cho học viên." },
       { status: 404 },
     );
   const origin = request.headers.get("origin");
+  if (isGoogleLogin && (origin !== request.nextUrl.origin || !request.headers.get("content-type")?.toLowerCase().startsWith("application/json")))
+    return NextResponse.json({ message: "Nguồn yêu cầu đăng nhập không hợp lệ." }, { status: 403 });
   if (request.method !== "GET" && origin && origin !== request.nextUrl.origin)
     return NextResponse.json(
       { message: "Nguồn yêu cầu không hợp lệ." },
@@ -64,6 +72,14 @@ async function handle(
         { message: "Dữ liệu quá lớn." },
         { status: 413 },
       );
+    if (isGoogleLogin) {
+      if (!googleClientId()) return NextResponse.json({ message: "Đăng nhập Google hiện chưa được bật. Bạn có thể đăng nhập bằng email." }, { status: 503 });
+      let credential: unknown;
+      try { credential = JSON.parse(String(body)).idToken; } catch { /* Reject malformed input below. */ }
+      if (!matchesGoogleNonce(credential, request.cookies.get(GOOGLE_NONCE_COOKIE)?.value))
+        return NextResponse.json({ message: "Phiên đăng nhập Google đã hết hạn. Vui lòng chọn tài khoản Google lại.", code: "googleChallengeExpired" }, { status: 403 });
+      body = JSON.stringify({ idToken: credential });
+    }
     const send = (token?: string) =>
       fetch(`${backendEndpoint(path)}${request.nextUrl.search}`, {
         method: request.method,
@@ -75,9 +91,10 @@ async function handle(
         cache: "no-store",
         signal: AbortSignal.timeout(path.startsWith("ai/") ? 45000 : 20000),
       });
-    let upstream = await send(request.cookies.get(ACCESS_COOKIE)?.value);
+    let upstream = await send(isLogin ? undefined : request.cookies.get(ACCESS_COOKIE)?.value);
     if (
       upstream.status === 401 &&
+      !isLogin &&
       !path.startsWith("auth/email/") &&
       request.cookies.get(REFRESH_COOKIE)?.value
     ) {
@@ -92,10 +109,29 @@ async function handle(
         : await upstream
             .json()
             .catch(() => ({ message: "Backend trả dữ liệu không hợp lệ." }));
-    if (path === "auth/email/login" && upstream.ok) {
+    if (isLogin && upstream.ok) {
       const login = data as ApiSession & { user: unknown };
+      if (isGoogleLogin) {
+        const user = login?.user as { id?: unknown; status?: { id?: unknown } } | undefined;
+        if (!user?.id || Number(user.status?.id) !== 1) {
+          const response = NextResponse.json({ message: errorMessage({ errors: { status: "accountNotActive" } }, 422), code: "accountNotActive" }, { status: 422 });
+          clearSession(response);
+          return response;
+        }
+        if (typeof login.token !== "string" || !login.token || typeof login.refreshToken !== "string" || !login.refreshToken || !Number.isFinite(login.tokenExpires))
+          return NextResponse.json({ message: "Chưa xác thực được tài khoản Google. Vui lòng thử lại." }, { status: 502 });
+      }
       renewed = login;
       data = { user: login.user };
+    }
+    if (isGoogleLogin && !upstream.ok) {
+      const failure = data as { code?: unknown; errors?: { status?: unknown } } | null;
+      if (upstream.status === 422 && failure?.code === "accountPendingApproval" && failure.errors?.status === "accountNotActive") {
+        const response = NextResponse.json({ status: "pending_approval", message: "Tài khoản của bạn đang chờ quản trị viên duyệt. Sau khi được duyệt, bạn có thể đăng nhập lại bằng Google." }, { status: 202, headers: { "Cache-Control": "no-store" } });
+        clearSession(response);
+        return response;
+      }
+      data = { message: errorMessage(data, upstream.status), ...(failure?.errors?.status === "accountNotActive" ? { code: "accountNotActive" } : {}) };
     }
     if (request.method === "POST" && path === "learning-scores/submit" && upstream.ok)
       revalidatePath("/", "layout");
@@ -104,6 +140,10 @@ async function handle(
         ? new NextResponse(null, { status: 204 })
         : NextResponse.json(data, { status: upstream.status });
     response.headers.set("Cache-Control", "no-store");
+    if (isGoogleLogin) {
+      if (upstream.ok && renewed) response.cookies.delete(GOOGLE_NONCE_COOKIE);
+      if (!upstream.ok) clearSession(response);
+    }
     if (renewed) setSession(response, renewed);
     if (
       path === "auth/logout" ||

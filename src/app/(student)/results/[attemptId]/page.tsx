@@ -1,3 +1,20 @@
-import Link from "next/link";
-import { EmptyState } from "@/components/ui/empty-state";
-export default function ResultsPage(){return <div className="flex flex-col gap-6"><h1 className="font-display text-2xl font-semibold text-ink dark:text-white"> Kết quả </h1><EmptyState icon={null} title="Chưa có lịch sử bài thi" body="Bài tự luyện hiện hỗ trợ tải câu trả lời về máy. Kết quả thi chưa được lưu trên tài khoản HSK."/><Link href="/practice" className="text-sm font-semibold text-teal"> Quay lại luyện tập → </Link></div>;}
+import { notFound } from "next/navigation";
+import { requireApiUser, serverApi } from "@/lib/api/server";
+import { ApiError } from "@/lib/api/client";
+import type { AttemptHistoryDetail } from "@/lib/learning-history";
+import { AttemptHistoryReview } from "@/components/learning/attempt-history-review";
+import { PageHeading } from "@/components/ui/catalog";
+
+export const metadata = { title: "Chi tiết bài làm" };
+export default async function ResultsPage({ params, searchParams }: { params: Promise<{ attemptId: string }>; searchParams: Promise<{ filter?: string }> }) {
+  await requireApiUser();
+  const { attemptId } = await params;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(attemptId)) notFound();
+  const detail = await serverApi<AttemptHistoryDetail>("learning-scores/history/" + attemptId).catch(error => {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    if (error instanceof ApiError && error.status >= 500) return null;
+    throw error;
+  });
+  if (!detail) return <div className="flex flex-col gap-5"><PageHeading title="Chi tiết bài làm" description="Xem lại kết quả đã nộp của bạn." /><p className="hsk-error" role="alert">Chưa tải được bài làm. Bấm Làm mới để thử lại.</p></div>;
+  return <AttemptHistoryReview detail={detail} filter={(await searchParams).filter || "all"} />;
+}

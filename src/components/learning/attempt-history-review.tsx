@@ -1,0 +1,94 @@
+import Link from "next/link";
+import { SKILL_LABELS } from "@/lib/hsk";
+import { publicMedia } from "@/lib/api/config";
+import { attemptHref } from "@/lib/attempt-routes";
+import { HskBadge } from "@/components/ui/catalog";
+import { SharedAudioSection } from "./shared-audio-section";
+import { historyDate, historyDuration, historyHref, historyMetric, historyOptions, historyText, type AttemptHistoryDetail, type HistorySourceItem } from "@/lib/learning-history";
+import type { Skill } from "@/types/assessment";
+
+const normalized = (value: string) => value.normalize("NFKC").replace(/[\s\u200B-\u200D\uFEFF]+/gu, "").replace(/[。.!！?？，、;；:：]+$/gu, "").toLowerCase();
+const audioFor = (item: HistorySourceItem) => publicMedia(historyText(item.question?.payload.audioUrl)) || publicMedia(item.audioUrl) || "";
+function ReviewImage({ url, alt }: { url: string; alt: string }) {
+  const src = publicMedia(url);
+  if (!src) return null;
+  return <a href={src} target="_blank" rel="noreferrer" aria-label={"Mở ảnh: " + alt} className="mt-3 block"><img src={src} alt={alt} className="mx-auto h-auto max-w-full rounded-lg object-contain" loading="lazy" /></a>;
+}
+function QuestionReview({ item, number, detail, sharedAudio }: { item: HistorySourceItem; number: number; detail: AttemptHistoryDetail; sharedAudio: boolean }) {
+  const question = item.question;
+  const payload = question?.payload || {};
+  const id = String(item.id);
+  const grade = detail.result.questions.find(entry => entry.questionId === id);
+  const answer = detail.snapshot.answers[id] || "";
+  const expected = grade?.correctAnswers || [];
+  const options = historyOptions(item);
+  const usesTextAnswer = options.length === 0 || ["FILL_IN_BLANK", "SHORT_ANSWER", "ESSAY"].includes(question?.type || "");
+  const speech = detail.snapshot.speakingAssessments[id];
+  const tracing = detail.snapshot.writingProgress[id];
+  const status = grade?.status;
+  const sourceMetadata = payload.source && typeof payload.source === "object" ? payload.source as Record<string, unknown> : {};
+  const speechTarget = [payload.character, payload.hanzi, sourceMetadata.sourceWord, payload.sentence, payload.text, payload.questionText].find((value): value is string => typeof value === "string" && /\p{Script=Han}/u.test(value));
+  const prompt = historyText(payload.text) || historyText(payload.character) || historyText(payload.hanzi) || historyText(payload.sentence) || "Nội dung câu hỏi chưa có trong bản lưu.";
+  const matches = (option: typeof options[number], value: string) => {
+    const values = [option.id, option.text];
+    if (question?.type === "TRUE_FALSE") {
+      if (normalized(option.id) === "a") values.push("true", "1", "对", "是", "đúng");
+      if (normalized(option.id) === "b") values.push("false", "0", "错", "否", "sai");
+    }
+    return values.some(candidate => normalized(candidate) === normalized(value));
+  };
+  const feedback = speech ? { text: `Điểm phát âm: ${speech.score}/100`, style: "border-brand/20 bg-brand/5 text-brand" }
+    : tracing ? { text: `Đúng ${tracing.correctStrokes}/${tracing.totalStrokes} nét đã mở · ${tracing.mistakes} lượt nét cần cải thiện · hoàn thành ${tracing.completedPositions.length}/${tracing.totalCharacters} chữ.`, style: "border-brand/20 bg-brand/5 text-brand" }
+      : status === "correct" ? { text: "Chính xác", style: "border-success bg-success-soft text-success" }
+        : status === "incorrect" ? { text: "Chưa chính xác", style: "border-danger bg-danger-soft text-danger" }
+          : status === "unanswered" ? { text: "Chưa trả lời", style: "border-brand/20 bg-brand/5 text-brand" }
+            : { text: question?.skill === "SPEAKING" ? "Câu này chưa có kết quả chấm phát âm trong lượt đã lưu." : "Mục tự luyện hoặc chưa chấm tự động.", style: "border-mist bg-paper text-slate" };
+  const correctText = expected.map(value => { const option = options.find(entry => matches(entry, value)); return option ? `${option.id}. ${option.text === option.id ? "" : option.text}`.trim() : value; }).join(" / ");
+  const skill = (question?.skill?.slice(0, 1) + (question?.skill?.slice(1).toLowerCase() || "")) as Skill;
+  return <article id={"history-question-" + id} className="hsk-panel min-w-0 scroll-mt-24">
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-brand">Câu {number}</h3><span className="text-xs text-slate">{SKILL_LABELS[skill] || question?.skill || "Bài luyện"}</span></div>
+    <p className="whitespace-pre-line text-sm font-medium leading-7 text-ink">{prompt}</p>
+    {question?.skill === "SPEAKING" && speechTarget && speechTarget !== prompt && <p lang="zh-CN" className="hsk-hanzi mt-3 text-ink">{historyText(speechTarget)}</p>}
+    {historyText(payload.pinyin) && <p className="mt-2 text-sm text-slate">{historyText(payload.pinyin)}</p>}
+    {(historyText(payload.translation) || historyText(payload.meaning)) && <p className="mt-2 text-sm text-slate">{historyText(payload.translation) || historyText(payload.meaning)}</p>}
+    {[payload.contextImageUrl, payload.imageUrl, payload.continuationImageUrl].map(value => historyText(value)).filter(Boolean).map((url, index) => <ReviewImage key={index} url={url} alt={`Hình câu ${number}, phần ${index + 1}`} />)}
+    {!sharedAudio && audioFor(item) && <audio controls preload="none" src={publicMedia(audioFor(item)) || undefined} aria-label={`Âm thanh câu ${number}`} className="mt-4 w-full" />}
+    {!speech && !tracing && question?.skill !== "SPEAKING" && (!usesTextAnswer ? <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      {options.map(option => {
+        const selected = Boolean(answer) && matches(option, answer);
+        const correct = expected.some(value => matches(option, value));
+        const color = correct ? "border-success bg-success-soft" : selected && status === "incorrect" ? "border-danger bg-danger-soft" : selected ? "border-brand bg-brand/5" : "border-mist";
+        return <div key={option.id} className={`min-w-0 rounded-lg border p-4 text-sm text-ink ${color}`} aria-label={`Đáp án ${option.id}${selected ? ", đã chọn" : ""}${correct ? ", đúng" : ""}`}>
+          <div className="flex items-start gap-3"><span aria-hidden="true" className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? "border-brand" : "border-slate-soft"}`}>{selected && <span className="h-2 w-2 rounded-full bg-brand" />}</span><p className="min-w-0 break-words leading-6"><strong className="mr-2">{option.id}.</strong>{option.text === option.id ? "" : option.text}{selected && <span className="sr-only"> (Đã chọn)</span>}</p></div>
+          {option.imageUrl && <ReviewImage url={option.imageUrl} alt={`Đáp án ${option.id}`} />}
+        </div>;
+      })}
+    </div> : <>{options.length > 0 && <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-slate">Từ gợi ý: {options.map(option => option.text).join(" · ")}</p>}<div className="mt-4 rounded-lg border border-mist bg-paper p-4"><p className="text-xs font-semibold text-slate">Câu trả lời của bạn</p><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-ink">{answer || "Chưa trả lời"}</p></div></>)}
+    <div className={`mt-4 rounded-lg border px-3 py-2 text-sm leading-6 ${feedback.style}`}><p>{feedback.text}</p>{correctText && status !== "correct" && <p className="mt-1">Đáp án: {correctText}</p>}</div>
+    {speech && <div className="mt-3 space-y-2 text-sm text-slate"><p>Nhận diện: {speech.recognizedText || "—"}</p><p>{speech.feedback}</p><p>Phát âm {speech.accuracyScore}/100 · Trôi chảy {speech.fluencyScore}/100 · Đầy đủ {speech.completenessScore}/100</p><p className="text-xs">Kết quả đã lưu không bao gồm tệp giọng nói để phát lại.</p></div>}
+  </article>;
+}
+
+export function AttemptHistoryReview({ detail, filter }: { detail: AttemptHistoryDetail; filter: string }) {
+  const items = detail.snapshot.source.items;
+  const isWrong = (item: HistorySourceItem) => detail.result.questions.some(grade => grade.questionId === String(item.id) && ["incorrect", "unanswered"].includes(grade.status));
+  const displayed = filter === "wrong" ? items.filter(isWrong) : items;
+  const groups: { audio: string; items: { item: HistorySourceItem; number: number }[] }[] = [];
+  items.forEach((item, index) => { const audio = audioFor(item); const previous = groups.at(-1); if (audio && previous?.audio === audio) previous.items.push({ item, number: index + 1 }); else groups.push({ audio, items: [{ item, number: index + 1 }] }); });
+  return <div className="flex flex-col gap-6">
+    <Link href={historyHref({ kind: detail.kind, sourceId: String(detail.sourceId) })} className="w-fit text-sm font-medium text-brand">← Lịch sử bài làm</Link>
+    <div className="hsk-panel space-y-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><HskBadge level={detail.hskLevel} /><h1 className="mt-3 font-display text-2xl font-semibold text-ink">{detail.title}</h1><p className="mt-2 text-sm text-slate">{historyDate(detail.submittedAt)} · {historyDuration(detail.durationSeconds)}</p></div><Link href={attemptHref(detail.kind + "-" + detail.sourceId)} className="hsk-button">Làm lại bài này</Link></div>
+      <p className="text-2xl font-semibold text-brand">{historyMetric(detail)}</p>{(detail.gradedCount > 0 || detail.ungradedCount > 0) && <p className="text-sm text-slate">Đúng {detail.correctCount} · Sai {detail.result.questions.filter(grade => grade.status === "incorrect").length} · Bỏ trống {detail.unansweredCount} · {detail.ungradedCount} câu chưa chấm tự động</p>}
+      {detail.kind === "exam" && detail.totalScore !== null && <p className="text-sm font-semibold text-ink">Điểm HSK: {Number(detail.totalScore.toFixed(1))}/{detail.maxScore} · {detail.passed ? "Đạt ngưỡng" : "Chưa đạt ngưỡng"}</p>}
+      {detail.result.sections.length > 0 && <div className="flex flex-wrap gap-3">{detail.result.sections.map(section => <p className="text-sm text-slate" key={section.skill}>{SKILL_LABELS[section.skill]}: {section.score === null ? "Chưa chấm" : Number(section.score.toFixed(1)) + "/100"}</p>)}</div>}
+      {detail.writingProgress.total > 0 && <p className="text-sm text-slate">Luyện nét: {detail.writingProgress.correctStrokes}/{detail.writingProgress.totalStrokes} nét đúng · {detail.writingProgress.mistakes} lượt cần cải thiện · hoàn thành {detail.writingProgress.completed}/{detail.writingProgress.total} chữ.</p>}
+      {detail.speaking.totalCount > 0 && <p className="text-sm text-slate">Phát âm: {detail.speaking.score === null ? "Chưa có điểm" : Number(detail.speaking.score.toFixed(1)) + "/100"} · {detail.speaking.gradedCount}/{detail.speaking.totalCount} câu đã chấm.</p>}
+      {detail.reasons.length > 0 && <ul className="list-disc space-y-1 pl-5 text-sm text-slate">{detail.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
+      <p className="text-xs leading-6 text-slate">Bản bài làm được lưu tại thời điểm nộp. Xem lại không thay đổi điểm hoặc mức HSK. Làm lại mở nội dung hiện hành trong một lượt mới.</p>
+    </div>
+    <div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-lg font-semibold text-ink">Xem lại bài làm</h2><Link href={"/results/" + detail.id} className={filter !== "wrong" ? "hsk-button" : "hsk-button-secondary"}>Tất cả ({items.length})</Link><Link href={"/results/" + detail.id + "?filter=wrong"} className={filter === "wrong" ? "hsk-button" : "hsk-button-secondary"}>Câu sai, bỏ trống ({items.filter(isWrong).length})</Link></div>
+    <p className="text-xs text-slate">Bấm vào hình để mở ảnh đầy đủ. Tỷ lệ đúng chỉ tính trên câu có thể chấm tự động; điểm HSK hiển thị riêng.</p>
+    {displayed.length === 0 && <div className="hsk-panel text-sm text-slate">Không có câu sai hoặc bỏ trống trong nhóm câu đã chấm.</div>}
+    {groups.map((group, index) => { const shown = group.items.filter(({ item }) => displayed.includes(item)); if (!shown.length) return null; const blocks = shown.map(({ item, number }) => <QuestionReview key={item.id} item={item} number={number} detail={detail} sharedAudio={Boolean(group.audio) && group.items.length > 1} />); return group.audio && group.items.length > 1 ? <SharedAudioSection key={index} src={publicMedia(group.audio) || group.audio} label={`Câu ${group.items[0]!.number}–${group.items.at(-1)!.number}`}>{blocks}</SharedAudioSection> : <div key={index} className="flex flex-col gap-5">{blocks}</div>; })}
+  </div>;
+}

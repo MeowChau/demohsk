@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, UserCheck } from "lucide-react";
 import { Field } from "@/components/ui/field";
+import { AccountApprovalDialog } from "@/components/auth/account-approval-dialog";
 import { apiAction } from "@/lib/api/client";
 import { signupSchema, type SignupInput } from "@/lib/validations/auth";
 import { errorFields } from "@/lib/validations/form-errors";
@@ -13,6 +14,7 @@ import { errorFields } from "@/lib/validations/form-errors";
 export default function RegisterPage() {
   const [error, setError] = useState("");
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [approvalNoticeOpen, setApprovalNoticeOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, setError: setFieldError, watch, trigger, formState: { errors, isSubmitting, touchedFields } } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -31,6 +33,7 @@ export default function RegisterPage() {
         password: values.password,
       });
       setRegisteredEmail(values.email);
+      setApprovalNoticeOpen(true);
     } catch (cause) {
       Object.entries(errorFields(cause)).forEach(([name, message], index) => {
         if (["username", "email", "password", "confirmPassword"].includes(name)) setFieldError(name as keyof SignupInput, { type: "server", message }, { shouldFocus: index === 0 });
@@ -50,6 +53,7 @@ export default function RegisterPage() {
       <Link href="/login" className="mt-7 flex h-12 items-center justify-center rounded-xl border border-mist bg-teal px-5 text-sm font-semibold text-white shadow-hard transition-all hover:shadow-brutalist">
         Đến trang đăng nhập
       </Link>
+      <AccountApprovalDialog open={approvalNoticeOpen} registeredEmail={registeredEmail} onClose={() => setApprovalNoticeOpen(false)} />
     </div>
   );
 
