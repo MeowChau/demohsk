@@ -15,6 +15,7 @@ export default async function DashboardPage(){
       streak={streak}
       levelInfo={levelInfo}
       initialAssessment={assessment}
+      analytics={stats.analytics}
     /><LearningAnalytics data={stats.analytics} dailyMinutes={user.dailyStudyTime} /></div>
   )
 }

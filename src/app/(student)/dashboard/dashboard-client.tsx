@@ -15,6 +15,9 @@ import { BookIcon } from "@/components/icons/stat-icons"
 import type { LevelInfo } from "@/types/gamification"
 import type { LearningScoreSummary } from "@/lib/learning-scores"
 import { apiFetch } from "@/lib/api/client"
+import type { HskAnalytics } from "@/lib/api/types"
+import type { CheckInResponse } from "@/lib/daily-checkin"
+import { DailyCheckInCard } from "@/components/dashboard/daily-checkin-card"
 
 type DashboardView = {
   course: {
@@ -42,6 +45,7 @@ type DashboardClientProps = {
   streak: StreakData
   levelInfo: LevelInfo
   initialAssessment: LearningScoreSummary | null
+  analytics: HskAnalytics
 }
 
 function StatCard({
@@ -151,8 +155,10 @@ export default function DashboardClient({
   streak,
   levelInfo,
   initialAssessment,
+  analytics,
 }: DashboardClientProps) {
   const [confettiFired, setConfettiFired] = useState(false)
+  const [checkInReward, setCheckInReward] = useState<CheckInResponse | null>(null)
 
   const headerRef = useRef<HTMLDivElement | null>(null)
 
@@ -279,7 +285,7 @@ export default function DashboardClient({
         <StatCard
           icon={<XpGem size={24} />}
           label="Tổng EXP"
-          value={xpTotal}
+          value={Math.max(xpTotal, Number.isFinite(checkInReward?.totalExp) ? checkInReward!.totalExp : 0)}
           accent="text-ink dark:text-navy"
           bg="bg-gradient-to-br from-cyan to-cyan-light"
           border="border-teal/30"
@@ -354,9 +360,9 @@ export default function DashboardClient({
         </motion.div>
       </div>
 
-      {/* 
-          STREAK BANNER
-      */}
+      <DailyCheckInCard initialAnalytics={analytics} onConfirmed={setCheckInReward} />
+
+      {/* STREAK BANNER */}
 
       {currentStreak > 0 && (
         <motion.div
@@ -437,6 +443,7 @@ export default function DashboardClient({
             currentBand={assessment?.currentHskLevel ?? student?.current_band ?? null}
             targetBand={student?.target_band ?? null}
           />
+          <p className="mt-5 text-center text-xs leading-6 text-slate">Đạt đề HSK của cấp cao hơn để cập nhật mức hiện tại trong hồ sơ. Làm lại đề cùng cấp không tự tăng sang cấp tiếp theo.</p>
         </motion.section>
 
         {/* Điểm tổng hợp theo cấp; kỹ năng chưa được chấm giữ trạng thái riêng. */}
@@ -501,7 +508,7 @@ export default function DashboardClient({
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {views.map(({ course, contents }) => (
+            {views.slice(0, 10).map(({ course, contents }) => (
               <Link
                 key={course.courseid}
                 href="/learning"

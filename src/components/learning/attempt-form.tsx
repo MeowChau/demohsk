@@ -21,6 +21,7 @@ import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type
 import { scorePracticeAttempt, type PracticeScore } from "@/lib/practice-scoring";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useBlockNavigation } from "@/components/shell/navigation-protection";
+import { promotionMessage } from "@/lib/hsk-promotion";
 
 function RefreshProfileAfterPromotion() {
   const router = useRouter();
@@ -451,7 +452,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
             <p className="text-xs text-slate">Điểm thi thử — tổng điểm từng phần</p>
             <p className="mt-1 text-2xl font-semibold text-brand">{savedScore.totalScore === null ? "Chưa có điểm toàn đề hợp lệ" : savedScore.totalScore.toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + "/" + savedScore.maxScore}</p>
             <div className="mt-3 flex flex-wrap gap-3">{savedScore.sections.map(section => <p key={section.skill} className="text-sm text-slate">{SKILL_LABELS[section.skill]}: {section.score === null ? "Chưa chấm" : section.score.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "/100"}{!section.complete && " · chưa đầy đủ"}</p>)}</div>
-            {savedScore.passed && <p className="mt-3 text-sm font-semibold text-brand">Đạt ngưỡng của đề HSK {savedScore.hskLevel}. {(savedScore.currentHskLevel ?? 0) > (savedScore.previousCurrentHskLevel ?? 0) ? "Cấp độ HSK hiện tại trong hồ sơ đã cập nhật lên HSK " + savedScore.currentHskLevel + "." : "Cấp độ hiện tại được giữ nguyên."}</p>}
+            {savedScore.passed && <p className="mt-3 text-sm font-semibold text-brand">Đạt ngưỡng của đề HSK {savedScore.hskLevel}. {promotionMessage(savedScore)}</p>}
             {savedScore.eligible && !savedScore.passed && <p className="mt-3 text-sm font-semibold text-brand">Chưa đạt ngưỡng {savedScore.passScore}/{savedScore.maxScore}. Mức HSK đã ghi nhận được giữ nguyên.</p>}
             {savedScore.reasons.length > 0 && <ul className="mt-3 list-disc pl-4 text-xs leading-6 text-slate">{savedScore.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
             <p className="mt-3 text-xs leading-5 text-slate">Đây là kết quả luyện thi nội bộ. Mức HSK không lấy từ điểm trung bình bốn kỹ năng và không tự đổi mục tiêu học tập.</p>
