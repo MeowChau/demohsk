@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { installNavigationProtection, type NavigationBlocker } from "@/lib/navigation-protection";
 
@@ -19,14 +19,27 @@ export function NavigationProtectionProvider({ children }: { children: React.Rea
   routerRef.current = router;
   const controller = useRef<ReturnType<typeof installNavigationProtection> | null>(null);
   const blockerRef = useRef<NavigationBlocker | null>(null);
+  const popListenerRef = useRef<((event: PopStateEvent) => void) | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useLayoutEffect(() => {
+    // Bind before Next's passive popstate listener so it cannot switch pages first.
+    const onPopState = (event: PopStateEvent) => popListenerRef.current?.(event);
+    window.addEventListener("popstate", onPopState, true);
+    return () => window.removeEventListener("popstate", onPopState, true);
+  }, []);
 
   useEffect(() => {
     let disposed = false;
     // Install after Next has initialized its own History API integration.
     queueMicrotask(() => {
       if (disposed) return;
-      controller.current = installNavigationProtection(href => routerRef.current.push(href));
+      controller.current = installNavigationProtection(href => routerRef.current.push(href), listener => {
+        popListenerRef.current = listener;
+        return () => {
+          if (popListenerRef.current === listener) popListenerRef.current = null;
+        };
+      });
       controller.current.setBlocker(blockerRef.current);
     });
     return () => {

@@ -21,6 +21,7 @@ import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type
 import { scorePracticeAttempt, type PracticeScore } from "@/lib/practice-scoring";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useBlockNavigation } from "@/components/shell/navigation-protection";
+import { remainingExamSeconds } from "@/lib/exam-timing";
 import { promotionMessage } from "@/lib/hsk-promotion";
 
 function RefreshProfileAfterPromotion() {
@@ -60,6 +61,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
   const scorePayload = useRef<LearningScoreSubmission | null>(null);
   const scoreAttemptId = useRef(globalThis.crypto?.randomUUID?.() || "attempt-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2));
   const attemptStartedAt = useRef(Date.now());
+  const examDeadline = useRef(attemptStartedAt.current + data.test.duration * 60_000);
   const sourceReference = /^(exam|set)-(\d+)$/.exec(testid);
   const attemptContext: LearningAttemptContext | undefined = recordScores && sourceReference
     ? { attemptId: scoreAttemptId.current, kind: sourceReference[1] as "exam" | "set", sourceId: Number(sourceReference[2]) } : undefined;
@@ -78,6 +80,20 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
 
   useEffect(() => {
     if (data.test.duration <= 0 || result) return;
+    const syncClock = () => setSecondsLeft(remainingExamSeconds(examDeadline.current));
+    syncClock();
+    const timer = window.setInterval(syncClock, 1000);
+    window.addEventListener("focus", syncClock);
+    document.addEventListener("visibilitychange", syncClock);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", syncClock);
+      document.removeEventListener("visibilitychange", syncClock);
+    };
+  }, [data.test.duration, result, attemptVersion]);
+
+  useEffect(() => {
+    if (data.test.duration <= 0 || result) return;
     if (secondsLeft <= 0) {
       if (!hasSpeakingWorkInProgress && !autoSubmitted.current) {
         autoSubmitted.current = true;
@@ -85,8 +101,6 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
       }
       return;
     }
-    const timer = setTimeout(() => setSecondsLeft(current => current - 1), 1000);
-    return () => clearTimeout(timer);
   }, [data.test.duration, result, secondsLeft, hasSpeakingWorkInProgress]);
 
   useEffect(() => {
@@ -226,11 +240,9 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
   }).length;
   const unfinishedCount = questions.length - completedQuestionCount;
   const hasUnpersistedResult = Boolean(result && recordScores && scorePayload.current && !savedScore);
-  const hasUnsavedChanges = hasUnpersistedResult || (!result && (workedQuestionIds.size > 0 || hasSpeakingWorkInProgress
-    || markedCount > 0 || speakingValues.length > 0
-    || (data.test.duration > 0 && secondsLeft < data.test.duration * 60)));
+  const hasUnsubmittedAttempt = !result && questions.length > 0;
 
-  useBlockNavigation(hasUnsavedChanges, proceed => {
+  useBlockNavigation(hasUnsubmittedAttempt || hasUnpersistedResult, proceed => {
     pendingLeave.current = proceed;
     setQuestionMenuOpen(false);
     setConfirmation("leave");
@@ -268,7 +280,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     const reference = /^(exam|set)-(\d+)$/.exec(testid);
     if (recordScores && reference) {
       const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers,
-        startedAt: new Date(attemptStartedAt.current).toISOString(), durationSeconds: Math.min(604800, Math.max(0, Math.floor((Date.now() - attemptStartedAt.current) / 1000))),
+        startedAt: new Date(attemptStartedAt.current).toISOString(), durationSeconds: Math.min(data.test.duration > 0 ? data.test.duration * 60 : 604800, Math.max(0, Math.floor((Date.now() - attemptStartedAt.current) / 1000))),
         writingProgress: Object.fromEntries(Object.entries(handwriting).map(([id, progress]) => [id, { completedPositions: progress.completedPositions,
           ...(strokeStats[id] || { correctStrokes: 0, totalStrokes: 0, mistakes: 0 }) }])) };
       scorePayload.current = payload; void persistScore(payload);
@@ -327,6 +339,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
     setSavedScore(null); setScoreError(""); scorePayload.current = null;
     scoreAttemptId.current = globalThis.crypto?.randomUUID?.() || "attempt-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
     attemptStartedAt.current = Date.now();
+    examDeadline.current = attemptStartedAt.current + data.test.duration * 60_000;
     setAnswers({});
     setHandwriting({});
     setStrokeStats({});
@@ -414,7 +427,7 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{workedQuestionIds.size}/{questions.length} câu đã làm</p>
           <p className={"mt-0.5 text-xs " + (secondsLeft <= 60 && data.test.duration > 0 && !result ? "font-semibold text-danger" : "text-slate")}>
-            {result ? "Đã nộp bài" : data.test.duration > 0 ? mm + ":" + ss : "Tự luyện"}
+            {result ? "Đã nộp bài" : data.test.duration > 0 ? "Còn lại " + mm + ":" + ss : "Tự luyện"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -435,7 +448,8 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
 
       {result && (
         <section ref={resultRef} tabIndex={-1} aria-label="Kết quả luyện tập" className="hsk-panel flex scroll-mt-24 flex-col gap-4 outline-none">
-          <h2 className="font-display text-lg font-semibold text-ink">Kết quả luyện tập</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{isExam ? "Kết quả bài thi" : "Kết quả luyện tập"}</h2>
+          {isExam && secondsLeft <= 0 && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.</p>}
           <div className="flex flex-wrap items-center gap-3">
             {savedScore?.historyId ? <>
               <p className="text-sm font-medium text-success">Đã lưu vào lịch sử</p>
@@ -545,7 +559,9 @@ export function AttemptForm({ attemptid, testid, data, recordScores = false }: {
       confirmDisabled={confirmation === "submit" && hasSpeakingWorkInProgress}
       onCancel={closeConfirmation} onConfirm={confirmAction}>
       {confirmation === "leave" ? (
-        <p>Tiến độ hiện tại chưa được lưu. Nếu thoát, câu trả lời, nét viết và bản ghi trong lượt này sẽ bị mất.</p>
+        <p>{hasUnpersistedResult
+          ? "Kết quả bài làm chưa được lưu thành công. Hãy ở lại để hoàn tất lưu hoặc thử lại; nếu thoát, bạn có thể mất kết quả của lượt này."
+          : "Bạn chưa nộp bài. Nếu thoát, câu trả lời, nét viết và bản ghi chưa lưu trong lượt này sẽ bị mất."}</p>
       ) : (
         <>
           <p>Đã hoàn thành <strong className="text-brand">{completedQuestionCount}/{questions.length}</strong> câu.</p>

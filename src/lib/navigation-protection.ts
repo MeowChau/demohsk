@@ -1,4 +1,6 @@
 export type NavigationBlocker = (proceed: () => void) => void;
+type PopStateListener = (event: PopStateEvent) => void;
+type SubscribeToPopState = (listener: PopStateListener) => () => void;
 const POSITION_KEY = "__triceNavigation";
 
 type Position = { session: string; index: number };
@@ -16,7 +18,7 @@ const pageKey = (href: string) => {
 };
 
 /** Track real history entries without inserting duplicate entries into the Back stack. */
-export function installNavigationProtection(navigate: (href: string) => void) {
+export function installNavigationProtection(navigate: (href: string) => void, subscribeToPopState?: SubscribeToPopState) {
   const originalPush = window.history.pushState;
   const originalReplace = window.history.replaceState;
   const initial = savedPosition(window.history.state);
@@ -108,7 +110,9 @@ export function installNavigationProtection(navigate: (href: string) => void) {
     currentUrl = window.location.href;
   };
   document.addEventListener("click", click, true);
-  window.addEventListener("popstate", pop, true);
+  if (!subscribeToPopState) window.addEventListener("popstate", pop, true);
+  const unsubscribePopState = subscribeToPopState?.(pop)
+    || (() => window.removeEventListener("popstate", pop, true));
 
   return {
     requestLeave,
@@ -120,7 +124,7 @@ export function installNavigationProtection(navigate: (href: string) => void) {
     },
     dispose() {
       document.removeEventListener("click", click, true);
-      window.removeEventListener("popstate", pop, true);
+      unsubscribePopState();
       window.removeEventListener("beforeunload", beforeUnload);
       if (window.history.pushState === push) window.history.pushState = originalPush;
       if (window.history.replaceState === replace) window.history.replaceState = originalReplace;

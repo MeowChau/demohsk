@@ -1,3 +1,4 @@
+jest.mock("@/lib/api/server", () => ({ getApiUser: jest.fn(async () => ({ currentHskLevel: 1 })) }));
 jest.mock("@/lib/api/catalog", () => ({ getPracticeSets: jest.fn(), getTopics: jest.fn() }));
 jest.mock("@/components/ui/refresh-button", () => ({ RefreshButton: () => null }));
 jest.mock("next/navigation", () => ({ ...jest.requireActual("next/navigation"), useRouter: () => ({ push: jest.fn() }), redirect: jest.fn((path: string) => { throw new Error(`REDIRECT:${path}`); }), notFound: jest.fn(() => { throw new Error("NOT_FOUND"); }) }));
@@ -13,14 +14,14 @@ import PracticeSkillPage from "../[skill]/page";
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(getTopics).mockResolvedValue([]);
-  jest.mocked(getPracticeSets).mockResolvedValue({ data: [], page: 2, limit: 24, total: 72, totalPages: 3 });
+  jest.mocked(getPracticeSets).mockResolvedValue({ data: [], page: 2, limit: 9, total: 72, totalPages: 3 });
 });
 
 it.each(["LISTENING", "SPEAKING", "READING", "WRITING"])("redirects old ?skill=%s URLs while preserving filters", async skill => {
   await expect(PracticeHubPage({ searchParams: Promise.resolve({ skill, page: "2", hskLevel: "3", search: "中文", topic: "HSK3-L01" }) })).rejects.toThrow("REDIRECT:");
   const url = new URL(jest.mocked(redirect).mock.calls[0]![0], "http://localhost");
   expect(url.pathname).toBe(`/practice/${skill.toLowerCase()}`);
-  expect(Object.fromEntries(url.searchParams)).toEqual({ page: "2", limit: "24", hskLevel: "3", topic: "HSK3-L01", search: "中文" });
+  expect(Object.fromEntries(url.searchParams)).toEqual({ page: "2", limit: "9", hskLevel: "3", topic: "HSK3-L01", search: "中文" });
   expect(getPracticeSets).not.toHaveBeenCalled();
 });
 

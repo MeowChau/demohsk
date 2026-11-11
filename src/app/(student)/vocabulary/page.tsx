@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
 import { getLessonWords, getTopics, getWords } from "@/lib/api/catalog";
-import { catalogHref, parseCatalogQuery, type SearchParams, type CatalogQuery } from "@/lib/catalog-query";
+import { getApiUser } from "@/lib/api/server";
+import { catalogHref, parseCatalogQuery, prioritizeCatalog, type SearchParams, type CatalogQuery } from "@/lib/catalog-query";
 import { CatalogFilters, CatalogPagination, DataEmpty, HskBadge, PageHeading } from "@/components/ui/catalog";
 import { WordCards } from "@/components/learning/word-cards";
 import { StudyTracker } from "@/components/shell/study-tracker";
@@ -14,20 +15,22 @@ export const metadata = { title: "Từ vựng tiếng Trung" };
 export default async function VocabularyPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const query: CatalogQuery = { ...parseCatalogQuery(params), view: params.view === "list" ? "list" : "cards" };
-  const topics = sortTopics(await getTopics(query.hskLevel));
+  const [allTopics, user] = await Promise.all([getTopics(query.hskLevel), getApiUser()]);
+  const topics = prioritizeCatalog(sortTopics(allTopics), user?.currentHskLevel);
   const vocabularyTopics = topics.filter(topic => topic.vocabularyCount > 0);
   const choosingLesson = query.view === "cards" && !query.topic;
-  const lessons = choosingLesson ? paginateTopics(filterTopics(vocabularyTopics, query.search), query.page) : null;
+  const lessons = choosingLesson ? paginateTopics(filterTopics(vocabularyTopics, query.search), query.page, query.limit) : null;
   const lesson = topics.find(topic => topic.topicKey === query.topic);
   let words: HskWord[] = [];
   let wordPage: PageData<HskWord> | null = null;
   if (query.view === "list") {
-    wordPage = await getWords(query);
+    wordPage = await getWords(query, user?.currentHskLevel ?? 1);
     words = wordPage.data;
   } else if (query.topic) {
     words = await getLessonWords(query);
   }
-  const activeQuery = lessons ? { ...query, page: lessons.page, limit: lessons.limit } : query;
+  const activePage = lessons || wordPage;
+  const activeQuery = activePage ? { ...query, page: activePage.page, limit: activePage.limit } : query;
   const resetHref = catalogHref("/vocabulary", { view: query.view });
   const tabs = (view: "cards" | "list") => catalogHref("/vocabulary", { ...query, view, page: 1, search: "" });
   return (
@@ -53,8 +56,8 @@ export default async function VocabularyPage({ searchParams }: { searchParams: P
         <CatalogPagination path="/vocabulary" query={activeQuery} data={lessons} />
       </> : <>
         {query.view === "cards" && <Link className="hsk-button-secondary w-fit" href={catalogHref("/vocabulary", { view: "cards", hskLevel: query.hskLevel })}><ArrowLeft size={16} aria-hidden="true" />Chọn bài khác</Link>}
-        {words.length ? <WordCards key={JSON.stringify({ ...query, view: undefined })} words={words} view={query.view} lessonTitle={lesson?.titleVi || query.topic} /> : <DataEmpty title="Chưa có từ vựng phù hợp" />}
-        {wordPage && <CatalogPagination path="/vocabulary" query={query} data={wordPage} />}
+        {words.length ? <WordCards key={JSON.stringify({ ...query, view: undefined })} words={words} view={query.view} lessonTitle={lesson?.titleVi || query.topic} lessonTopic={query.topic} /> : <DataEmpty title="Chưa có từ vựng phù hợp" />}
+        {wordPage && <CatalogPagination path="/vocabulary" query={activeQuery} data={wordPage} />}
       </>}
     </div>
   );

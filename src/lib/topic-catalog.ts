@@ -1,4 +1,5 @@
 import type { HskTopic, PageData } from "@/lib/api/types";
+import { CATALOG_PAGE_SIZE } from "@/lib/catalog-query";
 
 const titles = new Intl.Collator("vi", { numeric: true, sensitivity: "base" });
 function lessonNumber(topic: HskTopic) {
@@ -18,7 +19,7 @@ export function sortTopics(topics: HskTopic[]) {
   });
 }
 
-export function paginateTopics(topics: HskTopic[], requestedPage: number, limit = 12): PageData<HskTopic> {
+export function paginateTopics(topics: HskTopic[], requestedPage: number, limit = CATALOG_PAGE_SIZE): PageData<HskTopic> {
   const total = topics.length;
   const totalPages = Math.ceil(total / limit);
   const page = Math.max(1, Math.min(Number.isSafeInteger(requestedPage) ? requestedPage : 1, totalPages || 1));

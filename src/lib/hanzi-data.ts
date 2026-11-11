@@ -5,6 +5,10 @@ export function handwritingHref(word: Pick<HskWord, "id" | "hanzi" | "hskLevel">
   return "/practice/writing/words?" + new URLSearchParams({ word: String(word.id), search: word.hanzi, hskLevel: String(word.hskLevel) });
 }
 
+export function handwritingLessonHref(topic: string, hskLevel: number): string {
+  return "/practice/writing/words?" + new URLSearchParams({ topic, hskLevel: String(hskLevel) });
+}
+
 export function hanziCharacters(text: string): string[] {
   return Array.from(text).filter(character => /^\p{Script=Han}$/u.test(character));
 }

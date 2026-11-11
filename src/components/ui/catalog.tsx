@@ -20,7 +20,24 @@ export function CatalogFilters({ path, query, topics = [], skills = false, topic
   </form>;
 }
 export function CatalogPagination({ path, query, data }: { path: string; query: CatalogQuery; data: Pick<PageData<unknown>, "page" | "total" | "totalPages"> }) {
-  return <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate"><p>{data.total.toLocaleString("vi-VN")} kết quả · Trang {data.page} / {Math.max(1, data.totalPages)}</p><div className="flex gap-2">{data.page > 1 && <Link className="hsk-button-secondary" href={catalogHref(path, query, { page: data.page - 1 })}><ChevronLeft size={16} />Trước</Link>}{data.page < data.totalPages && <Link className="hsk-button-secondary" href={catalogHref(path, query, { page: data.page + 1 })}>Sau<ChevronRight size={16} /></Link>}</div></div>;
+  const totalPages = Math.max(1, data.totalPages);
+  const visible = totalPages <= 7 ? Array.from({ length: totalPages }, (_, index) => index + 1)
+    : [...new Set([1, data.page - 1, data.page, data.page + 1, totalPages].filter(page => page >= 1 && page <= totalPages))].sort((a, b) => a - b);
+  const pages: (number | string)[] = [];
+  visible.forEach((page, index) => {
+    if (index > 0 && page - visible[index - 1]! > 1) pages.push("gap-" + page);
+    pages.push(page);
+  });
+  return <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate">
+    <p>{data.total ? `${(data.page - 1) * query.limit + 1}–${Math.min(data.page * query.limit, data.total)} / ${data.total.toLocaleString("vi-VN")} kết quả` : "0 kết quả"} · Trang {data.page} / {totalPages}</p>
+    <nav aria-label="Phân trang danh sách" className="flex max-w-full flex-wrap items-center gap-2">
+      {data.page > 1 && <Link className="hsk-button-secondary min-h-11" aria-label="Trang trước" href={catalogHref(path, query, { page: data.page - 1 })}><ChevronLeft size={16} aria-hidden="true" />Trước</Link>}
+      {pages.map(page => typeof page === "string" ? <span key={page} aria-hidden="true" className="px-1">…</span>
+        : page === data.page ? <span key={page} aria-current="page" aria-label={"Trang " + page} className="hsk-button min-h-11 min-w-11 justify-center px-3">{page}</span>
+          : <Link key={page} aria-label={"Trang " + page} className="hsk-button-secondary min-h-11 min-w-11 justify-center px-3" href={catalogHref(path, query, { page })}>{page}</Link>)}
+      {data.page < data.totalPages && <Link className="hsk-button-secondary min-h-11" aria-label="Trang sau" href={catalogHref(path, query, { page: data.page + 1 })}>Sau<ChevronRight size={16} aria-hidden="true" /></Link>}
+    </nav>
+  </div>;
 }
 export function DataEmpty({ title = "Chưa có nội dung phù hợp", description = "Thử đổi bộ lọc hoặc quay lại sau khi nội dung được cập nhật." }: { title?: string; description?: string }) {
   return <div className="hsk-panel flex flex-col items-center gap-3 py-12 text-center"><BookOpen className="text-slate-soft" size={28} /><h2 className="hsk-section-title">{title}</h2><p className="max-w-md text-sm leading-6 text-slate">{description}</p></div>;

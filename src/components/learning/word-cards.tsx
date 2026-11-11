@@ -8,7 +8,7 @@ import { HskBadge } from "@/components/ui/catalog-badge";
 import { WordDeck } from "./word-deck";
 import { handwritingHref } from "@/lib/hanzi-data";
 
-export function WordCards({ words, view = "cards", lessonTitle }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string }) {
+export function WordCards({ words, view = "cards", lessonTitle, lessonTopic }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string; lessonTopic?: string }) {
   const [ratings, setRatings] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -18,7 +18,7 @@ export function WordCards({ words, view = "cards", lessonTitle }: { words: HskWo
     catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa lưu được tiến độ học từ."); }
     finally { setBusy(null); }
   }
-  return <div className="flex flex-col gap-4">{error && <p className="hsk-error" role="alert">{error}</p>}{view === "cards" ? <WordDeck words={words} lessonTitle={lessonTitle} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
+  return <div className="flex flex-col gap-4">{error && <p className="hsk-error" role="alert">{error}</p>}{view === "cards" ? <WordDeck words={words} lessonTitle={lessonTitle} lessonTopic={lessonTopic} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
     <div className="flex items-start justify-between gap-2"><div><h2 lang="zh-CN" className="hsk-hanzi text-ink">{word.hanzi}</h2><p className="mt-1 text-base text-brand">{word.pinyin}</p></div><HskBadge level={word.hskLevel} /></div>
     <p className="text-sm leading-6 text-slate">{word.meaning}</p>
     {word.topic && <p className="text-xs text-slate-soft">Chủ đề: {word.topic}</p>}

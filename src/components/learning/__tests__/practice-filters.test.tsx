@@ -18,7 +18,7 @@ it.each(["LISTENING", "SPEAKING", "READING", "WRITING", ""])("submits the select
   const url = new URL(push.mock.calls[0]![0], "http://localhost");
   expect(url.pathname).toBe(skill ? `/practice/${skill.toLowerCase()}` : "/practice");
   expect(url.searchParams.has("skill")).toBe(false);
-  expect(Object.fromEntries(url.searchParams)).toEqual({ page: "1", limit: "24", hskLevel: "3", topic: "HSK3-L01", search: "学习 & 中文" });
+  expect(Object.fromEntries(url.searchParams)).toEqual({ page: "1", limit: "9", hskLevel: "3", topic: "HSK3-L01", search: "学习 & 中文" });
   expect(screen.getByRole("link", { name: "Đặt lại" }).getAttribute("href")).toBe("/practice/reading");
   expect(container.querySelector("form")!.getAttribute("action")).toBe("/practice");
 });

@@ -23,7 +23,7 @@ describe("consistent practice skill routes", () => {
     const url = new URL(practiceHref(query), "http://localhost:3002");
     expect(url.pathname).toBe(`/practice/${skill.toLowerCase()}`);
     expect(url.searchParams.has("skill")).toBe(false);
-    expect(Object.fromEntries(url.searchParams)).toEqual({ page: "3", limit: "24", hskLevel: "2", topic: "HSK2-L01", search: "学习 & 中文" });
+    expect(Object.fromEntries(url.searchParams)).toEqual({ page: "3", limit: "9", hskLevel: "2", topic: "HSK2-L01", search: "学习 & 中文" });
   });
   it("resets the page when switching skill without carrying the old skill parameter", () => {
     const url = new URL(practiceHref(parseCatalogQuery({ skill: "READING", page: "4", hskLevel: "3" }), { skill: "WRITING", page: 1 }), "http://localhost");

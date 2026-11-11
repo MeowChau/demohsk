@@ -1,5 +1,17 @@
 export type SearchParams = Record<string, string | string[] | undefined>;
 export type CatalogQuery = { page: number; limit: number; hskLevel: string; topic: string; search: string; skill: string; view?: "cards" | "list" };
+export const CATALOG_PAGE_SIZE = 9;
+
+export function hskLevelPriority(currentLevel?: number | null): number[] {
+  const preferred = typeof currentLevel === "number" && Number.isInteger(currentLevel) && currentLevel >= 1 && currentLevel <= 9 ? currentLevel : 1;
+  return Array.from({ length: 9 }, (_, index) => index + 1)
+    .sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred) || b - a);
+}
+
+export function prioritizeCatalog<T extends { hskLevel: number }>(items: T[], currentLevel?: number | null): T[] {
+  const ranks = new Map(hskLevelPriority(currentLevel).map((level, index) => [level, index]));
+  return [...items].sort((a, b) => (ranks.get(a.hskLevel) ?? 9) - (ranks.get(b.hskLevel) ?? 9));
+}
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) || "";
 export function parseCatalogQuery(params: SearchParams, defaultLevel?: number | null): CatalogQuery {
   const rawLevel = first(params.hskLevel) || (defaultLevel ? String(defaultLevel) : "");
@@ -7,7 +19,7 @@ export function parseCatalogQuery(params: SearchParams, defaultLevel?: number | 
   const skill = first(params.skill).toUpperCase();
   return {
     page: Number.isInteger(page) && page >= 1 && page <= 1000000 ? page : 1,
-    limit: 24,
+    limit: CATALOG_PAGE_SIZE,
     hskLevel: /^[1-9]$/.test(rawLevel) ? rawLevel : "",
     topic: first(params.topic).trim().slice(0, 255),
     search: first(params.search).trim().slice(0, 500),

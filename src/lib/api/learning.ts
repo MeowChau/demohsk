@@ -1,3 +1,4 @@
+import { defaultExamMinutes } from "@/lib/exam-timing";
 import "server-only";
 import { practiceSetAttemptHref } from "@/lib/attempt-routes";
 import { serverApi, requireApiUser } from "./server";
@@ -300,7 +301,7 @@ export async function testForTaking(
       audio_url: kind === "set" && !tracingOnly ? publicMedia(set.audioUrl) : null,
       title: data.title,
       category: `HSK ${data.hskLevel}`,
-      duration: 0,
+      duration: kind === "exam" ? defaultExamMinutes(data.hskLevel) : 0,
       total_marks: Object.values(questionsBySkill).reduce(
         (sum, items) => sum + (items?.length || 0),
         0,
