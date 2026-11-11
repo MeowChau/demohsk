@@ -1,13 +1,12 @@
 "use client"
 
-import { motion, useInView } from "framer-motion"
+import { motion, useInView, useReducedMotion } from "framer-motion"
 import {
   Check,
   Headphones,
   BookOpen,
   PenLine,
   Mic,
-  Download,
   Zap,
   Target,
   TrendingUp,
@@ -239,8 +238,12 @@ function SkillModulesDemo() {
 // 3. Vocabulary flashcards demo
 // -----------------------------------------------------------------------------
 
+const VOCAB_DEMO_WORD = { hanzi: "学", pinyin: "xué", meaning: "học", wordClass: "động từ" }
+
 function VocabDemo() {
   const [flipped, setFlipped] = useState(false)
+  const reducedMotion = useReducedMotion()
+  const toggleCard = () => setFlipped(value => !value)
 
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, {
@@ -253,9 +256,13 @@ function VocabDemo() {
       ref={ref}
       className="relative w-full aspect-[4/3] flex items-center justify-center"
     >
-      <motion.div
-        className="relative w-32 h-20 cursor-pointer"
-        onClick={() => setFlipped((value) => !value)}
+      <motion.button
+        type="button"
+        aria-label="Lật thẻ mẫu chữ 学"
+        aria-pressed={flipped}
+        className="relative w-32 h-20 cursor-pointer rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-teal"
+        onClick={toggleCard}
+        style={{ perspective: 800 }}
         initial={{ opacity: 0, y: 20 }}
         animate={
           isInView
@@ -292,37 +299,50 @@ function VocabDemo() {
         ))}
 
         <motion.div
-          className="absolute inset-0 bg-white rounded-xl border-3 border-ink shadow-brutalist flex items-center justify-center z-10"
+          className="absolute inset-0 z-10"
           animate={{
             rotateY: flipped ? 180 : 0,
           }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: reducedMotion ? 0 : 0.4 }}
           style={{
             transformStyle: "preserve-3d",
           }}
         >
           <div
-            className="text-center"
+            aria-hidden={flipped}
+            className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-xl border-3 border-ink shadow-brutalist"
             style={{
               backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           >
-            <div className="text-xs font-black text-ink">
-               学习 </div>
+            <div className="text-lg font-black text-ink">
+              {VOCAB_DEMO_WORD.hanzi}</div>
 
             <div className="text-[8px] text-slate mt-0.5">
-               xuéxí · động từ </div>
+              {VOCAB_DEMO_WORD.pinyin} · {VOCAB_DEMO_WORD.wordClass}</div>
+          </div>
+          <div
+            aria-hidden={!flipped}
+            className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-xl border-3 border-ink shadow-brutalist"
+            style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+          >
+            <div className="text-base font-black text-teal">{VOCAB_DEMO_WORD.meaning}</div>
+            <div className="text-[8px] text-slate mt-0.5">{VOCAB_DEMO_WORD.hanzi} · {VOCAB_DEMO_WORD.pinyin}</div>
           </div>
         </motion.div>
-      </motion.div>
+      </motion.button>
 
-      <motion.div
-        className="absolute bottom-2 text-[10px] font-bold text-teal"
+      <motion.button
+        type="button"
+        aria-pressed={flipped}
+        onClick={toggleCard}
+        className="absolute bottom-2 min-h-11 rounded-lg px-3 text-[10px] font-bold text-teal hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ delay: 1 }}
       >
-         Bấm để lật thẻ ↻ </motion.div>
+         Bấm để lật thẻ ↻ </motion.button>
     </div>
   )
 }
@@ -432,22 +452,22 @@ function HskResourcesDemo() {
 
   const resources = [
     {
-      height: "h-16",
+      height: "h-32 sm:h-40",
       color: "bg-navy",
       label: "Bài luyện",
     },
     {
-      height: "h-20",
+      height: "h-40 sm:h-52",
       color: "bg-teal",
       label: "汉字",
     },
     {
-      height: "h-14",
+      height: "h-28 sm:h-36",
       color: "bg-violet",
       label: "Pinyin",
     },
     {
-      height: "h-18",
+      height: "h-24 sm:h-28",
       color: "bg-xp",
       label: "Nghĩa Việt",
     },
@@ -458,11 +478,11 @@ function HskResourcesDemo() {
       ref={ref}
       className="w-full aspect-[4/3] bg-surface rounded-xl border border-mist overflow-hidden shadow-hard p-4 flex items-center justify-center"
     >
-      <div className="flex gap-2 items-end">
+      <div className="flex w-full max-w-sm gap-3 items-end px-2 sm:gap-4 sm:px-4">
         {resources.map((resource, i) => (
           <motion.div
             key={resource.label}
-            className={`w-10 ${resource.height} ${resource.color} rounded border border-mist shadow-card flex flex-col items-center justify-end pb-1 relative`}
+            className={`min-w-0 flex-1 ${resource.height} ${resource.color} rounded-lg border border-mist shadow-card flex flex-col items-center justify-end px-1 pb-3 relative`}
             initial={{
               opacity: 0,
               y: 30,
@@ -485,27 +505,10 @@ function HskResourcesDemo() {
               scale: 1.05,
             }}
           >
-            <span className="text-[7px] font-semibold text-white/90 writing-mode-vertical">
+            <span className="text-center text-[10px] font-semibold text-white/90 sm:text-xs">
               {resource.label}
             </span>
 
-            <motion.div
-              className="absolute -top-2 -right-2"
-              initial={{ scale: 0 }}
-              animate={
-                isInView
-                  ? {
-                      scale: 1,
-                    }
-                  : {}
-              }
-              transition={{
-                delay: 0.8 + i * 0.1,
-                type: "spring",
-              }}
-            >
-              <Download className="h-3 w-3 text-teal" />
-            </motion.div>
           </motion.div>
         ))}
       </div>

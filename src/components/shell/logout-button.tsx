@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { apiAction } from "@/lib/api/client";
 import { notify } from "@/lib/toast";
@@ -17,30 +18,44 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
+  const id = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancel = useRef<HTMLButtonElement>(null);
 
-  // Animate in
+  // Render outside the blurred header and use the browser's modal top layer.
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      const t = setTimeout(() => setShow(true), 10);
-      return () => clearTimeout(t);
+    if (!open) {
+      setShow(false);
+      return;
     }
-    setShow(false);
-    const t = setTimeout(() => {
-      document.body.style.overflow = "";
-    }, 200);
-    return () => clearTimeout(t);
+    const element = dialog.current;
+    if (!element) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    if (!element.open) element.showModal();
+    document.body.style.overflow = "hidden";
+    cancel.current?.focus({ preventScroll: true });
+    const timer = setTimeout(() => setShow(true), 10);
+    return () => {
+      clearTimeout(timer);
+      if (element.open) element.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
   }, [open]);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!loading) setOpen(false);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+    // Capture also covers the moment all dialog buttons are disabled while submitting.
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [open, loading]);
 
   const handleConfirm = useCallback(async () => {
     setLoading(true);
@@ -70,23 +85,20 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
         {children ?? "Đăng xuất"}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className={`absolute inset-0 bg-navy-deep/60 transition-opacity duration-200 ${
-              show ? "opacity-100" : "opacity-0"
-            }`}
-            onClick={() => !loading && setOpen(false)}
-          />
-
+      {open && createPortal(
+        <dialog ref={dialog} aria-labelledby={id + "-title"} aria-describedby={id + "-description"}
+          className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[360px] overflow-visible overscroll-contain border-0 bg-transparent p-0 text-inherit backdrop:bg-navy-deep/60 backdrop:overscroll-contain"
+          // The account menu's outside-click/Escape handlers must not unmount this dialog.
+          onMouseDown={event => event.stopPropagation()}
+          onCancel={event => { event.preventDefault(); if (!loading) setOpen(false); }}
+          onClick={event => { if (event.target === event.currentTarget && !loading) setOpen(false); }}>
           {/* Card */}
           <div
             className={`relative w-full max-w-[360px] transition-all duration-200 ${
               show ? "scale-100 opacity-100" : "scale-[0.96] opacity-0"
             }`}
           >
-            <div className="overflow-hidden rounded-2xl border-3 border-ink bg-surface shadow-hard dark:border-white/20 dark:bg-navy-deep">
+            <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border-3 border-ink bg-surface shadow-hard dark:border-white/20 dark:bg-navy-deep">
               <div className="flex flex-col items-center p-8">
                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
                   <svg
@@ -104,13 +116,14 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
                   </svg>
                 </div>
 
-                <h3 className="text-lg font-black text-ink dark:text-white">
+                <h3 id={id + "-title"} className="text-lg font-black text-ink dark:text-white">
                    Đăng xuất </h3>
-                <p className="mt-2 text-center text-sm leading-relaxed text-slate dark:text-slate-soft">
+                <p id={id + "-description"} className="mt-2 text-center text-sm leading-relaxed text-slate dark:text-slate-soft">
                   {hasUnsavedChanges ? "Bài đang làm chưa được lưu. Nếu đăng xuất, tiến độ trong lượt này sẽ bị mất. Bạn vẫn muốn đăng xuất?" : "Bạn muốn đăng xuất khỏi tài khoản TriceHSK?"} </p>
 
                 <div className="mt-7 flex w-full gap-3">
                   <button
+                    ref={cancel}
                     type="button"
                     onClick={() => setOpen(false)}
                     disabled={loading}
@@ -153,7 +166,8 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
               </div>
             </div>
           </div>
-        </div>
+        </dialog>,
+        document.body,
       )}
     </>
   );

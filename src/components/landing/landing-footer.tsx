@@ -57,24 +57,6 @@ const footerLinks = {
       "label": "Góc tiếng Trung",
       "href": "/#chinese-phrases"
     }
-  ],
-  "Tài khoản": [
-    {
-      "label": "Đăng nhập",
-      "href": "/login"
-    },
-    {
-      "label": "Đăng ký",
-      "href": "/register"
-    },
-    {
-      "label": "Hồ sơ",
-      "href": "/profile"
-    },
-    {
-      "label": "Câu hỏi thường gặp",
-      "href": "/#faq"
-    }
   ]
 }
 
@@ -82,7 +64,7 @@ export function LandingFooter() {
   return (
     <footer className="bg-[#0F1720] pt-16 pb-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand column */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
@@ -126,12 +108,6 @@ export function LandingFooter() {
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
              © 2026 TriceHSK. Cùng bạn học tiếng Trung mỗi ngày. </p>
-          <div className="flex items-center gap-6">
-            <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-               Đăng nhập </Link>
-            <Link href="/register" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-               Đăng ký </Link>
-          </div>
         </div>
       </div>
     </footer>

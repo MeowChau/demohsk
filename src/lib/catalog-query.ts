@@ -1,5 +1,5 @@
 export type SearchParams = Record<string, string | string[] | undefined>;
-export type CatalogQuery = { page: number; limit: number; hskLevel: string; topic: string; search: string; skill: string };
+export type CatalogQuery = { page: number; limit: number; hskLevel: string; topic: string; search: string; skill: string; view?: "cards" | "list" };
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) || "";
 export function parseCatalogQuery(params: SearchParams, defaultLevel?: number | null): CatalogQuery {
   const rawLevel = first(params.hskLevel) || (defaultLevel ? String(defaultLevel) : "");

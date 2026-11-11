@@ -12,6 +12,8 @@ import { ThemeToggle } from "@/components/shell/theme-toggle"
 import { FeatureMenu } from "@/components/shell/feature-menu"
 import type { NavRole } from "@/components/shell/top-nav"
 
+const publicActionClassName = "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border-2 font-bold leading-none transition-colors"
+
 function getInitials(name: string) {
   if (!name) return "U"
   return name
@@ -244,7 +246,7 @@ export function LandingNav({
                 <div className="hidden items-center gap-3 xl:flex">
                   <Link
                     href="/login"
-                    className={`text-sm font-semibold px-4 py-2 rounded-full border-2 transition-colors ${
+                    className={`${publicActionClassName} h-11 w-[132px] px-4 text-sm ${
                       scrolled
                         ? "text-[var(--navy)] border-[var(--navy)]/10 hover:border-[var(--navy)]/30"
                         : "text-[#0F1720] border-[#0F1720]/20 hover:border-[#0F1720]/40"
@@ -253,7 +255,7 @@ export function LandingNav({
                      Đăng nhập </Link>
                   <Link
                     href="/register"
-                    className="text-sm font-bold text-white bg-[var(--navy)] hover:bg-[var(--navy-deep)] transition-colors px-6 py-2.5 rounded-full border-2 border-[var(--navy)]"
+                    className={`${publicActionClassName} h-11 w-[132px] px-4 text-sm text-white bg-[var(--navy)] hover:bg-[var(--navy-deep)] border-[var(--navy)]`}
                   >
                      Bắt đầu học </Link>
                 </div>
@@ -344,12 +346,12 @@ export function LandingNav({
                   <div className="mt-4 flex flex-col gap-3">
                     <Link
                       href="/login"
-                      className="w-full text-center text-base font-bold text-[var(--navy)] border-2 border-[var(--navy)]/10 rounded-full py-3"
+                      className={`${publicActionClassName} h-12 w-full px-5 text-base text-[var(--navy)] border-[var(--navy)]/10`}
                     >
                        Đăng nhập </Link>
                     <Link
                       href="/register"
-                      className="w-full text-center text-base font-bold text-white bg-[var(--navy)] rounded-full py-3"
+                      className={`${publicActionClassName} h-12 w-full px-5 text-base text-white bg-[var(--navy)] border-[var(--navy)]`}
                     >
                        Bắt đầu học </Link>
                   </div>

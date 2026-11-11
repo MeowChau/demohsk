@@ -8,18 +8,17 @@ import { HskBadge } from "@/components/ui/catalog-badge";
 import { WordDeck } from "./word-deck";
 import { handwritingHref } from "@/lib/hanzi-data";
 
-export function WordCards({ words }: { words: HskWord[] }) {
+export function WordCards({ words, view = "cards", lessonTitle }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string }) {
   const [ratings, setRatings] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState("");
-  const [cardsView, setCardsView] = useState(true);
   async function rate(id: number, action: "studied" | "remembered" | "unknown") {
     setBusy(id); setError("");
     try { await apiAction("analytics/vocabulary-progress", { vocabularyId: id, action }); setRatings(previous => ({ ...previous, [id]: action })); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa lưu được tiến độ học từ."); }
     finally { setBusy(null); }
   }
-  return <div className="flex flex-col gap-4"><div className="flex gap-2" aria-label="Cách xem từ vựng"><button type="button" className={cardsView ? "hsk-button" : "hsk-button-secondary"} aria-pressed={cardsView} onClick={() => setCardsView(true)}>Lật thẻ</button><button type="button" className={!cardsView ? "hsk-button" : "hsk-button-secondary"} aria-pressed={!cardsView} onClick={() => setCardsView(false)}>Danh sách</button></div>{error && <p className="hsk-error" role="alert">{error}</p>}{cardsView ? <WordDeck words={words} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
+  return <div className="flex flex-col gap-4">{error && <p className="hsk-error" role="alert">{error}</p>}{view === "cards" ? <WordDeck words={words} lessonTitle={lessonTitle} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
     <div className="flex items-start justify-between gap-2"><div><h2 lang="zh-CN" className="hsk-hanzi text-ink">{word.hanzi}</h2><p className="mt-1 text-base text-brand">{word.pinyin}</p></div><HskBadge level={word.hskLevel} /></div>
     <p className="text-sm leading-6 text-slate">{word.meaning}</p>
     {word.topic && <p className="text-xs text-slate-soft">Chủ đề: {word.topic}</p>}

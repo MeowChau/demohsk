@@ -1,8 +1,8 @@
 "use client"
 
-import { motion, useInView } from "framer-motion"
+import { motion } from "framer-motion"
 import { Target, BookOpen, TrendingUp } from "lucide-react"
-import { useRef } from "react"
+
 
 const steps = [
   {
@@ -27,76 +27,6 @@ const steps = [
     desc: "Luyện từng kỹ năng, đánh dấu từ đã học và theo dõi mục tiêu cùng hoạt động học của bạn.",
   },
 ]
-
-function AnimatedPath() {
-  const ref = useRef<SVGPathElement>(null)
-  const isInView = useInView(ref, {
-    once: true,
-    margin: "-100px",
-  })
-
-  return (
-    <svg
-      className="absolute top-24 left-0 w-full h-16 hidden md:block pointer-events-none"
-      viewBox="0 0 1200 80"
-      fill="none"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <motion.path
-        ref={ref}
-        d="M 100 40 Q 300 40 400 40 Q 500 40 600 40 Q 700 40 800 40 Q 900 40 1100 40"
-        stroke="var(--teal)"
-        strokeWidth="3"
-        strokeDasharray="8 8"
-        fill="none"
-        initial={{
-          pathLength: 0,
-          opacity: 0,
-        }}
-        animate={
-          isInView
-            ? {
-                pathLength: 1,
-                opacity: 1,
-              }
-            : {}
-        }
-        transition={{
-          duration: 1.5,
-          ease: "easeInOut",
-          delay: 0.3,
-        }}
-      />
-
-      {[
-        { cx: 100, delay: 0.2 },
-        { cx: 600, delay: 0.8 },
-        { cx: 1100, delay: 1.4 },
-      ].map((point) => (
-        <motion.circle
-          key={point.cx}
-          cx={point.cx}
-          cy="40"
-          r="6"
-          fill="var(--teal)"
-          initial={{ scale: 0 }}
-          animate={
-            isInView
-              ? {
-                  scale: 1,
-                }
-              : {}
-          }
-          transition={{
-            delay: point.delay,
-            type: "spring",
-          }}
-        />
-      ))}
-    </svg>
-  )
-}
 
 export function HowItWorks() {
   return (
@@ -132,7 +62,7 @@ export function HowItWorks() {
 
         {/* Steps */}
         <div className="relative">
-          <AnimatedPath />
+
 
           <div className="grid md:grid-cols-3 gap-8">
             {steps.map((step, i) => (
