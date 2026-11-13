@@ -22,12 +22,30 @@ export interface PracticeScore {
 type PracticeItem = NonNullable<TestWithQuestions["questionsBySkill"][keyof TestWithQuestions["questionsBySkill"]]>;
 type PracticeQuestionItem = PracticeItem[number];
 
-function normalizeAnswer(value: string): string {
+export function normalizeAnswer(value: string): string {
   return value
     .normalize("NFKC")
     .replace(/[\s\u200B-\u200D\uFEFF]+/gu, "")
     .replace(/[。.!！?？，、;；:：]+$/gu, "")
     .toLocaleLowerCase();
+}
+
+const TRUE_VALUES = ["true", "1", "对", "是", "đúng"];
+const FALSE_VALUES = ["false", "0", "错", "否", "sai"];
+function booleanAnswerValues(value: string): string[] {
+  if (value === "a" || TRUE_VALUES.includes(value)) return TRUE_VALUES;
+  if (value === "b" || FALSE_VALUES.includes(value)) return FALSE_VALUES;
+  return [];
+}
+
+export function optionMatchesAnswer(option: { id: string; text: string }, answer: string, type?: string): boolean {
+  const expected = normalizeAnswer(answer);
+  if (!expected) return false;
+  const values = [option.id, option.text];
+  if (type === "TRUE_FALSE") {
+    values.push(...booleanAnswerValues(normalizeAnswer(option.id)));
+  }
+  return values.some(value => normalizeAnswer(value) === expected);
 }
 
 function selectedAnswerValues(item: PracticeQuestionItem, submitted: string): string[] {
@@ -36,13 +54,7 @@ function selectedAnswerValues(item: PracticeQuestionItem, submitted: string): st
   const values = [submitted];
   if (option?.option_text) values.push(option.option_text);
 
-  if (item.question.type === "TRUE_FALSE") {
-    if (["a", "true", "1", "对", "是", "đúng"].includes(normalized)) {
-      values.push("true", "1", "对", "是", "đúng");
-    } else if (["b", "false", "0", "错", "否", "sai"].includes(normalized)) {
-      values.push("false", "0", "错", "否", "sai");
-    }
-  }
+  if (item.question.type === "TRUE_FALSE") values.push(...booleanAnswerValues(normalized));
   return values.map(normalizeAnswer);
 }
 

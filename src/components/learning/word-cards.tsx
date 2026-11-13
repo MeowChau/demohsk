@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import Link from "next/link";
 import { Check, RotateCcw, Brain, PenLine } from "lucide-react";
 import { apiAction } from "@/lib/api/client";
@@ -10,13 +11,14 @@ import { handwritingHref } from "@/lib/hanzi-data";
 
 export function WordCards({ words, view = "cards", lessonTitle, lessonTopic }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string; lessonTopic?: string }) {
   const [ratings, setRatings] = useState<Record<number, string>>({});
-  const [busy, setBusy] = useState<number | null>(null);
-  const [error, setError] = useState("");
+  const mutation = useAsyncAction<{ id: number; action: "studied" | "remembered" | "unknown" }, void>(
+    input => apiAction<void>("analytics/vocabulary-progress", { vocabularyId: input.id, action: input.action }),
+  );
+  const busy = mutation.pending ? mutation.input!.id : null;
+  const error = mutation.error?.message || "";
   async function rate(id: number, action: "studied" | "remembered" | "unknown") {
-    setBusy(id); setError("");
-    try { await apiAction("analytics/vocabulary-progress", { vocabularyId: id, action }); setRatings(previous => ({ ...previous, [id]: action })); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa lưu được tiến độ học từ."); }
-    finally { setBusy(null); }
+    const result = await mutation.execute({ id, action });
+    if (result.status === "success") setRatings(previous => ({ ...previous, [id]: action }));
   }
   return <div className="flex flex-col gap-4">{error && <p className="hsk-error" role="alert">{error}</p>}{view === "cards" ? <WordDeck words={words} lessonTitle={lessonTitle} lessonTopic={lessonTopic} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
     <div className="flex items-start justify-between gap-2"><div><h2 lang="zh-CN" className="hsk-hanzi text-ink">{word.hanzi}</h2><p className="mt-1 text-base text-brand">{word.pinyin}</p></div><HskBadge level={word.hskLevel} /></div>

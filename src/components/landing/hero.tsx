@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
-import confetti from "canvas-confetti"
+import { celebrate } from "@/lib/celebration"
 import type { HskTopic } from "@/lib/api/types"
 
 type CatalogSummary = { words: number | null; practices: number | null; exams: number | null; topics: HskTopic[]; available: boolean }
@@ -35,10 +35,11 @@ function LiveDashboardMockup({ catalog }: { catalog: CatalogSummary }) {
   const number = (value: number | null) => value === null ? "—" : value.toLocaleString("vi-VN")
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
     const timer = setTimeout(() => {
       let current = 0
 
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         current += 1
 
         if (current >= availableLevels) {
@@ -49,10 +50,9 @@ function LiveDashboardMockup({ catalog }: { catalog: CatalogSummary }) {
         }
       }, 50)
 
-      return () => clearInterval(interval)
     }, 800)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); if (interval) clearInterval(interval); }
   }, [availableLevels])
 
   const progress = (bandScore / targetBand) * 100
@@ -351,7 +351,7 @@ function MagneticButton({
   }, [x, y])
 
   const handleClick = useCallback(() => {
-    confetti({
+    void celebrate({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 },
@@ -417,7 +417,7 @@ function TypewriterHeadline() {
       clearInterval(timer)
       if (cursorTimer) clearTimeout(cursorTimer)
     }
-  }, [])
+  }, [fullText])
 
   return (
     <h1 className="hsk-hero-heading text-ink" aria-label={fullText}>

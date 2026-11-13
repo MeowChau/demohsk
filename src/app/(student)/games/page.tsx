@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Clock3, Swords, Trophy, Users } from "lucide-react";
 import { requireApiUser, serverApi } from "@/lib/api/server";
+import { backendUrl } from "@/lib/api/config";
 import { ApiError } from "@/lib/api/client";
 import type { PageData, PkHistory } from "@/lib/api/types";
 import { parseCatalogQuery, type SearchParams } from "@/lib/catalog-query";
@@ -12,6 +13,8 @@ export const metadata = { title: "Game PK (1 vs 1)" };
 export default async function GamesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const user = await requireApiUser();
   const query = parseCatalogQuery(await searchParams, user.currentHskLevel || 1);
+  const api = new URL(backendUrl());
+  const backendOrigin=api.origin+api.pathname;
   const level = Number(query.hskLevel || 1);
   const history = await serverApi<PageData<PkHistory>>(
     "game/pk/history?page=" + query.page + "&limit=10",
@@ -27,7 +30,7 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
       </PageHeading>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <PkArena key={level} userId={Number(user.id)} level={level} />
+        <PkArena key={backendOrigin+":"+user.id+":"+level} userId={Number(user.id)} level={level} backendOrigin={backendOrigin} />
         <aside className="hsk-panel flex flex-col gap-5" aria-labelledby="pk-rules-title">
           <h2 id="pk-rules-title" className="hsk-section-title">Thông tin luật chơi</h2>
           <div className="flex items-start gap-3"><Users className="mt-1 shrink-0 text-brand" size={20} /><div><h3 className="text-sm font-semibold text-ink">Đấu trực tiếp 1 vs 1</h3><p className="mt-1 text-sm leading-6 text-slate">Ghép với người chơi cùng cấp HSK trên web. Cả hai xác nhận sẵn sàng để bắt đầu.</p></div></div>

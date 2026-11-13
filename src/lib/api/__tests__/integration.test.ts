@@ -22,6 +22,19 @@ describe("Existing HSK backend integration", () => {
     );
     expect(publicMedia("//example.com/a")).toBeNull();
   });
+  it.each([
+    ["https://media.example/api/v1", "/api/v1/files/a.mp3", "https://media.example/api/v1/files/a.mp3"],
+    ["https://media.example/api/v1/", "/files/a.mp3", "https://media.example/api/v1/files/a.mp3"],
+    ["https://media.example/", "/api/v1/files/a.mp3", "https://media.example/api/v1/files/a.mp3"],
+  ])("resolves media for base %s and path %s", (base, path, expected) => {
+    const original = process.env.NEXT_PUBLIC_HSK_MEDIA_ORIGIN;
+    try {
+      process.env.NEXT_PUBLIC_HSK_MEDIA_ORIGIN = base;
+      expect(publicMedia(path)).toBe(expected);
+    } finally {
+      process.env.NEXT_PUBLIC_HSK_MEDIA_ORIGIN = original;
+    }
+  });
   it("explains backend auth errors", () => {
     expect(
       errorMessage({ errors: { password: "incorrectPassword" } }, 422),

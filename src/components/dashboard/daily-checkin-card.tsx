@@ -21,7 +21,6 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
   const busyRef = useRef(false);
   const sequence = useRef(0);
   const mounted = useRef(false);
-  const dateRef = useRef(date);
   const latestStatus = useRef(initialAnalytics);
   const routerRef = useRef(router);
   routerRef.current = router;
@@ -30,32 +29,39 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
   useEffect(() => { setAnalytics(initialAnalytics); latestStatus.current = initialAnalytics; }, [initialAnalytics]);
   useEffect(() => {
     mounted.current = true;
+    let active = true;
+    let inFlight = false;
+    let lastChecked = Date.now();
     const refresh = async () => {
-      if (document.visibilityState === "hidden" || busyRef.current) return;
+      if (!active || document.visibilityState === "hidden" || busyRef.current || inFlight) return;
       const today = studyDateKey();
-      dateRef.current = today;
+      if (latestStatus.current.studyDate === today && Date.now() - lastChecked < 30000) return;
+      inFlight = true;
       setDate(today);
       const request = ++sequence.current;
       try {
         const data = await apiFetch<HskAnalytics>("analytics/dashboard");
-        if (mounted.current && request === sequence.current) {
+        if (active && mounted.current && request === sequence.current) {
           const changed = data.studyDate !== latestStatus.current.studyDate || data.checkedInToday !== latestStatus.current.checkedInToday;
+          lastChecked = Date.now();
           latestStatus.current = data;
           setAnalytics(data);
           if (changed) routerRef.current.refresh();
         }
       } catch {
-        // A failed status refresh must not mark attendance or prevent a server-checked retry.
+        // Keep the last server state and retry stale-day status on the next tick.
+      } finally {
+        inFlight = false;
       }
     };
     const onVisibility = () => { if (document.visibilityState === "visible") void refresh(); };
-    const timer = setInterval(() => { if (studyDateKey() !== dateRef.current) void refresh(); }, 30000);
-    void refresh();
+    const timer = setInterval(() => { if (studyDateKey() !== latestStatus.current.studyDate) void refresh(); }, 30000);
+    if (latestStatus.current.studyDate !== studyDateKey()) void refresh();
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      active = false;
       mounted.current = false;
-      sequence.current++;
       clearInterval(timer);
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", onVisibility);

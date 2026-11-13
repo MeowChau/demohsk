@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { motion, useInView, useSpring, useTransform } from "framer-motion"
+import { useRef } from "react"
+import { motion } from "framer-motion"
 import { Check, Zap } from "lucide-react"
 import Link from "next/link"
 import { TiltCard } from "@/components/ui/tilt-card"
@@ -55,11 +55,6 @@ export function PricingSection() {
 
 
   const ref = useRef(null)
-
-  const isInView = useInView(ref, {
-    once: true,
-    margin: "-100px",
-  })
 
   return (
     <section

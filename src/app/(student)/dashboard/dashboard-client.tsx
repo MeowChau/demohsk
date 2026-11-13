@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
-import confetti from "canvas-confetti"
+import { celebrate } from "@/lib/celebration"
 import Link from "next/link"
 import { ArrowRight, Target, Trophy } from "lucide-react"
 
@@ -14,19 +14,11 @@ import { LevelBadge } from "@/components/gamification/level-badge"
 import { BookIcon } from "@/components/icons/stat-icons"
 import type { LevelInfo } from "@/types/gamification"
 import type { LearningScoreSummary } from "@/lib/learning-scores"
+import { learningScoresChangedSince } from "@/lib/learning-scores";
 import { apiFetch } from "@/lib/api/client"
-import type { HskAnalytics } from "@/lib/api/types"
+import type { DashboardTopic, HskAnalytics } from "@/lib/api/types"
 import type { CheckInResponse } from "@/lib/daily-checkin"
 import { DailyCheckInCard } from "@/components/dashboard/daily-checkin-card"
-
-type DashboardView = {
-  course: {
-    courseid: string | number
-    title: string
-    level?: string | null
-  }
-  contents: unknown[]
-}
 
 type StudentData = {
   current_band: number | null
@@ -39,11 +31,13 @@ type StreakData = {
 } | null
 
 type DashboardClientProps = {
-  views: DashboardView[]
+  topics: DashboardTopic[]
+  topicCount?: number
   student: StudentData | null
   xpTotal: number
   streak: StreakData
   levelInfo: LevelInfo
+  assessmentLoadedAt?: number
   initialAssessment: LearningScoreSummary | null
   analytics: HskAnalytics
 }
@@ -149,15 +143,17 @@ function StatCard({
 }
 
 export default function DashboardClient({
-  views,
+  topics,
+  topicCount = topics.length,
   student,
   xpTotal,
   streak,
   levelInfo,
   initialAssessment,
+  assessmentLoadedAt = 0,
   analytics,
 }: DashboardClientProps) {
-  const [confettiFired, setConfettiFired] = useState(false)
+  const confettiFired = useRef(false)
   const [checkInReward, setCheckInReward] = useState<CheckInResponse | null>(null)
 
   const headerRef = useRef<HTMLDivElement | null>(null)
@@ -175,29 +171,40 @@ export default function DashboardClient({
   const selectedLevel = assessment?.currentHskLevel ?? student?.current_band ?? 1
   useEffect(() => {
     let active = true
-    let sequence = 0
-    const refresh = () => {
-      const request = ++sequence
-      apiFetch<LearningScoreSummary>("learning-scores")
-        .then(data => { if (active && request === sequence) { setAssessment(data); setAssessmentError("") } })
-        .catch(cause => { if (active && request === sequence) setAssessmentError(cause instanceof Error ? cause.message : "Chưa tải được điểm học tập.") })
+    let inFlight = false
+    let refreshAgain = false
+    const fresh = initialAssessment && Date.now()-assessmentLoadedAt<30000 && !learningScoresChangedSince(assessmentLoadedAt)
+    let lastRequest = fresh ? Date.now() : 0
+    setAssessment(initialAssessment)
+    const refresh = async (force = false) => {
+      if (inFlight) { refreshAgain ||= force; return }
+      if (!force && Date.now() - lastRequest < 30000) return
+      inFlight = true
+      lastRequest = Date.now()
+      try {
+        const data = await apiFetch<LearningScoreSummary>("learning-scores")
+        if (active) { setAssessment(data); setAssessmentError("") }
+      } catch (cause) {
+        if (active) setAssessmentError(cause instanceof Error ? cause.message : "Chưa tải được điểm học tập.")
+      } finally { inFlight = false; if (active && refreshAgain) {refreshAgain=false;void refresh(true)} }
     }
-    refresh()
-    window.addEventListener("hsk-scores-updated", refresh)
-    window.addEventListener("focus", refresh)
-    return () => { active = false; window.removeEventListener("hsk-scores-updated", refresh); window.removeEventListener("focus", refresh) }
-  }, [student?.current_band])
+    const onScore = () => { void refresh(true) }
+    const onFocus = () => { void refresh() }
+    if (!fresh) void refresh(true)
+    window.addEventListener("hsk-scores-updated", onScore)
+    window.addEventListener("focus", onFocus)
+    return () => { active = false; window.removeEventListener("hsk-scores-updated", onScore); window.removeEventListener("focus", onFocus) }
+  }, [initialAssessment,assessmentLoadedAt,student?.current_band])
 
   useEffect(() => {
     if (
       isInView &&
-      !confettiFired &&
+      !confettiFired.current &&
       currentStreak > 0
     ) {
-      setConfettiFired(true)
-
       const timeout = setTimeout(() => {
-        confetti({
+        confettiFired.current = true
+        void celebrate({
           particleCount: 60,
           spread: 60,
           origin: { y: 0.3 },
@@ -207,7 +214,7 @@ export default function DashboardClient({
 
       return () => clearTimeout(timeout)
     }
-  }, [isInView, confettiFired, currentStreak])
+  }, [isInView, currentStreak])
 
   return (
     <div className="flex flex-col gap-8">
@@ -233,8 +240,8 @@ export default function DashboardClient({
             transition={{ delay: 0.2 }}
             className="text-base font-medium text-slate"
           >
-            {views.length > 0
-              ? `Bạn có ${views.length} chủ đề bài học HSK.`
+            {topicCount > 0
+              ? `Bạn có ${topicCount} chủ đề bài học HSK.`
               : "Các chủ đề HSK đã xuất bản sẽ xuất hiện ở đây."}
           </motion.p>
         </div>
@@ -310,7 +317,7 @@ export default function DashboardClient({
         <StatCard
           icon={<BookIcon size={24} />}
           label="Chủ đề HSK"
-          value={views.length}
+          value={topicCount}
           accent="text-white"
           bg="bg-navy"
           border="border-navy-deep"
@@ -491,7 +498,7 @@ export default function DashboardClient({
              Xem tất cả bài học → </Link>
         </div>
 
-        {views.length === 0 ? (
+        {topics.length === 0 ? (
           <div className="rounded-2xl border-3 border-dashed border-mist bg-paper p-8 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-mist">
               <BookIcon
@@ -508,9 +515,9 @@ export default function DashboardClient({
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {views.slice(0, 10).map(({ course, contents }) => (
+            {topics.map(topic => (
               <Link
-                key={course.courseid}
+                key={topic.topicKey}
                 href="/learning"
                 className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-brutalist dark:border-slate/30 dark:bg-surface"
               >
@@ -519,15 +526,13 @@ export default function DashboardClient({
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-base font-black text-ink dark:text-white">
-                      {course.title}
+                      {topic.titleVi || topic.titleCn || topic.topicKey}
                     </p>
 
                     <p className="mt-1 text-sm text-slate">
-                      {contents.length}  bài học {contents.length === 1 ? "" : "s"}
+                      {topic.totalSets} bài học
 
-                      {course.level
-                        ? ` · ${course.level}`
-                        : ""}
+                      {` · HSK ${topic.hskLevel}`}
                     </p>
                   </div>
 

@@ -39,6 +39,9 @@ export interface HskTopic {
   readingCount: number;
   writingCount: number;
 }
+// Minimal dashboard projection; question payloads stay on the lesson routes.
+export type DashboardTopic = Pick<HskTopic, "topicKey" | "titleVi" | "titleCn" | "hskLevel" | "totalSets">;
+
 export interface HskWord {
   id: number;
   hanzi: string;

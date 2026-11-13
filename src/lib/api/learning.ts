@@ -1,3 +1,4 @@
+import { byOrder, examSchema, practiceSchema, questionOptions } from "./question-adapter";
 import { defaultExamMinutes } from "@/lib/exam-timing";
 import "server-only";
 import { practiceSetAttemptHref } from "@/lib/attempt-routes";
@@ -173,20 +174,21 @@ export async function testForTaking(
   const id = match[2];
   const data =
     kind === "set"
-      ? await serverApi<HskPractice>(`practice-sets/${id}`)
-      : await serverApi<HskExam>(`exams/${id}`);
+      ? practiceSchema.parse(await serverApi<unknown>(`practice-sets/${id}`))
+      : examSchema.parse(await serverApi<unknown>(`exams/${id}`));
   const set = data as HskPractice;
   const groups =
     kind === "set"
       ? [
           {
             id: 0,
+            order: 0,
             title: set.title,
             audioUrl: set.audioUrl,
             links: set.practiceSetQuestions || [],
           },
         ]
-      : ((data as HskExam).sections || []).map((section) => ({
+      : byOrder((data as HskExam).sections || []).map((section) => ({
           ...section,
           links: section.sectionQuestions,
         }));
@@ -200,9 +202,9 @@ export async function testForTaking(
         testid: reference,
         title: group.title,
         passage_text: "",
-        order_index: group.id,
+        order_index: group.order,
       });
-    for (const link of group.links) {
+    for (const link of byOrder(group.links)) {
       const q = link.question;
       if (!q) continue;
       const skill = (q.skill.slice(0, 1) +
@@ -261,30 +263,9 @@ export async function testForTaking(
         question.sharedAudio = false;
         question.manualGrading = true;
       }
-      const rawOptions = Array.isArray(payload.options) ? payload.options : [];
-      const images = Array.isArray(payload.optionImages) ? payload.optionImages : [];
-      const optionCount = Math.max(rawOptions.length, images.length);
-      const options = Array.from({ length: optionCount }, (_, index) => {
-        const raw = rawOptions[index];
-        const option = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
-        const fallbackId = String.fromCharCode(65 + index);
-        return {
-          optionid: String(option?.id ?? option?.optionId ?? option?.label ?? fallbackId),
-          option_text: typeof raw === "string"
-            ? raw
-            : String(option?.text ?? option?.label ?? option?.id ?? fallbackId),
-          image_url: publicMedia(
-            (typeof option?.imageUrl === "string" ? option.imageUrl : undefined) ||
-            (typeof images[index] === "string" ? images[index] as string : undefined),
-          ),
-        };
-      });
-      if (q.type === "TRUE_FALSE" && options.length === 0) {
-        options.push(
-          { optionid: "A", option_text: "对 · Đúng", image_url: null },
-          { optionid: "B", option_text: "错 · Sai", image_url: null },
-        );
-      }
+      const options = questionOptions(payload, q.type).map(option => ({
+        optionid: option.id, option_text: option.text, image_url: publicMedia(option.imageUrl),
+      }));
       questionsBySkill[skill] ||= [];
       questionsBySkill[skill]!.push({
         question,

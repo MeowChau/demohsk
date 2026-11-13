@@ -15,8 +15,6 @@ import {
   PenLine,
   Mic,
   BookOpen,
-  HelpCircle,
-  Globe,
   AlertTriangle,
   X,
 } from "lucide-react";

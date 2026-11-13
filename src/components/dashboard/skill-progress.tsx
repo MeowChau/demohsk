@@ -117,7 +117,7 @@ export function SkillProgress({
                   <div
                     className="inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 border-2 border-ink/10"
                     style={{
-                      backgroundColor: `${color}18`,
+                      backgroundColor: `color-mix(in srgb, ${color} 9%, transparent)`,
                     }}
                   >
                     <Icon

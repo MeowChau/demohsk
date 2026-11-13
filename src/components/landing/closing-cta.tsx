@@ -4,7 +4,7 @@ import { motion, useMotionValue, useSpring } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useRef, useCallback } from "react"
-import confetti from "canvas-confetti"
+import { celebrate } from "@/lib/celebration"
 
 function MagneticConfettiButton({
   children,
@@ -52,7 +52,7 @@ function MagneticConfettiButton({
   }, [x, y])
 
   const handleHover = useCallback(() => {
-    confetti({
+    void celebrate({
       particleCount: 60,
       spread: 80,
       origin: {

@@ -1,3 +1,4 @@
+import { questionOptions } from "./api/question-adapter";
 import type { SubmittedLearningScore } from "./learning-scores";
 import type { PronunciationAssessment } from "./api/types";
 import type { SearchParams } from "./catalog-query";
@@ -70,14 +71,5 @@ export function historyText(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : typeof value === "number" ? String(value) : fallback;
 }
 export function historyOptions(item: HistorySourceItem) {
-  const payload = item.question?.payload || {};
-  const raw = Array.isArray(payload.options) ? payload.options : [];
-  const images = Array.isArray(payload.optionImages) ? payload.optionImages : [];
-  const options = Array.from({ length: Math.max(raw.length, images.length) }, (_, index) => {
-    const value = raw[index];
-    const option = value && typeof value === "object" ? value as Record<string, unknown> : {};
-    const id = historyText(option.id ?? option.optionId ?? option.label, String.fromCharCode(65 + index));
-    return { id, text: typeof value === "string" ? value : historyText(option.text ?? option.label, id), imageUrl: historyText(option.imageUrl) || historyText(images[index]) };
-  });
-  return item.question?.type === "TRUE_FALSE" && !options.length ? [{ id: "A", text: "对 · Đúng", imageUrl: "" }, { id: "B", text: "错 · Sai", imageUrl: "" }] : options;
+  return questionOptions(item.question?.payload || {}, item.question?.type || "");
 }

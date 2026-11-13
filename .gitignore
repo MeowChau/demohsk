@@ -39,3 +39,6 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 src/ai-tutor-backend/venv/bin/python
+
+# Generated audit reports and screenshots; recreate locally when needed.
+/docs/evidence/

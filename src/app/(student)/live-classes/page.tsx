@@ -1,5 +1,4 @@
 import type { LiveClass } from "@/types/courses";
-import { getCurrentStudentId } from "@/lib/auth/current-user";
 import { CalendarIcon } from "@/components/icons/stat-icons";
 import { EmptyState } from "@/components/ui/empty-state";
 

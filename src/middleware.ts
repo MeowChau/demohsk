@@ -67,7 +67,7 @@ export async function middleware(request: NextRequest) {
     return response;
   } catch {
     return NextResponse.json(
-      { message: "Chưa kết nối được máy chủ HSK tại cổng 3001." },
+      { message: "Chưa kết nối được máy chủ HSK. Vui lòng thử lại." },
       { status: 503 },
     );
   }
@@ -83,6 +83,7 @@ export const config = {
     "/leaderboard/:path*",
     "/games/:path*",
     "/results/:path*",
+    "/history/:path*",
     "/rewards/:path*",
     "/support/:path*",
     "/teacher/:path*",

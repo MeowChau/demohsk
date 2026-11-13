@@ -1,9 +1,24 @@
 import "server-only";
+import { cache } from "react";
+import { backendEndpoint } from "./config";
+import { ApiError, errorMessage } from "./client";
 import { serverApi } from "./server";
 import { CATALOG_PAGE_SIZE, catalogSearch, hskLevelPriority, type CatalogQuery } from "@/lib/catalog-query";
-import type { HskExam, HskPractice, HskTopic, HskWord, PageData } from "./types";
+import type { DashboardTopic, HskExam, HskPractice, HskTopic, HskWord, PageData } from "./types";
 
-export const getTopics = (level?: string) => serverApi<HskTopic[]>("practice-sets/topics" + (level ? "?hskLevel=" + level : ""));
+export const getTopics = cache((level?: string) => serverApi<HskTopic[]>("practice-sets/topics" + (level ? "?hskLevel=" + level : "")));
+// Topic totals are already computed by the existing API. Do not load all
+// practice sets just to count lessons for ten dashboard cards.
+export async function getDashboardTopics(level: number): Promise<{ topics: DashboardTopic[]; total: number }> {
+  const topics = await getTopics(String(level));
+  return {
+    total: topics.length,
+    topics: topics.slice(0, 10).map(({ topicKey, titleVi, titleCn, hskLevel, totalSets }) => ({
+      topicKey, titleVi, titleCn, hskLevel, totalSets,
+    })),
+  };
+}
+const requestPage = cache(<T>(path:string) => serverApi<PageData<T>>(path));
 type CatalogLoader<T> = (query: Partial<CatalogQuery>) => Promise<PageData<T>>;
 
 // Read only the level buckets needed for this page. Sorting a single backend
@@ -45,7 +60,7 @@ async function personalizedPage<T>(load: CatalogLoader<T>, query: Partial<Catalo
 }
 
 export const getWords = (query: Partial<CatalogQuery>, currentLevel?: number | null) => {
-  const load: CatalogLoader<HskWord> = next => serverApi("vocabulary?" + catalogSearch({ ...next, view: undefined }));
+  const load: CatalogLoader<HskWord> = next => requestPage<HskWord>("vocabulary?" + catalogSearch({ ...next, view: undefined }));
   return currentLevel === undefined ? load(query) : personalizedPage(load, query, currentLevel);
 };
 
@@ -62,17 +77,25 @@ export async function getLessonWords(query: Partial<CatalogQuery>): Promise<HskW
   return [...words.values()];
 }
 export const getPracticeSets = (query: Partial<CatalogQuery>, currentLevel?: number | null) => {
-  const load: CatalogLoader<HskPractice> = next => serverApi("practice-sets?" + catalogSearch(next));
+  const load: CatalogLoader<HskPractice> = next => requestPage<HskPractice>("practice-sets?" + catalogSearch(next));
   return currentLevel === undefined ? load(query) : personalizedPage(load, query, currentLevel);
 };
 export const getExams = (query: Partial<CatalogQuery>, currentLevel?: number | null) => {
-  const load: CatalogLoader<HskExam> = next => serverApi("exams?" + catalogSearch(next));
+  const load: CatalogLoader<HskExam> = next => requestPage<HskExam>("exams?" + catalogSearch(next));
   return currentLevel === undefined ? load(query) : personalizedPage(load, query, currentLevel);
 };
 
+async function publicCatalog<T>(path: "vocabulary?limit=1" | "practice-sets?limit=1" | "exams?limit=1" | "practice-sets/topics"): Promise<T> {
+  const response = await fetch(backendEndpoint(path), {
+    method:"GET", next:{revalidate:60,tags:["hsk-public-catalog"]}, signal:AbortSignal.timeout(15000),
+  });
+  const body:unknown = await response.json().catch(()=>null);
+  if(!response.ok) throw new ApiError(errorMessage(body,response.status),response.status);
+  return body as T;
+}
 export async function getCatalogOverview() {
   const [words, practices, exams, topics] = await Promise.allSettled([
-    getWords({ limit: 1 }), getPracticeSets({ limit: 1 }), getExams({ limit: 1 }), getTopics(),
+    publicCatalog<PageData<HskWord>>("vocabulary?limit=1"), publicCatalog<PageData<HskPractice>>("practice-sets?limit=1"), publicCatalog<PageData<HskExam>>("exams?limit=1"), publicCatalog<HskTopic[]>("practice-sets/topics"),
   ]);
   return {
     words: words.status === "fulfilled" ? words.value.total : null,

@@ -2,7 +2,7 @@ jest.mock("server-only", () => ({}));
 jest.mock("@/lib/api/server", () => ({ serverApi: jest.fn(), requireApiUser: jest.fn() }));
 import { serverApi } from "../server";
 import { learningViews, testForTaking, profileDetail } from "../learning";
-import { getCatalogOverview } from "../catalog";
+import { getCatalogOverview, getWords, getLessonWords, getDashboardTopics } from "../catalog";
 import type { HskUser } from "../types";
 const request = jest.mocked(serverApi);
 describe("real admin catalog shape", () => {
@@ -23,12 +23,18 @@ describe("real admin catalog shape", () => {
     expect(result[0]?.course.description).toContain("AI 小语，你好！");
   });
   it("keeps partial catalog failures visible without fabricating statistics", async () => {
-    request.mockRejectedValueOnce(new Error("offline"));
-    request.mockResolvedValueOnce({ data: [], total: 12 });
-    request.mockResolvedValueOnce({ data: [], total: 12 });
-    request.mockResolvedValueOnce([]);
-    const result = await getCatalogOverview();
-    expect(result.words).toBeNull(); expect(result.practices).toBe(12); expect(result.available).toBe(false);
+    const original=global.fetch;
+    const fetchMock=jest.fn().mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce(new Response(JSON.stringify({data:[],total:12})))
+      .mockResolvedValueOnce(new Response(JSON.stringify({data:[],total:12})))
+      .mockResolvedValueOnce(new Response("[]"));
+    global.fetch=fetchMock;
+    try {
+      const result=await getCatalogOverview();
+      expect(result.words).toBeNull();expect(result.practices).toBe(12);expect(result.available).toBe(false);
+      for(const [,options] of fetchMock.mock.calls){expect(options.headers).toBeUndefined();expect(options.next.revalidate).toBe(60);}
+      expect(request).not.toHaveBeenCalled();
+    } finally {global.fetch=original;}
   });
   it("keeps image-only choices and writing question types from the admin payload", async () => {
     request.mockResolvedValueOnce({ id: 8, title: "Bài luyện", hskLevel: 2, skill: "WRITING", practiceSetQuestions: [
@@ -60,5 +66,49 @@ describe("real admin catalog shape", () => {
     expect(result.questionsBySkill.Writing![0]!.question).toMatchObject({ templateId: "write-tracing", question: "Luyện viết: 发烧", pinyin: "fā shāo", audio_url: null });
     expect(result.test.audio_url).toBeNull();
     expect(JSON.stringify(result)).not.toContain("rubric");
+  });
+});
+
+describe("large personalized catalog",()=>{
+ beforeEach(()=>request.mockReset());
+ function dataset(){
+  const words=Array.from({length:205},(_,i)=>({id:i+1,hanzi:"你好",meaning:"xin chào",pinyin:"ni hao",hskLevel:i%3+1,topic:"demo"}));
+  request.mockImplementation(async path=>{
+   const q=new URL(String(path),"http://fixture").searchParams;const level=Number(q.get("hskLevel"));
+   const list=words.filter(x=>!level || x.hskLevel===level);const page=Number(q.get("page")||1),limit=Number(q.get("limit")||9);
+   return {data:list.slice((page-1)*limit,page*limit),total:list.length,totalPages:Math.ceil(list.length/limit),page,limit};
+  });return words;
+ }
+ it("reads all 205 records across level boundaries without duplicates or missing entries",async()=>{
+  dataset();const pages=[];for(let page=1;page<=23;page++)pages.push(await getWords({page,limit:9},2));
+  expect(pages[0]!.data.every(x=>x.hskLevel===2)).toBe(true);expect(pages[22]!.data).toHaveLength(7);
+  expect(new Set(pages.flatMap(x=>x.data.map(y=>y.id))).size).toBe(205);
+  expect((await getWords({page:999,hskLevel:"3",limit:9},2)).page).toBe(8);
+ });
+ it("loads the whole selected lesson independently of the nine-item catalog page",async()=>{
+  dataset();expect(await getLessonWords({topic:"demo"})).toHaveLength(205);await expect(getLessonWords({})).rejects.toThrow("Chọn một chủ đề");
+ });
+});
+
+describe("dashboard topic summary", () => {
+  beforeEach(() => request.mockReset());
+  it("uses one topic request and sends only ten compact cards to the client", async () => {
+    const topics = Array.from({length: 31}, (_, i) => ({
+      topicKey: `HSK1-L${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: 1,
+      totalSets: 2, totalQuestions: 80, vocabularyCount: 20, pinyin: "ni hao",
+    }));
+    request.mockResolvedValue(topics);
+    const { topics: result, total } = await getDashboardTopics(1);
+    expect(total).toBe(31);
+    expect(result).toHaveLength(10);
+    expect(result.map(item => item.topicKey)).toEqual(topics.slice(0, 10).map(item => item.topicKey));
+    expect(result[0]).toMatchObject({totalSets: 2});
+    expect(result[0]).not.toHaveProperty("totalQuestions");
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledWith("practice-sets/topics?hskLevel=1");
+  });
+  it("keeps upstream errors visible instead of reporting an empty successful dashboard", async () => {
+    request.mockRejectedValue(new Error("unavailable"));
+    await expect(getDashboardTopics(2)).rejects.toThrow("unavailable");
   });
 });

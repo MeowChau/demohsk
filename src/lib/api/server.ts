@@ -25,7 +25,7 @@ export async function serverApi<T>(
     });
   } catch {
     throw new ApiError(
-      "Chưa kết nối được backend HSK. Kiểm tra máy chủ tại cổng 3001.",
+      "Chưa kết nối được máy chủ HSK. Vui lòng thử lại.",
       503,
     );
   }

@@ -5,20 +5,19 @@ import { attemptHref } from "@/lib/attempt-routes";
 import { HskBadge } from "@/components/ui/catalog";
 import { SharedAudioSection } from "./shared-audio-section";
 import { historyDate, historyDuration, historyHref, historyMetric, historyOptions, historyText, type AttemptHistoryDetail, type HistorySourceItem } from "@/lib/learning-history";
+import { optionMatchesAnswer } from "@/lib/practice-scoring";
 import type { Skill } from "@/types/assessment";
 
-const normalized = (value: string) => value.normalize("NFKC").replace(/[\s\u200B-\u200D\uFEFF]+/gu, "").replace(/[。.!！?？，、;；:：]+$/gu, "").toLowerCase();
 const audioFor = (item: HistorySourceItem) => publicMedia(historyText(item.question?.payload.audioUrl)) || publicMedia(item.audioUrl) || "";
 function ReviewImage({ url, alt }: { url: string; alt: string }) {
   const src = publicMedia(url);
   if (!src) return null;
   return <a href={src} target="_blank" rel="noreferrer" aria-label={"Mở ảnh: " + alt} className="mt-3 block"><img src={src} alt={alt} className="mx-auto h-auto max-w-full rounded-lg object-contain" loading="lazy" /></a>;
 }
-function QuestionReview({ item, number, detail, sharedAudio }: { item: HistorySourceItem; number: number; detail: AttemptHistoryDetail; sharedAudio: boolean }) {
+function QuestionReview({ item, number, detail, sharedAudio, grade }: { item: HistorySourceItem; number: number; detail: AttemptHistoryDetail; sharedAudio: boolean; grade?: AttemptHistoryDetail["result"]["questions"][number] }) {
   const question = item.question;
   const payload = question?.payload || {};
   const id = String(item.id);
-  const grade = detail.result.questions.find(entry => entry.questionId === id);
   const answer = detail.snapshot.answers[id] || "";
   const expected = grade?.correctAnswers || [];
   const options = historyOptions(item);
@@ -29,14 +28,7 @@ function QuestionReview({ item, number, detail, sharedAudio }: { item: HistorySo
   const sourceMetadata = payload.source && typeof payload.source === "object" ? payload.source as Record<string, unknown> : {};
   const speechTarget = [payload.character, payload.hanzi, sourceMetadata.sourceWord, payload.sentence, payload.text, payload.questionText].find((value): value is string => typeof value === "string" && /\p{Script=Han}/u.test(value));
   const prompt = historyText(payload.text) || historyText(payload.character) || historyText(payload.hanzi) || historyText(payload.sentence) || "Nội dung câu hỏi chưa có trong bản lưu.";
-  const matches = (option: typeof options[number], value: string) => {
-    const values = [option.id, option.text];
-    if (question?.type === "TRUE_FALSE") {
-      if (normalized(option.id) === "a") values.push("true", "1", "对", "是", "đúng");
-      if (normalized(option.id) === "b") values.push("false", "0", "错", "否", "sai");
-    }
-    return values.some(candidate => normalized(candidate) === normalized(value));
-  };
+  const matches = (option: typeof options[number], value: string) => optionMatchesAnswer(option, value, question?.type);
   const feedback = speech ? { text: `Điểm phát âm: ${speech.score}/100`, style: "border-brand/20 bg-brand/5 text-brand" }
     : tracing ? { text: `Đúng ${tracing.correctStrokes}/${tracing.totalStrokes} nét đã mở · ${tracing.mistakes} lượt nét cần cải thiện · hoàn thành ${tracing.completedPositions.length}/${tracing.totalCharacters} chữ.`, style: "border-brand/20 bg-brand/5 text-brand" }
       : status === "correct" ? { text: "Chính xác", style: "border-success bg-success-soft text-success" }
@@ -71,8 +63,12 @@ function QuestionReview({ item, number, detail, sharedAudio }: { item: HistorySo
 
 export function AttemptHistoryReview({ detail, filter }: { detail: AttemptHistoryDetail; filter: string }) {
   const items = detail.snapshot.source.items;
-  const isWrong = (item: HistorySourceItem) => detail.result.questions.some(grade => grade.questionId === String(item.id) && ["incorrect", "unanswered"].includes(grade.status));
+  // Build lookup tables once instead of scanning all grades for every question.
+  const grades = new Map(detail.result.questions.map(grade => [grade.questionId, grade]));
+  const wrongIds = new Set(detail.result.questions.filter(grade => ["incorrect", "unanswered"].includes(grade.status)).map(grade => grade.questionId));
+  const isWrong = (item: HistorySourceItem) => wrongIds.has(String(item.id));
   const displayed = filter === "wrong" ? items.filter(isWrong) : items;
+  const displayedIds = new Set(displayed.map(item => item.id));
   const groups: { audio: string; items: { item: HistorySourceItem; number: number }[] }[] = [];
   items.forEach((item, index) => { const audio = audioFor(item); const previous = groups.at(-1); if (audio && previous?.audio === audio) previous.items.push({ item, number: index + 1 }); else groups.push({ audio, items: [{ item, number: index + 1 }] }); });
   return <div className="flex flex-col gap-6">
@@ -89,6 +85,6 @@ export function AttemptHistoryReview({ detail, filter }: { detail: AttemptHistor
     <div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-lg font-semibold text-ink">Xem lại bài làm</h2><Link href={"/results/" + detail.id} className={filter !== "wrong" ? "hsk-button" : "hsk-button-secondary"}>Tất cả ({items.length})</Link><Link href={"/results/" + detail.id + "?filter=wrong"} className={filter === "wrong" ? "hsk-button" : "hsk-button-secondary"}>Câu sai, bỏ trống ({items.filter(isWrong).length})</Link></div>
     <p className="text-xs text-slate">Bấm vào hình để mở ảnh đầy đủ. Tỷ lệ đúng chỉ tính trên câu có thể chấm tự động; điểm HSK hiển thị riêng.</p>
     {displayed.length === 0 && <div className="hsk-panel text-sm text-slate">Không có câu sai hoặc bỏ trống trong nhóm câu đã chấm.</div>}
-    {groups.map((group, index) => { const shown = group.items.filter(({ item }) => displayed.includes(item)); if (!shown.length) return null; const blocks = shown.map(({ item, number }) => <QuestionReview key={item.id} item={item} number={number} detail={detail} sharedAudio={Boolean(group.audio) && group.items.length > 1} />); return group.audio && group.items.length > 1 ? <SharedAudioSection key={index} src={publicMedia(group.audio) || group.audio} label={`Câu ${group.items[0]!.number}–${group.items.at(-1)!.number}`}>{blocks}</SharedAudioSection> : <div key={index} className="flex flex-col gap-5">{blocks}</div>; })}
+    {groups.map((group, index) => { const shown = group.items.filter(({ item }) => displayedIds.has(item.id)); if (!shown.length) return null; const blocks = shown.map(({ item, number }) => <QuestionReview key={item.id} item={item} number={number} detail={detail} grade={grades.get(String(item.id))} sharedAudio={Boolean(group.audio) && group.items.length > 1} />); return group.audio && group.items.length > 1 ? <SharedAudioSection key={index} src={publicMedia(group.audio) || group.audio} label={`Câu ${group.items[0]!.number}–${group.items.at(-1)!.number}`}>{blocks}</SharedAudioSection> : <div key={index} className="flex flex-col gap-5">{blocks}</div>; })}
   </div>;
 }

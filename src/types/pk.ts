@@ -1,3 +1,4 @@
+import { z } from "zod";
 export type PkQuestion = { id: number; hanzi: string; pinyin: string; prompt: string; options: { id: string; text: string }[] };
 export type PkScore = { userId: number; score: number; correctCount: number; totalQuestions: number; combo: number };
 export type PkMatch = {
@@ -6,8 +7,8 @@ export type PkMatch = {
   readyUserIds: number[]; index: number; stage: "waiting" | "playing" | "reveal" | "finished";
   turnUserId: number; deadline: number; scores: PkScore[]; serverNow: number; questions: PkQuestion[];
 };
-export type PkAnswer = PkMatch & { userId: number; questionId: number; optionId: string | null; correct: boolean; correctOptionId: string };
-export type PkResult = PkMatch & { winnerId: number | null; reason: string; durationInSeconds: number; rewards: { userId: number; expAwarded: number }[] };
+export type PkAnswer = Omit<PkMatch,"questions"> & { userId: number; questionId: number; optionId: string | null; correct: boolean; correctOptionId: string };
+export type PkResult = Omit<PkMatch,"questions"> & { winnerId: number | null; reason: string; durationInSeconds: number; rewards: { userId: number; expAwarded: number }[] };
 export type PkCommand = { event: "find_match" | "cancel_match" | "player_ready" | "submit_answer"; hskLevel: number; roomId?: string; questionId?: number; optionId?: string };
 const roomPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function parsePkCommand(value: unknown): PkCommand {
@@ -26,3 +27,24 @@ export function parsePkCommand(value: unknown): PkCommand {
   return command;
 }
 export const validPkRoom = (value?: string | null) => typeof value === "string" && roomPattern.test(value) ? value : undefined;
+
+const id=z.number().int().positive();
+const count=z.number().int().nonnegative();
+const question=z.object({id,hanzi:z.string(),pinyin:z.string(),prompt:z.string(),options:z.array(z.object({id:z.string(),text:z.string()})).min(2)});
+const room=z.object({revision:count,roomId:z.string().uuid(),users:z.array(id).length(2).refine(users=>new Set(users).size===2),
+  players:z.array(z.object({id,name:z.string(),photoUrl:z.string().nullable(),hskLevel:id})),
+  readyUserIds:z.array(id),index:count,stage:z.enum(["waiting","playing","reveal","finished"]),
+  turnUserId:id,deadline:count,serverNow:count,
+  scores:z.array(z.object({userId:id,score:z.number().finite(),correctCount:count,totalQuestions:count,combo:count})),
+});
+const pkEnvelope=z.discriminatedUnion("event",[
+ z.object({event:z.literal("connecting"),payload:z.null()}),
+ z.object({event:z.enum(["pk_connected","online_count_update"]),payload:z.object({count,hskLevel:id.optional()})}),
+ z.object({event:z.enum(["connection_closed","connection_error","exception"]),payload:z.object({message:z.string().optional()})}),
+ z.object({event:z.literal("match_cancelled"),payload:z.object({roomId:z.string().uuid(),message:z.string().optional()})}),
+ z.object({event:z.enum(["match_found","player_ready_update","game_started","turn_changed"]),payload:room.extend({questions:z.array(question).optional()})}),
+ z.object({event:z.literal("answer_result"),payload:room.extend({userId:id,questionId:id,optionId:z.string().nullable(),correct:z.boolean(),correctOptionId:z.string()})}),
+ z.object({event:z.literal("game_finished"),payload:room.extend({winnerId:id.nullable(),reason:z.string(),durationInSeconds:count,rewards:z.array(z.object({userId:id,expAwarded:count}))})}),
+]);
+export function parsePkMessage(value:unknown){const parsed=pkEnvelope.safeParse(value);return parsed.success?parsed.data:null;}
+export function pkStorageKey(origin:string,userId:number,level:number){return `hsk:pk-room:${encodeURIComponent(origin)}:${userId}:${level}`;}

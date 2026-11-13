@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, useInView } from "framer-motion"
-import { Star, Quote } from "lucide-react"
+import { Quote } from "lucide-react"
 import { useRef, useState, useEffect } from "react"
 import { TiltCard } from "@/components/ui/tilt-card"
 
@@ -124,41 +124,6 @@ function ScrambleText({
 }
 
 /**
- * Animated five-star rating.
- */
-function StarBurst() {
-  return (
-    <motion.div
-      initial={{ scale: 0 }}
-      whileInView={{ scale: 1 }}
-      viewport={{ once: true }}
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 20,
-      }}
-      className="flex items-center gap-0.5"
-    >
-      {[...Array(5)].map((_, index) => (
-        <motion.div
-          key={index}
-          initial={{ rotate: 0, scale: 0 }}
-          whileInView={{ rotate: 360, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: index * 0.1,
-            type: "spring",
-            stiffness: 200,
-          }}
-        >
-          <Star className="h-4 w-4 fill-xp text-xp" />
-        </motion.div>
-      ))}
-    </motion.div>
-  )
-}
-
-/**
  * Individual testimonial card.
  *
  * Uses TiltCard from the newer UI version while preserving
@@ -196,7 +161,7 @@ function TestimonialCard({
 
           {/* Testimonial */}
           <p className="mb-4 flex-1 text-sm font-medium leading-relaxed text-slate">
-            "{testimonial.quote}"
+            &quot;{testimonial.quote}&quot;
           </p>
 
           {/* Student information */}

@@ -53,29 +53,6 @@ function AnimatedNumber({
   )
 }
 
-const stats = [
-  {
-    "value": 9,
-    "suffix": "",
-    "label": "Cấp độ HSK trong hệ thống"
-  },
-  {
-    "value": 4,
-    "suffix": "",
-    "label": "Kỹ năng nghe, nói, đọc, viết"
-  },
-  {
-    "value": 3,
-    "suffix": "",
-    "label": "Chữ Hán · Pinyin · nghĩa Việt"
-  },
-  {
-    "value": 1,
-    "suffix": "",
-    "label": "Mục tiêu học của riêng bạn"
-  }
-]
-
 export function TrustBar({ stats }: { stats: { label: string; value: number | null }[] }) {
   return (
     <section className="relative overflow-hidden border-y-3 border-ink bg-white py-12 md:py-16">

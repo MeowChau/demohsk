@@ -19,7 +19,7 @@ export function CatalogFilters({ path, query, topics = [], skills = false, topic
     <button className="hsk-button" type="submit">Áp dụng</button><Link href={resetHref} className="hsk-button-secondary">Đặt lại</Link>
   </form>;
 }
-export function CatalogPagination({ path, query, data }: { path: string; query: CatalogQuery; data: Pick<PageData<unknown>, "page" | "total" | "totalPages"> }) {
+export function CatalogPagination({ path, query, data }: { path: string; query: Pick<CatalogQuery, "page" | "limit"> & Partial<CatalogQuery>; data: Pick<PageData<unknown>, "page" | "total" | "totalPages"> }) {
   const totalPages = Math.max(1, data.totalPages);
   const visible = totalPages <= 7 ? Array.from({ length: totalPages }, (_, index) => index + 1)
     : [...new Set([1, data.page - 1, data.page, data.page + 1, totalPages].filter(page => page >= 1 && page <= totalPages))].sort((a, b) => a - b);

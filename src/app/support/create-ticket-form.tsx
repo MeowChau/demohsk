@@ -22,7 +22,7 @@ export function CreateTicketForm() {
       formRef.current?.reset();
     }
     if (state?.error) notify.error(state.error);
-  }, [state]);
+  }, [state, formRef]);
 
   return (
     <form {...validation.formProps} action={formAction} className="flex flex-col gap-3 rounded-lg bg-surface p-6 shadow-card">

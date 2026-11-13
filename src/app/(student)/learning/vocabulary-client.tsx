@@ -79,7 +79,7 @@ export function VocabularyClient({
     startTransition(async () => {
       const result = await toggleSaveWordAction(word.wordid, isSaved);
       if (result.error) { notify.error(result.error); return; }
-      setSavedIds((prev) => { const next = new Set(prev); isSaved ? next.delete(word.wordid) : next.add(word.wordid); return next; });
+      setSavedIds((prev) => { const next = new Set(prev); if (isSaved) next.delete(word.wordid); else next.add(word.wordid); return next; });
     });
   }
 
@@ -401,7 +401,7 @@ export function VocabularyClient({
                     style={{ transform: "rotateY(180deg)" }}
                   >
                     <p className="text-base font-semibold">{livePreview.back}</p>
-                    {livePreview.example && <p className="text-sm italic text-white/80">"{livePreview.example}"</p>}
+                    {livePreview.example && <p className="text-sm italic text-white/80">&quot;{livePreview.example}&quot;</p>}
                     {previewCard && (
                       <div className="mt-2 flex gap-2">
                         <button

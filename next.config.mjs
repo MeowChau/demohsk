@@ -8,7 +8,6 @@ const nextConfig = {
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     ] }));
   },
-  // ...your existing config
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",

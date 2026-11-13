@@ -24,5 +24,10 @@ export function publicMedia(value?: string | null): string | null {
   if (!value) return null;
   if (/^https?:\/\//i.test(value)) return value;
   if (!/^\/(?!\/)/.test(value)) return null;
-  return `${(process.env.NEXT_PUBLIC_HSK_MEDIA_ORIGIN || "https://api.tricehsk.id.vn/api/v1").replace(/\/$/, "")}${value}`;
+  const base = new URL(process.env.NEXT_PUBLIC_HSK_MEDIA_ORIGIN || "https://api.tricehsk.id.vn/api/v1");
+  const prefix = base.pathname.replace(/\/+$/, "");
+  // A stored API path is already rooted; do not repeat the configured API prefix.
+  const path = prefix && (value === prefix || value.startsWith(prefix + "/"))
+    ? value : prefix + value;
+  return new URL(path, base.origin).toString();
 }

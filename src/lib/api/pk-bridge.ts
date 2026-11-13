@@ -28,11 +28,11 @@ export function pkEventStream(token: string, level: number, signal: AbortSignal,
   return new ReadableStream<Uint8Array>({
     start(controller) {
       let closed = false;
-      let heartbeat: NodeJS.Timeout | undefined;
+      const heartbeat: { timer?: NodeJS.Timeout } = {};
       detach = () => {
         if (closed) return;
         closed = true;
-        clearInterval(heartbeat);
+        clearInterval(heartbeat.timer);
         signal.removeEventListener("abort", detach);
         socket.offAny();
         socket.removeAllListeners();
@@ -55,10 +55,10 @@ export function pkEventStream(token: string, level: number, signal: AbortSignal,
         detach();
       });
       signal.addEventListener("abort", detach, { once: true });
-      heartbeat = setInterval(() => {
+      heartbeat.timer = setInterval(() => {
         if (!closed) try { controller.enqueue(encoder.encode(": keep-alive\n\n")); } catch { detach(); }
       }, 15000);
-      heartbeat.unref();
+      heartbeat.timer.unref();
       send({ event: "connecting", payload: null });
       socket.connect();
     },

@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { requireApiUser, serverApi } from "@/lib/api/server";
 import { ApiError } from "@/lib/api/client";
 import type { PageData } from "@/lib/api/types";
 import type { SearchParams } from "@/lib/catalog-query";
 import { HSK_LEVELS, SKILL_LABELS } from "@/lib/hsk";
-import { historyHref, historySearch, parseHistoryQuery, type AttemptHistorySummary } from "@/lib/learning-history";
-import { DataEmpty, PageHeading } from "@/components/ui/catalog";
+import { historySearch, parseHistoryQuery, type AttemptHistorySummary } from "@/lib/learning-history";
+import { CatalogPagination, DataEmpty, PageHeading } from "@/components/ui/catalog";
 import { AttemptHistoryTable } from "@/components/learning/attempt-history-table";
 
 export const metadata = { title: "Lịch sử bài làm" };
@@ -34,9 +33,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
     {!history ? <p className="hsk-error" role="alert">{invalidRange ? "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc. Hãy sửa bộ lọc để xem lịch sử." : "Chưa tải được lịch sử bài làm. Bấm Làm mới để thử lại; các kết quả đã lưu vẫn được giữ trên tài khoản."}</p>
       : history.data.length ? <AttemptHistoryTable items={history.data} />
         : <DataEmpty title="Chưa có bài làm phù hợp" description="Nộp một đề thi hoặc bài luyện để lưu kết quả, hoặc thử thay đổi bộ lọc." />}
-    {history && <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate"><p>{history.total} lượt làm · Trang {history.page}/{Math.max(1, history.totalPages)}</p><div className="flex gap-2">
-      {history.page > 1 && <Link className="hsk-button-secondary" href={historyHref({ ...query, page: history.page - 1 })}><ChevronLeft size={16} />Trước</Link>}
-      {history.page < history.totalPages && <Link className="hsk-button-secondary" href={historyHref({ ...query, page: history.page + 1 })}>Sau<ChevronRight size={16} /></Link>}
-    </div></div>}
+    {history && <CatalogPagination path="/history" query={query} data={history} />}
   </div>;
 }

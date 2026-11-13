@@ -17,6 +17,7 @@ const display = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://trike-hsk-web-tau.vercel.app"),
   title: { default: "TriceHSK — Học tiếng Trung mỗi ngày", template: "%s | TriceHSK" },
   description: "Học từ vựng tiếng Trung, luyện nghe, nói, đọc, viết và theo dõi mục tiêu HSK cùng TriceHSK.",
 };
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+    <html lang="vi" data-scroll-behavior="smooth" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased">
         <ThemeProvider>
           <NavigationProtectionProvider>

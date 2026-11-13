@@ -36,7 +36,7 @@ export const notify = {
 
   /** XP earned toast — bouncy green popup */
   xp: (amount: number, reason?: string) =>
-    sonnerToast.custom((t) => (
+    sonnerToast.custom(() => (
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -58,7 +58,7 @@ export const notify = {
 
   /** Gems earned toast */
   gems: (amount: number) =>
-    sonnerToast.custom((t) => (
+    sonnerToast.custom(() => (
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -77,7 +77,7 @@ export const notify = {
 
   /** Level up celebration toast */
   levelUp: (level: number, title: string) =>
-    sonnerToast.custom((t) => (
+    sonnerToast.custom(() => (
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}

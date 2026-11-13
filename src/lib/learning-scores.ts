@@ -1,27 +1,20 @@
-import type { Skill } from "@/types/assessment";
-import type { PracticeScore } from "@/lib/practice-scoring";
-export interface SkillAverage {
-  score: number | null; sampleCount: number; questionCount: number; updatedAt: string | null;
-  taskKind?: "word" | "sentence" | "passage";
+import type { LearningScoreSubmission as Submission } from "./api/generated/learning-contract";
+export type { SkillAverage, LearningScoreSummary, SavedScore as SubmittedLearningScore } from "./api/generated/learning-contract";
+export interface LearningScoreSubmission extends Omit<Submission, "writingProgress"> {
+  writingProgress?: Record<string, { completedPositions: number[]; correctStrokes: number; totalStrokes: number; mistakes: number }>;
 }
-export interface LearningScoreSummary {
-  currentHskLevel: number | null;
-  estimatedHskLevel: number | null;
-  evidence: { level: number; score: number; maxScore: number; at: string } | null;
-  hskLevel: number;
-  skills: Record<Skill, SkillAverage>;
-  writingProgress: { completed: number; total: number; correctStrokes: number; totalStrokes: number; mistakes: number };
+export type LearningAttemptContext = Pick<Submission, "attemptId" | "kind" | "sourceId">;
+
+let latestScoreChange = 0;
+const changeKey = "hsk:scores-updated-at";
+export function markLearningScoresUpdated() {
+  if (typeof window === "undefined") return;
+  latestScoreChange = Date.now();
+  try { sessionStorage.setItem(changeKey,String(latestScoreChange)); } catch { /* Timestamp is also kept in memory. */ }
+  window.dispatchEvent(new Event("hsk-scores-updated"));
 }
-export interface SubmittedLearningScore extends PracticeScore {
-  historyId?: string; submittedAt?: string; accuracyPercent?: number | null;
-  currentHskLevel: number | null; previousCurrentHskLevel: number | null;
-  hskLevel: number; estimatedHskLevel: number | null; previousHskLevel: number | null; sourceVersion: string;
-  sections: { skill: Skill; score: number | null; earned: number; possible: number; correctCount: number; gradedCount: number; totalQuestions: number; complete: boolean }[];
-  totalScore: number | null; maxScore: number; passScore: number | null; eligible: boolean; passed: boolean; reasons: string[];
+export function learningScoresChangedSince(loadedAt:number) {
+  if (typeof window === "undefined") return false;
+  let saved=0;try {saved=Number(sessionStorage.getItem(changeKey)||0);} catch { /* Storage is optional. */ }
+  return Math.max(latestScoreChange,Number.isFinite(saved)?saved:0)>loadedAt;
 }
-export interface LearningScoreSubmission {
-  attemptId: string; kind: "exam" | "set"; sourceId: number; answers: Record<string,string>;
-  startedAt?: string; durationSeconds?: number;
-  writingProgress?: Record<string,{ completedPositions: number[]; correctStrokes: number; totalStrokes: number; mistakes: number }>;
-}
-export type LearningAttemptContext = Pick<LearningScoreSubmission, "attemptId" | "kind" | "sourceId">;

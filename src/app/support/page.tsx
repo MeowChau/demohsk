@@ -1,6 +1,5 @@
 import type { SupportTicket } from "@/types/community";
 import type { TicketStatus } from "@/types/community";
-import { getCurrentStudentId } from "@/lib/auth/current-user";
 import { CreateTicketForm } from "./create-ticket-form";
 import { WarningIcon, InfoIcon, CheckIcon } from "@/components/icons/stat-icons";
 import { EmptyState } from "@/components/ui/empty-state";

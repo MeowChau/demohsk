@@ -1,4 +1,5 @@
-export type Skill = "Listening" | "Reading" | "Writing" | "Speaking";
+export type { LearningSkill as Skill } from "@/lib/api/generated/learning-contract";
+import type { LearningSkill as Skill } from "@/lib/api/generated/learning-contract";
 export type TestCategory = `HSK ${number}`;
 
 export interface PracticeTest {
