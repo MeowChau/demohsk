@@ -9,7 +9,7 @@ import {
   updateCustomCardAction,
   deleteCustomCardAction,
   toggleSaveWordAction,
-} from "./api-actions";
+} from "@/lib/api/vocabulary-actions";
 
 type Tab = "bank" | "custom";
 type DifficultyFilter = "all" | VocabDifficulty;

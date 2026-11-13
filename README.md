@@ -48,8 +48,17 @@ Web này chỉ chứa giao diện học viên. Các đường dẫn admin/teache
 
 ## Kiểm tra
 
+Chạy trực tiếp bằng các lệnh có sẵn, không cần script kiểm chứng riêng:
+
 ```powershell
-npm test -- --runInBand
+npm run lint
 npm run typecheck
+npm test -- --runInBand
 npm run build
 ```
+
+Để xem độ bao phủ kiểm thử, chạy `npm run test:coverage -- --runInBand` thay cho lệnh test thường. Kết quả hiển thị trong terminal; thư mục `coverage/` được Git bỏ qua.
+
+Để đo hiệu năng, dừng phiên dev trước khi chạy `npm run build` rồi `npm start`, mở http://localhost:3002 và dùng Lighthouse/Performance trong DevTools. Báo cáo JSON và ảnh chụp có thể tạo lại tại máy kiểm tra; nếu xuất file thì để trong `docs/evidence/`, thư mục này không đưa vào Git.
+
+`.env.local` cấu hình kết nối backend/media và không đưa vào Git. Các kiểu TypeScript của API vẫn nằm trong source để web biên dịch và kiểm tra kiểu; dự án không còn lệnh đồng bộ kiểu từ source backend.
