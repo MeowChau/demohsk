@@ -462,7 +462,7 @@ export default function RewardsClient({
               delay: 0.5,
             }}
           >
-            <div className="absolute inset-0 bg-white/20 animate-shine-sweep" />
+            <div className="absolute inset-0 bg-inverse/20 animate-shine-sweep" />
           </motion.div>
 
           <div className="absolute inset-0 flex items-center justify-center">
@@ -503,7 +503,7 @@ export default function RewardsClient({
               <p className="text-xs font-semibold text-slate uppercase tracking-wider">
                  Tổng EXP </p>
 
-              <motion.p className="font-display text-4xl font-semibold text-green-600">
+              <motion.p className="font-display text-4xl font-semibold text-success">
                 {stats.xpTotal.toLocaleString()}
               </motion.p>
             </div>
@@ -530,10 +530,10 @@ export default function RewardsClient({
             <AnimatedFlame size={48} />
 
             <div>
-              <p className="text-xs font-semibold text-orange-600 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-coral uppercase tracking-wider">
                  Chuỗi ngày học </p>
 
-              <p className="font-display text-4xl font-semibold text-orange-600">
+              <p className="font-display text-4xl font-semibold text-coral">
                 {currentStreak}{" "}
                 <span className="text-base font-normal text-orange-400">
                    ngày </span>
@@ -546,7 +546,7 @@ export default function RewardsClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="text-xs text-orange-500 mt-2 font-semibold"
+              className="text-xs text-coral mt-2 font-semibold"
             >
               {currentStreak >= 7
                 ? "🔥 Bạn đang học rất đều. Tiếp tục nhé!"
@@ -672,7 +672,7 @@ export default function RewardsClient({
                   className="flex items-center justify-between rounded-xl border border-mist bg-surface px-5 py-3 shadow-hard"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border border-green-200">
+                    <div className="w-8 h-8 rounded-full bg-success-soft flex items-center justify-center border border-success/25">
                       <XpGem size={16} />
                     </div>
 
@@ -687,7 +687,7 @@ export default function RewardsClient({
                     whileHover={{
                       scale: 1.1,
                     }}
-                    className="font-semibold text-green-600 bg-green-50 border border-green-200 px-3 py-1 rounded-full text-xs"
+                    className="font-semibold text-success bg-success-soft border border-success/25 px-3 py-1 rounded-full text-xs"
                   >
                     +
                     {entry.amount.toLocaleString()}{" "}

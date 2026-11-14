@@ -196,22 +196,22 @@ function LiveDashboardMockup({ catalog }: { catalog: CatalogSummary }) {
             {[
               {
                 icon: Headphones,
-                color: "#0EA599",
+                color: "var(--teal-text)",
                 pct: (skillCounts[0] || 0) / maxSkillCount * 100,
               },
               {
                 icon: BookOpen,
-                color: "#123C6B",
+                color: "var(--brand-text)",
                 pct: (skillCounts[1] || 0) / maxSkillCount * 100,
               },
               {
                 icon: PenLine,
-                color: "#F5A524",
+                color: "var(--xp-text)",
                 pct: (skillCounts[2] || 0) / maxSkillCount * 100,
               },
               {
                 icon: Mic,
-                color: "#9B8AFB",
+                color: "var(--violet-text)",
                 pct: (skillCounts[3] || 0) / maxSkillCount * 100,
               },
             ].map((skill, i) => (

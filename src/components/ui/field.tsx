@@ -39,15 +39,15 @@ export function Field({
           className={cn(
             [
               "block h-12 w-full rounded-lg",
-              "border border-mist",
+              "border border-control",
               "bg-surface",
               "px-4",
               "text-sm text-ink",
               "placeholder:text-slate-soft",
               "outline-none",
-              "transition-all duration-200",
+              "transition-[border-color,box-shadow,background-color] duration-200",
               "shadow-sm",
-              "hover:border-slate-soft",
+              "enabled:hover:border-teal enabled:hover:ring-4 enabled:hover:ring-teal/10",
               "focus:border-teal",
               "focus:ring-4 focus:ring-teal/10",
               "disabled:cursor-not-allowed",
@@ -57,7 +57,7 @@ export function Field({
             className,
             error && [
               "border-danger",
-              "hover:border-danger",
+              "enabled:hover:border-danger enabled:hover:ring-danger/10",
               "bg-danger/5",
               "focus:border-danger",
               "focus:ring-danger/10",

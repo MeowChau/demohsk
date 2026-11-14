@@ -8,6 +8,7 @@ import type { SubmittedLearningScore, LearningScoreSubmission } from "@/lib/lear
 export type SubmitPhase = "doing" | "confirming" | "saving" | "saveFailed" | "saved" | "reviewing";
 export interface AttemptValues {
   answers: Record<string,string>;
+  checkedQuestions: Record<string, PracticeScore["questions"][number]>;
   handwriting: Record<string,HandwritingProgress>;
   strokeStats: Record<string,HandwritingStrokeProgress>;
   speakingAssessments: Record<string,PronunciationAssessment>;
@@ -32,7 +33,7 @@ export interface AttemptState extends AttemptValues {
   reset: () => void;
 }
 export function createAttemptStore(firstQuestion: string | null = null) {
-  const initial = (): AttemptValues => ({ answers:{}, handwriting:{}, strokeStats:{}, speakingAssessments:{}, recordedQuestions:{}, speakingBusy:{}, bookmarks:{}, activeQuestionId:firstQuestion, result:null, savedScore:null });
+  const initial = (): AttemptValues => ({ answers:{}, checkedQuestions:{}, handwriting:{}, strokeStats:{}, speakingAssessments:{}, recordedQuestions:{}, speakingBusy:{}, bookmarks:{}, activeQuestionId:firstQuestion, result:null, savedScore:null });
   return createStore<AttemptState>()((set,get) => ({
     ...initial(), phase:"doing", error:"", submission:null,
     setField: (key,value) => {

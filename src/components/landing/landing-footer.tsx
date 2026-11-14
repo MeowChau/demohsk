@@ -106,7 +106,7 @@ export function LandingFooter() {
         </div>
 
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
              © 2026 TriceHSK. Cùng bạn học tiếng Trung mỗi ngày. </p>
         </div>
       </div>

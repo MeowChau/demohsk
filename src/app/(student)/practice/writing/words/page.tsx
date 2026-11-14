@@ -20,7 +20,7 @@ export default async function WordWritingPage({ searchParams }: { searchParams: 
   const wordId = typeof params.word === "string" ? params.word : undefined;
   return <div className="flex flex-col gap-6">
     <PageHeading title={query.topic ? `Luyện viết · ${lessonTitle}` : "Luyện viết từ vựng"}
-      description={query.topic ? `${words.length} từ cùng chủ đề. Viết từng chữ, chọn từ bất kỳ hoặc chuyển lần lượt bằng nút Từ tiếp theo.` : "Chọn từ theo cấp độ HSK và luyện viết từng nét trực tiếp trên ô chữ."} />
+      description={query.topic ? `${words.length} từ cùng chủ đề. Luyện lần lượt từng từ; dùng “Từ trước” và “Từ tiếp theo” để chuyển từ.` : "Luyện viết lần lượt từng từ theo cấp độ HSK, từng nét trực tiếp trên ô chữ."} />
     <Link className="w-fit text-sm font-medium text-brand hover:underline" href={query.topic ? catalogHref("/vocabulary", { view: "cards", topic: query.topic, hskLevel: query.hskLevel }) : "/practice/writing"}>
       {query.topic ? "← Quay lại flashcard của bài" : "Xem danh sách bài luyện viết"}
     </Link>

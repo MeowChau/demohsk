@@ -82,7 +82,7 @@ export function AvatarUploader({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={pending}
-          className="rounded-full border border-[var(--mist)] px-4 py-2 text-xs font-bold text-[var(--ink)] transition-all hover:border-[var(--teal)] hover:text-[var(--teal)] disabled:opacity-50 dark:border-slate/20 dark:text-white"
+          className="rounded-full border border-[var(--mist)] px-4 py-2 text-xs font-bold text-[var(--ink)] transition-all hover:border-teal hover:text-teal disabled:opacity-50 dark:border-slate/20 dark:text-white"
         >
           {currentUrl ? "Đổi ảnh" : "Tải ảnh lên"}
         </button>

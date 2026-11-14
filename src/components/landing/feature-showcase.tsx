@@ -207,13 +207,13 @@ function SkillModulesDemo() {
             </span>
 
             <motion.div
-              className="mt-1 h-1.5 w-full bg-white/30 rounded-full overflow-hidden"
+              className="mt-1 h-1.5 w-full bg-inverse/30 rounded-full overflow-hidden"
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.6 + i * 0.1 }}
             >
               <motion.div
-                className="h-full bg-white rounded-full"
+                className="h-full bg-inverse rounded-full"
                 initial={{ width: 0 }}
                 animate={
                   isInView

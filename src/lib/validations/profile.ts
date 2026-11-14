@@ -8,6 +8,9 @@ export const profileInfoSchema = z.object({
   currentHskLevel: optionalIntegerInput(9, "Cấp độ HSK hiện tại phải là số nguyên từ 1 đến 9."),
   targetHskLevel: optionalIntegerInput(9, "Cấp độ HSK mục tiêu phải là số nguyên từ 1 đến 9."),
   dailyStudyTime: optionalIntegerInput(1440, "Mục tiêu mỗi ngày cần là số nguyên từ 1 đến 1440 phút."),
+}).refine(value => value.currentHskLevel === undefined || value.targetHskLevel === undefined || value.currentHskLevel <= value.targetHskLevel, {
+  path: ["targetHskLevel"],
+  message: "Cấp độ HSK mục tiêu phải bằng hoặc cao hơn cấp độ hiện tại.",
 });
 export type ProfileInfoInput = z.infer<typeof profileInfoSchema>;
 

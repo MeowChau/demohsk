@@ -9,7 +9,7 @@ import { apiFetch, ApiError } from "@/lib/api/client";
 import type { SubmittedLearningScore, LearningScoreSubmission, LearningAttemptContext } from "@/lib/learning-scores";
 import { markLearningScoresUpdated } from "@/lib/learning-scores";
 import { historyHref, historyResultHref } from "@/lib/learning-history";
-import { Flag, LayoutGrid } from "lucide-react";
+import { ClipboardCheck, Flag, LayoutGrid } from "lucide-react";
 import { SKILL_LABELS } from "@/lib/hsk";
 import type { TestWithQuestions, Skill, Question } from "@/types/assessment";
 import type { PronunciationAssessment } from "@/lib/api/types";
@@ -21,7 +21,9 @@ import { SharedAudioSection } from "@/components/learning/shared-audio-section";
 import { groupPracticeSections, pauseOtherPracticeAudio, type QuestionAudioGroup } from "@/lib/practice-audio";
 import { QuestionNavigator, type QuestionNavigationGroup } from "@/components/learning/question-navigator";
 import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type HandwritingStrokeProgress } from "@/lib/writing-practice";
-import { optionMatchesAnswer, scorePracticeAttempt, type PracticeScore } from "@/lib/practice-scoring";
+import { optionMatchesAnswer, scorePracticeAttempt, type PracticeScore, type GradingMode } from "@/lib/practice-scoring";
+import { GradingModeOptions } from "./attempt/grading-mode-options";
+import { WritingErrorTable, SpeakingErrorTable } from "./attempt/skill-error-summary";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useBlockNavigation } from "@/components/shell/navigation-protection";
 import { remainingExamSeconds } from "@/lib/exam-timing";
@@ -35,7 +37,7 @@ function RefreshProfileAfterPromotion() {
 
 type Option = { optionid: string; option_text: string; image_url?: string | null };
 
-type AttemptProps = { attemptid: string; testid: string; data: TestWithQuestions; recordScores?: boolean };
+type AttemptProps = { attemptid: string; testid: string; data: TestWithQuestions; recordScores?: boolean; initialGradingMode?: GradingMode };
 const AttemptContext = createContext<AttemptStore | null>(null);
 function useAttemptStore() {
   const store = useContext(AttemptContext);
@@ -53,8 +55,13 @@ function AttemptRoot(props: AttemptProps) {
   const [store] = useState(() => createAttemptStore(Object.values(props.data.questionsBySkill).flatMap(x => x || [])[0]?.question.questionid ?? null));
   return <AttemptContext.Provider value={store}><AttemptContent {...props} /></AttemptContext.Provider>;
 }
-function AttemptContent({ attemptid, testid, data, recordScores = false }: AttemptProps) {
+function AttemptContent({ attemptid, testid, data, recordScores = false, initialGradingMode }: AttemptProps) {
   const store = useAttemptStore();
+  const [gradingMode, setGradingMode] = useState<GradingMode>(initialGradingMode || "on-submit");
+  const [pendingMode, setPendingMode] = useState<GradingMode>(initialGradingMode || "on-submit");
+  const [started, setStarted] = useState(!recordScores || Boolean(initialGradingMode));
+  const [modeDialogOpen, setModeDialogOpen] = useState(recordScores && !initialGradingMode);
+  const [checkedQuestions] = useAttemptField("checkedQuestions");
   const phase = useStore(store, state => state.phase);
   const [answers, setAnswers] = useAttemptField("answers");
   const [handwriting, setHandwriting] = useAttemptField("handwriting");
@@ -109,7 +116,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
   }, [result]);
 
   useEffect(() => {
-    if (!showQuestions || typeof IntersectionObserver === "undefined") return;
+    if (!started || !showQuestions || typeof IntersectionObserver === "undefined") return;
     const visible = new Set<HTMLElement>();
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
@@ -123,7 +130,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
     }, { rootMargin: "-160px 0px -45% 0px", threshold: 0 });
     formRef.current?.querySelectorAll<HTMLElement>("[data-practice-question]").forEach(element => observer.observe(element));
     return () => observer.disconnect();
-  }, [questions, attemptVersion, showQuestions, setActiveQuestionId]);
+  }, [questions, attemptVersion, showQuestions, started, setActiveQuestionId]);
 
   useEffect(() => {
     const resumeScrollTracking = () => { keepSelectedQuestion.current = false; };
@@ -161,7 +168,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
     observer?.observe(toolbar);
     return () => observer?.disconnect();
-  }, []);
+  }, [started]);
 
   const strokeSummary = Object.values(strokeStats).reduce((summary, item) => ({
     correctStrokes: summary.correctStrokes + item.correctStrokes,
@@ -169,6 +176,9 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
     mistakes: summary.mistakes + item.mistakes,
   }), { correctStrokes: 0, totalStrokes: 0, mistakes: 0 });
   const tracingQuestions = useMemo(() => questions.filter(item => writingPractice(item.question) !== null), [questions]);
+  const tracingTargets = useMemo(() => tracingQuestions.map(({ question }) => ({
+    id: question.questionid, text: writingPractice(question)?.text || "", pinyin: question.pinyin,
+  })), [tracingQuestions]);
   const writingCompleted = Object.values(handwriting).reduce((sum, item) => sum + item.completedPositions.length, 0);
   const writingTotal = Object.values(handwriting).reduce((sum, item) => sum + item.totalCharacters, 0);
   const speakingQuestionCount = useMemo(() => questions.filter(item => item.question.skill === "Speaking").length, [questions]);
@@ -183,7 +193,9 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
     ...Object.entries(handwriting).filter(([, progress]) => progress.completedPositions.length > 0).map(([id]) => id),
     ...Object.entries(recordedQuestions).filter(([, recorded]) => recorded).map(([id]) => id),
   ]);
-  const gradeByQuestion = new Map((savingScore ? [] : result?.questions || []).map(grade => [grade.questionId, grade] as const));
+  const checkedGrades = Object.values(checkedQuestions);
+  const checkedCorrectCount = checkedGrades.filter(grade => grade.status === "correct").length;
+  const gradeByQuestion = new Map((savingScore ? [] : result?.questions || (gradingMode === "per-question" ? checkedGrades : [])).map(grade => [grade.questionId, grade] as const));
   const questionNumbers = useMemo(() => new Map(questions.map((item, index) => [item.question.questionid, index + 1])), [questions]);
 
   const markedCount = Object.values(bookmarks).filter(Boolean).length;
@@ -197,7 +209,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
   }).length;
   const unfinishedCount = questions.length - completedQuestionCount;
   const hasUnpersistedResult = Boolean(result && recordScores && scorePayload.current && !savedScore);
-  const hasUnsubmittedAttempt = !result && questions.length > 0;
+  const hasUnsubmittedAttempt = started && !result && questions.length > 0;
 
   useBlockNavigation(hasUnsubmittedAttempt || hasUnpersistedResult, proceed => {
     pendingLeave.current = proceed;
@@ -226,7 +238,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
   }
 
   function finishAttempt() {
-    if (result || scoreBusy.current || Object.values(store.getState().speakingBusy).some(Boolean)) return;
+    if (!started || result || scoreBusy.current || Object.values(store.getState().speakingBusy).some(Boolean)) return;
     closeConfirmation();
     formRef.current?.querySelectorAll("audio").forEach(audio => audio.pause());
     setReviewing(false);
@@ -317,6 +329,19 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
     autoSubmitted.current = false;
   }
 
+  function startAttempt() {
+    if (scoreBusy.current || hasUnpersistedResult) return;
+    if (result) resetAttempt();
+    else {
+      attemptStartedAt.current = Date.now();
+      examDeadline.current = attemptStartedAt.current + data.test.duration * 60_000;
+      setAttemptVersion(version => version + 1);
+    }
+    setGradingMode(pendingMode);
+    setStarted(true);
+    setModeDialogOpen(false);
+  }
+
   function renderQuestion({ question, options }: { question: Question; options: Option[] }, showIndividualAudio = true) {
     return (
       <Attempt.Question
@@ -325,7 +350,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
         recordingLocked={hasSpeakingWorkInProgress && !speakingBusy[question.questionid]}
         sampleAudioDisabled={hasSpeakingWorkInProgress} showIndividualAudio={showIndividualAudio}
         grade={gradeByQuestion.get(question.questionid)} submitted={Boolean(result)}
-        persistScores={recordScores} attemptContext={attemptContext}
+        persistScores={recordScores} attemptContext={attemptContext} gradingMode={gradingMode}
       />
     );
   }
@@ -345,9 +370,9 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
   return (
     <>
     {recordScores && savedScore?.currentHskLevel != null && savedScore.currentHskLevel > (savedScore.previousCurrentHskLevel ?? 0) && <RefreshProfileAfterPromotion />}
-    <form ref={formRef} className="flex flex-col gap-6" onSubmit={event => {
+    {started ? <form ref={formRef} className="flex flex-col gap-6" onSubmit={event => {
       event.preventDefault();
-      if (result) return;
+      if (!started || result) return;
       if (Object.values(store.getState().speakingBusy).some(Boolean)) {
         setNotice("Hãy dừng ghi âm và đợi nhận diện giọng nói xong rồi nộp bài.");
         return;
@@ -366,6 +391,10 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
       <div ref={toolbarRef} className="sticky top-[5.5rem] z-30 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-mist bg-surface px-4 py-3 shadow-card">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{workedQuestionIds.size}/{questions.length} câu đã làm</p>
+          <p className="mt-1 text-xs text-slate">{gradingMode === "per-question" ? "Chấm ngay từng câu" : "Chấm khi nộp bài"}</p>
+          {!result && gradingMode === "per-question" && checkedGrades.length > 0 && <p className="mt-1 text-xs font-medium text-brand dark:text-ink" role="status">
+            Đã chấm {checkedGrades.length} câu · Đúng {checkedCorrectCount}/{checkedGrades.length} · Chính xác {Math.round(checkedCorrectCount / checkedGrades.length * 100)}%
+          </p>}
           <Attempt.Timer duration={data.test.duration} deadline={examDeadline.current} version={attemptVersion}
             stopped={Boolean(result)} blocked={hasSpeakingWorkInProgress} onExpire={() => {
               autoSubmitted.current = true; setExpired(true); formRef.current?.requestSubmit();
@@ -378,7 +407,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-mist text-brand hover:bg-brand/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand lg:hidden">
             <LayoutGrid size={20} aria-hidden="true" />
           </button>}
-          {result ? <button type="button" className="hsk-button" disabled={savingScore || hasUnpersistedResult} onClick={resetAttempt}>Làm lại</button>
+          {result ? <button type="button" className="hsk-button" disabled={savingScore || hasUnpersistedResult} onClick={() => { setPendingMode(gradingMode); setModeDialogOpen(true); }}>Làm lại</button>
             : <button type="submit" className="hsk-button" disabled={hasSpeakingWorkInProgress}>Nộp bài</button>}
         </div>
       </div>
@@ -433,6 +462,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
                 <div><dt className="text-xs text-slate">Chữ đã hoàn thành</dt><dd className="mt-1 font-semibold text-brand">{writingCompleted}/{writingTotal}</dd></div>
               </dl>
               <p className="mt-3 text-xs leading-5 text-slate">Kết quả ghi nhận từ phần nhận diện nét khi luyện viết. Các chữ chưa mở chưa có trong tổng số nét.</p>
+              <WritingErrorTable targets={tracingTargets} progress={strokeStats} />
             </div>
           )}
           {speakingQuestionCount > 0 && (
@@ -441,6 +471,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
               <p className="mt-2 text-xl font-semibold text-brand">{speakingAverage === null ? "Chưa có điểm phát âm" : speakingAverage + "/100"}</p>
               <p className="mt-2 text-sm leading-6 text-slate">Đã ghi âm {recordingCount}/{speakingQuestionCount} câu · đã chấm {speakingValues.length} câu.</p>
               {speakingValues.length < recordingCount && <p className="mt-1 text-sm text-slate">Một số bản ghi chưa nhận được kết quả chấm phát âm.</p>}
+              <SpeakingErrorTable assessments={speakingAssessments} />
             </div>
           )}
           {!savingScore && result.ungradedCount > 0 && <p className="hsk-notice">{result.ungradedCount} câu cần chấm thủ công hoặc chưa có đáp án tự chấm.</p>}
@@ -479,10 +510,19 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
       {hasSpeakingWorkInProgress && <p className="text-xs text-slate" role="status">Hoàn tất ghi âm và nhận diện giọng nói để nộp bài.</p>}
         </div>
         {showQuestions && <Attempt.Navigator groups={navigationGroups} activeId={activeQuestionId} answeredCount={workedQuestionIds.size}
-          totalCount={questions.length} markedCount={markedCount} reviewMode={Boolean(result)}
+          totalCount={questions.length} markedCount={markedCount} reviewMode={Boolean(result) || gradingMode === "per-question"}
           open={questionMenuOpen} onOpenChange={setQuestionMenuOpen} onSelect={selectQuestion} />}
       </div>
-    </form>
+    </form> : <section className="hsk-panel flex flex-col items-start gap-3">
+      <h2 className="hsk-section-title">Chọn cách làm bài để bắt đầu</h2>
+      <p className="text-sm leading-6 text-slate">Chọn chấm khi nộp bài hoặc nhận kết quả ngay từng câu. Đồng hồ chỉ bắt đầu sau khi bạn xác nhận.</p>
+      <button type="button" className="hsk-button" onClick={() => setModeDialogOpen(true)}>Chọn cách làm bài</button>
+    </section>}
+    <ConfirmationDialog open={modeDialogOpen} title="Chọn cách làm bài" confirmLabel="Bắt đầu làm bài" cancelLabel="Huỷ"
+      confirmDisabled={savingScore || hasUnpersistedResult} onCancel={() => setModeDialogOpen(false)} onConfirm={startAttempt}
+      icon={<ClipboardCheck size={20} className="mt-0.5 shrink-0 text-brand dark:text-ink" aria-hidden="true" />}>
+      <GradingModeOptions value={pendingMode} onChange={setPendingMode} />
+    </ConfirmationDialog>
     <ConfirmationDialog open={confirmation !== null}
       title={confirmation === "leave" ? "Thoát bài đang làm?" : "Xác nhận nộp bài?"}
       confirmLabel={confirmation === "leave" ? "Thoát bài" : "Nộp bài"}
@@ -505,7 +545,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false }: Attem
 }
 
 const QuestionBlock = memo(function QuestionBlock({ number, question, options, answer, onAnswerChange, onHandwritingProgress, onStrokeProgress, strokeStats,
-  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext }: {
+  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext, gradingMode, answerLocked, canCheckImmediately, onCheckAnswer }: {
   number: number;
   question: Question;
   options: Option[];
@@ -514,6 +554,10 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   onHandwritingProgress: (progress: HandwritingProgress) => void;
   onStrokeProgress: (progress: HandwritingStrokeProgress) => void;
   strokeStats?: HandwritingStrokeProgress;
+  gradingMode: GradingMode;
+  answerLocked: boolean;
+  canCheckImmediately: boolean;
+  onCheckAnswer: () => void;
   speechAssessment: PronunciationAssessment | null;
   onSpeakingAssessmentChange: (assessment: PronunciationAssessment | null) => void;
   onSpeakingBusyChange: (busy: boolean) => void;
@@ -589,7 +633,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       ) : usesTextAnswer ? (
         <>
           {options.length > 0 && <p className="mb-3 rounded-lg bg-paper p-3 text-sm text-slate">Từ gợi ý: {options.map(item => item.option_text).join(" · ")}</p>}
-          <textarea rows={6} aria-label="Câu trả lời bằng tiếng Trung" className="hsk-input min-h-32" lang="zh-CN" disabled={submitted}
+          <textarea rows={6} aria-label="Câu trả lời bằng tiếng Trung" className="hsk-input min-h-32" lang="zh-CN" disabled={answerLocked}
             value={answer} onChange={event => onAnswerChange(event.target.value)} placeholder="Nhập câu trả lời bằng tiếng Trung…" />
         </>
       ) : (
@@ -603,7 +647,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
             return (
               <label key={option.optionid} className={"flex min-w-0 cursor-pointer flex-col gap-3 rounded-lg border p-4 text-sm leading-6 text-ink transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/30 " + color}>
                 <span className="flex w-full items-start gap-3">
-                  <input type="radio" name={question.questionid} value={option.optionid} checked={selected} disabled={submitted}
+                  <input type="radio" name={question.questionid} value={option.optionid} checked={selected} disabled={answerLocked}
                     className="mt-1 h-4 w-4 shrink-0 accent-brand" onChange={() => onAnswerChange(option.optionid)} />
                   <span className="min-w-0 break-words">
                     <span className="font-semibold text-brand">{option.optionid}.</span>
@@ -619,15 +663,22 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
           })}
         </div>
       )}
+      {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && usesTextAnswer && canCheckImmediately && !answerLocked &&
+        <div className="mt-3 flex flex-col items-start gap-2">
+          <button type="button" className="hsk-button-secondary" disabled={!answer.trim()} onClick={onCheckAnswer}>Kiểm tra câu này</button>
+          <p className="text-xs leading-5 text-slate">Nhập xong rồi kiểm tra. Câu trả lời sẽ được khóa sau khi chấm.</p>
+        </div>}
+      {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && !canCheckImmediately &&
+        <p className="mt-3 text-xs leading-5 text-slate">Câu này chưa có đáp án chấm ngay hoặc cần chấm thủ công. Câu trả lời vẫn được gửi khi nộp bài.</p>}
       {submitted && handwriting && <p className="mt-3 rounded-lg bg-brand/5 p-3 text-sm text-slate">
         {strokeStats?.totalStrokes ? "Viết đúng " + strokeStats.correctStrokes + "/" + strokeStats.totalStrokes + " nét đã mở · " + strokeStats.mistakes + " lượt nét cần cải thiện." : "Chưa có nét viết được ghi nhận."}
       </p>}
-      {feedback && <p className={"mt-3 rounded-lg border px-3 py-2 text-sm " + feedback.style}>{feedback.text}</p>}
+      {feedback && <p role="status" className={"mt-3 rounded-lg border px-3 py-2 text-sm " + feedback.style}>{feedback.text}</p>}
     </article>
   );
 });
 
-type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext">;
+type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext" | "gradingMode">;
 const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps) {
   const store = useAttemptStore();
   const id = props.question.questionid;
@@ -635,7 +686,23 @@ const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps)
   const bookmarked = useStore(store,s => Boolean(s.bookmarks[id]));
   const strokes = useStore(store,s => s.strokeStats[id]);
   const speech = useStore(store,s => s.speakingAssessments[id] ?? null);
-  const onAnswerChange = useCallback((value: string) => store.getState().setField("answers", p => ({...p,[id]:value})),[store,id]);
+  const checkedGrade = useStore(store, state => state.checkedQuestions[id]);
+  const canCheckImmediately = props.question.skill !== "Speaking" && !writingPractice(props.question)
+    && !props.question.manualGrading && Boolean(props.question.acceptedAnswers?.length);
+  const usesTextAnswer = props.options.length === 0 || ["FILL_IN_BLANK", "SHORT_ANSWER", "ESSAY"].includes(props.question.type || "");
+  const checkAnswer = useCallback((value: string) => {
+    const state = store.getState();
+    if (props.gradingMode !== "per-question" || !canCheckImmediately || !value.trim() || state.result || state.checkedQuestions[id]) return;
+    const grade = scorePracticeAttempt([{ question: props.question, options: props.options }], { [id]: value }).questions[0];
+    if (grade && (grade.status === "correct" || grade.status === "incorrect")) state.setField("checkedQuestions", previous => ({ ...previous, [id]: grade }));
+  }, [store, id, props.gradingMode, props.question, props.options, canCheckImmediately]);
+  const onAnswerChange = useCallback((value: string) => {
+    const state = store.getState();
+    if (state.result || state.checkedQuestions[id]) return;
+    state.setField("answers", previous => ({ ...previous, [id]: value }));
+    if (!usesTextAnswer) checkAnswer(value);
+  }, [store, id, usesTextAnswer, checkAnswer]);
+  const onCheckAnswer = useCallback(() => checkAnswer(store.getState().answers[id] || ""), [store, id, checkAnswer]);
   const onToggleBookmark = useCallback(() => store.getState().setField("bookmarks", p => ({...p,[id]:!p[id]})),[store,id]);
   const onStrokeProgress = useCallback((value: HandwritingStrokeProgress) => {
     if (store.getState().result) return;
@@ -654,6 +721,7 @@ const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps)
   const onSpeakingBusyChange = useCallback((value: boolean) => store.getState().setField("speakingBusy",p=>({...p,[id]:value})),[store,id]);
   const onRecordingChange = useCallback((value: boolean) => store.getState().setField("recordedQuestions",p=>({...p,[id]:value})),[store,id]);
   return <QuestionBlock {...props} answer={answer} bookmarked={bookmarked} strokeStats={strokes} speechAssessment={speech}
+    gradingMode={props.gradingMode} answerLocked={props.submitted || Boolean(checkedGrade)} canCheckImmediately={canCheckImmediately} onCheckAnswer={onCheckAnswer}
     onAnswerChange={onAnswerChange} onToggleBookmark={onToggleBookmark} onStrokeProgress={onStrokeProgress}
     onHandwritingProgress={onHandwritingProgress} onSpeakingAssessmentChange={onSpeakingAssessmentChange}
     onSpeakingBusyChange={onSpeakingBusyChange} onRecordingChange={onRecordingChange} />;

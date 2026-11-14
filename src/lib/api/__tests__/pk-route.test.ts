@@ -17,7 +17,7 @@ describe("HttpOnly PK bridge authentication", () => {
     expect(response.status).toBe(403); expect(sendPkCommand).not.toHaveBeenCalled();
   });
   it("keeps identity and score fields out of client commands", async () => {
-    jest.mocked(getApiUser).mockResolvedValue({ id: 2, username: "learner", email: null, role: { id: 2 }, level: 1, currentExp: 0 });
+    jest.mocked(getApiUser).mockResolvedValue({ id: 2, username: "learner", email: null, role: { id: 2 }, level: 1, currentHskLevel: 1, currentExp: 0 });
     jest.mocked(sendPkCommand).mockResolvedValue({ ok: true });
     const response = await POST(new NextRequest("http://localhost:3002/api/pk", { method: "POST", headers: { origin: "http://localhost:3002", cookie: "hsk_access=private" }, body: JSON.stringify({ event: "find_match", hskLevel: 1, userId: 999, score: 999 }) }));
     expect(response.status).toBe(200);

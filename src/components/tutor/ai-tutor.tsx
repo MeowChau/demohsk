@@ -167,9 +167,9 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
         <div className="flex items-center gap-3">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)]"
-            style={{ background: "var(--teal)" }}
+            style={{ background: "var(--teal-solid)" }}
           >
-            <Bot className="h-5 w-5" style={{ color: "var(--white)" }} />
+            <Bot className="h-5 w-5" style={{ color: "var(--inverse)" }} />
           </span>
           <div>
             <h1 className="font-[var(--font-display)] text-xl font-bold" style={{ color: "var(--ink)" }}>
@@ -184,7 +184,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
           className="flex items-center gap-2 rounded-[var(--radius-pill)] px-3 py-1.5 text-xs font-medium"
           style={{
             background: online ? "var(--success-soft)" : "var(--danger-soft)",
-            color: online ? "var(--success)" : "var(--danger)",
+            color: online ? "var(--success-text)" : "var(--danger-text)",
           }}
         >
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
@@ -201,7 +201,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="flex items-start gap-2.5 overflow-hidden rounded-[var(--radius-md)] px-4 py-3 text-sm"
-            style={{ background: "var(--warning-soft)", color: "var(--warning)" }}
+            style={{ background: "var(--warning-soft)", color: "var(--warning-text)" }}
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="flex-1 leading-relaxed">
@@ -238,7 +238,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
                   className="max-w-[80%] rounded-[var(--radius-lg)] px-4 py-2.5 text-sm leading-relaxed"
                   style={
                     m.role === "user"
-                      ? { background: "var(--teal)", color: "var(--white)", borderBottomRightRadius: 6 }
+                      ? { background: "var(--teal-solid)", color: "var(--inverse)", borderBottomRightRadius: 6 }
                       : {
                           background: "var(--white)",
                           color: "var(--ink)",
@@ -286,14 +286,14 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
             style={{
               background: "var(--white)",
               color: "var(--ink)",
-              borderColor: "var(--mist)",
+              borderColor: "var(--control-border)",
             }}
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={online !== true || isLoading || !input.trim()}
             className="flex items-center gap-1.5 rounded-[var(--radius-pill)] px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
-            style={{ background: "var(--teal)", color: "var(--white)" }}
+            style={{ background: "var(--teal-solid)", color: "var(--inverse)" }}
           >
             Gửi
             <Send className="h-3.5 w-3.5" />
@@ -311,7 +311,7 @@ export default function AiTutor({ userId, firstName }: { userId: string; firstNa
             className="flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3.5 py-2 text-xs font-medium transition-transform hover:-translate-y-0.5 disabled:opacity-50"
             style={{ background: "var(--white)", color: "var(--slate)", boxShadow: "var(--shadow-card)" }}
           >
-            <Icon className="h-3.5 w-3.5" style={{ color: "var(--teal)" }} />
+            <Icon className="h-3.5 w-3.5" style={{ color: "var(--teal-text)" }} />
             {label}
           </button>
         ))}

@@ -37,6 +37,32 @@ const config: Config = {
         gems: { DEFAULT: color("gems"), deep: color("gems-deep") },
         flame: { DEFAULT: color("flame"), deep: color("flame-deep") },
       },
+      // The existing color classes now resolve by role, not by one shared hue.
+      textColor: {
+        brand: { DEFAULT: color("brand-text"), hover: color("brand-text-hover") },
+        navy: { DEFAULT: color("brand-text"), deep: color("brand-text") },
+        teal: { DEFAULT: color("teal-text"), deep: color("teal-text") },
+        violet: { DEFAULT: color("violet-text"), deep: color("violet-text") },
+        coral: { DEFAULT: color("coral-text"), deep: color("coral-text") },
+        xp: { DEFAULT: color("xp-text"), deep: color("xp-text") },
+        success: { DEFAULT: color("success-text") }, danger: { DEFAULT: color("danger-text") },
+        warning: { DEFAULT: color("warning-text") }, slate: { soft: color("muted-text") },
+      },
+      backgroundColor: {
+        white: color("white"), inverse: color("inverse"),
+        cyan: { DEFAULT: color("cyan-surface"), light: color("cyan-light") },
+        teal: { DEFAULT: color("teal-solid") }, violet: { DEFAULT: color("violet-solid") },
+        success: { DEFAULT: color("success-solid") }, danger: { DEFAULT: color("danger-solid") },
+      },
+      borderColor: {
+        mist: color("border"), ink: color("strong-border"), control: color("control-border"),
+        brand: { DEFAULT: color("brand-text") }, teal: { DEFAULT: color("teal-text") },
+        success: { DEFAULT: color("success-text") }, danger: { DEFAULT: color("danger-text") },
+      },
+      ringColor: { brand: { DEFAULT: color("brand-text") }, teal: { DEFAULT: color("teal-text") } },
+      outlineColor: { brand: { DEFAULT: color("brand-text") }, teal: { DEFAULT: color("teal-text") } },
+      accentColor: { teal: color("teal-text") },
+      gradientColorStops: { cyan: { DEFAULT: color("cyan-surface"), light: color("cyan-light") } },
       fontFamily: {
         display: ["var(--font-display)"],
         body: ["var(--font-body)"],

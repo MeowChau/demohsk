@@ -306,8 +306,8 @@ export default function DashboardClient({
           value={currentStreak}
           suffix="ngày"
           accent="text-ink dark:text-navy"
-          bg="bg-gradient-to-br from-orange-100 to-amber-50"
-          border="border-orange-300"
+          bg="bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-950/60 dark:to-amber-950/40"
+          border="border-orange-300 dark:border-orange-400/30"
           iconBg="bg-white/60"
           highlight={currentStreak > 0}
           delay={0.1}
@@ -321,7 +321,7 @@ export default function DashboardClient({
           accent="text-white"
           bg="bg-navy"
           border="border-navy-deep"
-          iconBg="bg-white/10"
+          iconBg="bg-inverse/10"
           textLight
           delay={0.2}
         />
@@ -350,7 +350,7 @@ export default function DashboardClient({
             href="/practice"
             className="group flex h-full flex-col justify-center rounded-2xl border-3 border-ink bg-gradient-to-br from-navy to-navy-deep p-5 text-white shadow-hard transition-all hover:shadow-brutalist dark:border-slate/30"
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-inverse/10">
               <Target size={20} className="text-cyan" />
             </div>
 
@@ -384,9 +384,9 @@ export default function DashboardClient({
           transition={{
             delay: 0.4,
           }}
-          className="relative flex items-center gap-4 overflow-hidden rounded-2xl border-3 border-orange-300 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-5 shadow-hard"
+          className="relative flex items-center gap-4 overflow-hidden rounded-2xl border-3 border-orange-300 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-5 dark:from-orange-950/60 dark:via-amber-950/40 dark:to-surface dark:border-orange-400/30 shadow-hard"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-orange-200 bg-orange-100">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-orange-200 bg-orange-100 dark:border-orange-400/30 dark:bg-orange-950/50">
             <AnimatedFlame size={28} />
           </div>
 

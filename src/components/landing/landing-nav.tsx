@@ -50,6 +50,7 @@ export function LandingNav({
   const pathname = usePathname()
   const reducedMotion = useReducedMotion()
   const isLanding = variant === "landing"
+  const avatarSurface = avatarUrl ? "bg-[var(--mist)] text-[var(--slate)]" : "bg-[var(--navy)] text-white"
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -116,7 +117,7 @@ export function LandingNav({
                 height={30}
                 className="h-10 w-10 shrink-0 object-contain sm:h-12 sm:w-12 [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
               />
-              <span className="text-xl font-extrabold tracking-tight text-[var(--navy)] dark:text-white">
+              <span className="text-xl font-extrabold tracking-tight text-navy dark:text-white">
                 TriceHSK
               </span>
             </Link>
@@ -131,8 +132,8 @@ export function LandingNav({
                       href={link.href}
                       aria-current={isActiveRoute(pathname, link.href) ? "page" : undefined}
                       className={`text-sm font-semibold transition-colors ${
-                        scrolled ? "text-[var(--slate)] hover:text-[var(--navy)] dark:hover:text-white" : "text-[#0F1720]/80 hover:text-[#0F1720] dark:text-slate dark:hover:text-white"
-                      } ${isActiveRoute(pathname, link.href) ? "!text-[var(--navy)] dark:!text-white" : ""}`}
+                        scrolled ? "text-[var(--slate)] hover:text-navy dark:hover:text-white" : "text-ink/80 hover:text-ink dark:text-slate dark:hover:text-white"
+                      } ${isActiveRoute(pathname, link.href) ? "!text-navy dark:!text-white" : ""}`}
                     >
                       <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </Link>
@@ -145,7 +146,7 @@ export function LandingNav({
                     key={link.href}
                     href={link.href}
                     className={`text-sm font-semibold transition-colors ${
-                      scrolled ? "text-[var(--slate)] hover:text-[var(--navy)]" : "text-[#0F1720]/80 hover:text-[#0F1720]"
+                      scrolled ? "text-[var(--slate)] hover:text-navy" : "text-ink/80 hover:text-ink"
                     }`}
                   >
                     <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
@@ -166,11 +167,11 @@ export function LandingNav({
                     aria-expanded={userOpen}
                     className={`flex items-center gap-2 rounded-full p-1 pr-3 transition-colors ${
                       userOpen
-                        ? "bg-[var(--mist)] dark:bg-white/10"
-                        : "hover:bg-[var(--mist)]/60 dark:hover:bg-white/5"
+                        ? "bg-[var(--mist)] dark:bg-ink/10"
+                        : "hover:bg-[var(--mist)]/60 dark:hover:bg-ink/5"
                     }`}
                   >
-                    <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-xs font-bold text-white">
+                    <div className={`relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full text-xs font-bold ${avatarSurface}`}>
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
@@ -201,7 +202,7 @@ export function LandingNav({
                   {userOpen && (
                     <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-xl border border-[var(--mist)] bg-white p-1.5 shadow-lg ring-1 ring-black/5 dark:border-slate/20 dark:bg-slate-900 dark:ring-white/10">
                       <div className="flex items-center gap-3 px-3 py-2.5">
-                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-xs font-bold text-white">
+                        <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold ${avatarSurface}`}>
                           {avatarUrl ? (
                             <Image
                               src={avatarUrl}
@@ -225,7 +226,7 @@ export function LandingNav({
                       <div className="h-px bg-[var(--mist)] dark:bg-slate/20" />
                       <Link
                         href="/profile"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--slate)] transition-colors hover:bg-[var(--mist)] hover:text-[var(--ink)] dark:text-slate-soft dark:hover:bg-white/5 dark:hover:text-white"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--slate)] transition-colors hover:bg-[var(--mist)] hover:text-[var(--ink)] dark:text-slate-soft dark:hover:bg-ink/5 dark:hover:text-white"
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -233,7 +234,7 @@ export function LandingNav({
                          Hồ sơ và cài đặt </Link>
                       <div className="h-px bg-[var(--mist)] dark:bg-slate/20" />
                       <div className="px-1 py-1">
-                        <LogoutButton className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-[var(--slate)] transition-colors hover:bg-[var(--mist)] hover:text-[var(--ink)] dark:text-slate-soft dark:hover:bg-white/5 dark:hover:text-white">
+                        <LogoutButton className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-[var(--slate)] transition-colors hover:bg-[var(--mist)] hover:text-[var(--ink)] dark:text-slate-soft dark:hover:bg-ink/5 dark:hover:text-white">
                           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
@@ -248,8 +249,8 @@ export function LandingNav({
                     href="/login"
                     className={`${publicActionClassName} h-11 w-[132px] px-4 text-sm ${
                       scrolled
-                        ? "text-[var(--navy)] border-[var(--navy)]/10 hover:border-[var(--navy)]/30"
-                        : "text-[#0F1720] border-[#0F1720]/20 hover:border-[#0F1720]/40"
+                        ? "text-navy border-[var(--navy)]/10 hover:border-[var(--navy)]/30"
+                        : "text-ink border-[#0F1720]/20 hover:border-[#0F1720]/40"
                     }`}
                   >
                      Đăng nhập </Link>
@@ -264,7 +265,7 @@ export function LandingNav({
               {/* Mobile toggle */}
               <button
                 type="button"
-                className="xl:hidden p-2 text-[#0F1720] dark:text-slate"
+                className="xl:hidden p-2 text-ink dark:text-slate"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={mobileOpen ? "Đóng điều hướng" : "Mở điều hướng"}
                 aria-expanded={mobileOpen}
@@ -291,7 +292,7 @@ export function LandingNav({
               {isLoggedIn ? (
                 <>
                   <div className="flex items-center gap-3 pb-4 border-b-2 border-[var(--mist)]">
-                    <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-sm font-bold text-white">
+                    <div className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-sm font-bold ${avatarSurface}`}>
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
@@ -305,7 +306,7 @@ export function LandingNav({
                       )}
                     </div>
                     <div>
-                      <p className="text-base font-bold text-[var(--navy)] dark:text-white">{displayName}</p>
+                      <p className="text-base font-bold text-navy dark:text-white">{displayName}</p>
                       <p className="text-xs text-[var(--slate)]"> Đã đăng nhập </p>
                     </div>
                   </div>
@@ -315,7 +316,7 @@ export function LandingNav({
                       href={link.href}
                       aria-current={isActiveRoute(pathname, link.href) ? "page" : undefined}
                       onClick={() => setMobileOpen(false)}
-                      className="text-lg font-bold text-[var(--navy)] dark:text-white py-3 border-b-2 border-[var(--mist)]"
+                      className="text-lg font-bold text-navy dark:text-white py-3 border-b-2 border-[var(--mist)]"
                     >
                       <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </Link>
@@ -323,11 +324,11 @@ export function LandingNav({
                   <Link
                     href="/profile"
                     onClick={() => setMobileOpen(false)}
-                    className="text-lg font-bold text-[var(--navy)] dark:text-white py-3 border-b-2 border-[var(--mist)]"
+                    className="text-lg font-bold text-navy dark:text-white py-3 border-b-2 border-[var(--mist)]"
                   >
                      Hồ sơ và cài đặt </Link>
                   <div className="mt-4">
-                    <LogoutButton className="w-full text-center text-base font-bold text-[var(--danger)] border-2 border-[var(--danger)]/20 rounded-full py-3">
+                    <LogoutButton className="w-full text-center text-base font-bold text-danger border-2 border-danger/20 rounded-full py-3">
                        Đăng xuất </LogoutButton>
                   </div>
                 </>
@@ -338,7 +339,7 @@ export function LandingNav({
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="text-lg font-bold text-[var(--navy)] py-3 border-b-2 border-[var(--mist)]"
+                      className="text-lg font-bold text-navy py-3 border-b-2 border-[var(--mist)]"
                     >
                       <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
                     </a>
@@ -346,7 +347,7 @@ export function LandingNav({
                   <div className="mt-4 flex flex-col gap-3">
                     <Link
                       href="/login"
-                      className={`${publicActionClassName} h-12 w-full px-5 text-base text-[var(--navy)] border-[var(--navy)]/10`}
+                      className={`${publicActionClassName} h-12 w-full px-5 text-base text-navy border-[var(--navy)]/10`}
                     >
                        Đăng nhập </Link>
                     <Link

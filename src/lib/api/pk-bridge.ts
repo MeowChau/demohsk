@@ -1,10 +1,11 @@
 import "server-only";
 import { io } from "socket.io-client";
 import { backendUrl } from "./config";
-import type { PkCommand } from "@/types/pk";
+import { parsePkMessage } from "@/types/pk";
+import type { PkResult, PkCommand } from "@/types/pk";
 
 type Envelope = { event: string; payload: unknown };
-type Reply = { ok: boolean; message?: string };
+type Reply = { ok: boolean; message?: string; result?: PkResult };
 const events = new Set(["pk_connected", "online_count_update", "match_found", "player_ready_update", "game_started", "turn_changed", "answer_result", "game_finished", "match_cancelled", "exception"]);
 
 function createSocket(token: string, level: number, roomId?: string) {
@@ -72,7 +73,7 @@ export function sendPkCommand(token: string, command: PkCommand): Promise<Reply>
   const socket = createSocket(token, command.hskLevel, command.roomId);
   const payload = command.event === "submit_answer"
     ? { roomId: command.roomId, questionId: command.questionId, optionId: command.optionId }
-    : command.event === "player_ready" ? { roomId: command.roomId } : {};
+    : command.event === "player_ready" || (command.event === "cancel_match" && command.roomId) ? { roomId: command.roomId } : {};
   return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (error?: Error, reply?: Reply) => {
@@ -90,12 +91,18 @@ export function sendPkCommand(token: string, command: PkCommand): Promise<Reply>
     // Wait for authentication and Redis presence, not just transport connection.
     socket.once("pk_connected", () => {
       void socket.timeout(10000).emitWithAck(command.event, payload).then((value: unknown) => {
-        const reply = value as { ok?: unknown; message?: unknown } | null;
+        const reply = value as { ok?: unknown; message?: unknown; result?: unknown } | null;
         if (!reply || typeof reply.ok !== "boolean") {
           finish(new Error("Máy chủ PK trả về phản hồi không hợp lệ."));
           return;
         }
-        finish(undefined, { ok: reply.ok, ...(typeof reply.message === "string" ? { message: reply.message } : {}) });
+        const result = command.event === "cancel_match" && reply.result
+          ? parsePkMessage({ event: "game_finished", payload: reply.result }) : null;
+        if (reply.result && command.event === "cancel_match" && result?.event !== "game_finished") {
+          finish(new Error("Kết quả kết thúc trận chưa hợp lệ. Vui lòng kết nối lại."));
+          return;
+        }
+        finish(undefined, { ok: reply.ok, ...(typeof reply.message === "string" ? { message: reply.message } : {}), ...(result?.event === "game_finished" ? { result: result.payload } : {}) });
       }).catch(() => finish(new Error("Chưa nhận được xác nhận từ máy chủ PK. Vui lòng thử lại.")));
     });
     socket.once("connect_error", () => finish(new Error("Chưa kết nối được phòng PK. Vui lòng thử lại.")));

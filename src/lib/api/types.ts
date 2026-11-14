@@ -174,5 +174,5 @@ export interface WritingAssessment { score: number; grammarErrors: { error: stri
 export interface PronunciationAssessment {
   progressSaved?: boolean; progressMessage?: string;
   score: number; accuracyScore: number; fluencyScore: number; completenessScore: number;
-  recognizedText: string; feedback: string; words: { word: string; accuracyScore: number | null; errorType: string }[];
+  recognizedText: string; feedback: string; words: { word: string; accuracyScore: number | null; errorType: string; phonemes?: { phoneme: string; accuracyScore: number }[] }[];
 }

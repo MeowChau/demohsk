@@ -1,3 +1,4 @@
+import type { GradingMode } from "@/lib/practice-scoring";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { testForTaking } from "@/lib/api/learning";
@@ -9,7 +10,7 @@ import type { Skill } from "@/types/assessment";
 import { AttemptForm } from "./attempt-form";
 import { StudyTracker } from "@/components/shell/study-tracker";
 
-export async function AttemptContent({ reference, durationMinutes }: { reference: string; durationMinutes?: number }) {
+export async function AttemptContent({ reference, durationMinutes, gradingMode }: { reference: string; durationMinutes?: number; gradingMode?: GradingMode }) {
   const parsed = parseAttemptReference(reference);
   if (!parsed) notFound();
   const data = await testForTaking(parsed.reference).catch(error => {
@@ -30,7 +31,7 @@ export async function AttemptContent({ reference, durationMinutes }: { reference
         <h1 className="font-display text-2xl font-semibold text-ink dark:text-white">{data.test.title}</h1>
         <p className="text-sm text-slate-soft">{data.test.total_marks} câu hỏi · {isExam ? data.test.duration + " phút" : "Tự luyện"}</p>
       </div>
-      <AttemptForm key={parsed.reference + "-" + data.test.duration} attemptid={parsed.reference} testid={parsed.reference} data={data} recordScores />
+      <AttemptForm key={parsed.reference + "-" + data.test.duration + "-" + (gradingMode || "choose")} attemptid={parsed.reference} testid={parsed.reference} data={data} initialGradingMode={gradingMode} recordScores />
     </div>
   );
 }

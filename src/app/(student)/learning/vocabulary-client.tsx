@@ -272,7 +272,7 @@ export function VocabularyClient({
                           className={`mt-1 rounded-pill px-4 py-1.5 text-xs font-semibold transition ${
                             savedIds.has(activeWord.wordid)
                               ? "bg-cyan text-navy-deep"
-                              : "bg-white/15 text-white hover:bg-white/25"
+                              : "bg-inverse/15 text-white hover:bg-inverse/25"
                           }`}
                         >
                           {savedIds.has(activeWord.wordid) ? "Đã học ✓" : "Đánh dấu đã học"}

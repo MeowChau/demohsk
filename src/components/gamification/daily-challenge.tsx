@@ -112,7 +112,7 @@ export function DailyChallengeCard({
         <div className="flex flex-col items-center gap-1 shrink-0">
           <XpGem size={20}/>
 
-          <span className="text-xs font-black text-green-600">
+          <span className="text-xs font-black text-success">
             +50
           </span>
         </div>
@@ -140,7 +140,7 @@ export function DailyChallengeCard({
               type: "spring",
               stiffness: 250,
             }}
-            className="mt-3 text-center text-sm font-black text-green-600"
+            className="mt-3 text-center text-sm font-black text-success"
           >
              🎉 Đã hoàn thành mục tiêu trong ngày! </motion.div>
         )}

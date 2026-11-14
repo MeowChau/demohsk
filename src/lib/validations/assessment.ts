@@ -31,5 +31,6 @@ export const pronunciationResultSchema = z.object({
     word: z.string(),
     accuracyScore: pronunciationScore.nullable(),
     errorType: z.string(),
+    phonemes: z.array(z.object({ phoneme: z.string().min(1).max(64), accuracyScore: pronunciationScore })).max(2000).optional(),
   })),
 });

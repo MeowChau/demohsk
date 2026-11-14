@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { ArrowUpRight, Clock3, Swords, Trophy, Users } from "lucide-react";
+import { ArrowUpRight, Trophy } from "lucide-react";
 import { requireApiUser, serverApi } from "@/lib/api/server";
-import { backendUrl } from "@/lib/api/config";
+import { publicMedia } from "@/lib/api/config";
+import { validHskLevel } from "@/lib/hsk";
+import { userDisplayName } from "@/lib/user-display";
 import { ApiError } from "@/lib/api/client";
 import type { PageData, PkHistory } from "@/lib/api/types";
 import { parseCatalogQuery, type SearchParams } from "@/lib/catalog-query";
 import { CatalogPagination, DataEmpty, HskBadge, PageHeading } from "@/components/ui/catalog";
-import { PkArena } from "@/components/learning/pk-arena";
+import { PkLobby } from "@/components/learning/pk-lobby";
 
 export const metadata = { title: "Game PK (1 vs 1)" };
 
 export default async function GamesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const user = await requireApiUser();
-  const query = parseCatalogQuery(await searchParams, user.currentHskLevel || 1);
-  const api = new URL(backendUrl());
-  const backendOrigin=api.origin+api.pathname;
-  const level = Number(query.hskLevel || 1);
+  const level = validHskLevel(user.currentHskLevel);
+  const query = { ...parseCatalogQuery(await searchParams), hskLevel: level === null ? "" : String(level) };
   const history = await serverApi<PageData<PkHistory>>(
     "game/pk/history?page=" + query.page + "&limit=10",
   ).catch(error => {
@@ -29,17 +29,10 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
         <Link className="hsk-button-secondary" href="/leaderboard?metric=exp"><Trophy size={17} />Bảng xếp hạng</Link>
       </PageHeading>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <PkArena key={backendOrigin+":"+user.id+":"+level} userId={Number(user.id)} level={level} backendOrigin={backendOrigin} />
-        <aside className="hsk-panel flex flex-col gap-5" aria-labelledby="pk-rules-title">
-          <h2 id="pk-rules-title" className="hsk-section-title">Thông tin luật chơi</h2>
-          <div className="flex items-start gap-3"><Users className="mt-1 shrink-0 text-brand" size={20} /><div><h3 className="text-sm font-semibold text-ink">Đấu trực tiếp 1 vs 1</h3><p className="mt-1 text-sm leading-6 text-slate">Ghép với người chơi cùng cấp HSK trên web. Cả hai xác nhận sẵn sàng để bắt đầu.</p></div></div>
-          <div className="flex items-start gap-3"><Clock3 className="mt-1 shrink-0 text-brand" size={20} /><div><h3 className="text-sm font-semibold text-ink">Luân phiên theo lượt</h3><p className="mt-1 text-sm leading-6 text-slate">Trả lời trong thời gian hiển thị. Hết lượt, người chơi tiếp theo sẽ trả lời.</p></div></div>
-          <div className="flex items-start gap-3"><Swords className="mt-1 shrink-0 text-brand" size={20} /><div><h3 className="text-sm font-semibold text-ink">Nhanh và chính xác</h3><p className="mt-1 text-sm leading-6 text-slate">Trả lời đúng, nhanh và giữ chuỗi đúng để tăng điểm. Kết quả và EXP được xác nhận khi trận kết thúc.</p></div></div>
-        </aside>
-      </div>
+      <PkLobby currentLevel={level}
+        displayName={userDisplayName(user)} avatarUrl={publicMedia(user.photo?.path)} totalMatches={history?.total ?? null} />
 
-      <section className="flex min-w-0 flex-col gap-4" aria-labelledby="pk-history-title">
+      <section id="pk-history" className="flex min-w-0 scroll-mt-28 flex-col gap-4" aria-labelledby="pk-history-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="pk-history-title" className="hsk-section-title">Lịch sử thi đấu</h2>
           <Link href="/leaderboard?metric=exp" className="inline-flex items-center gap-1 text-sm font-medium text-brand">Xem bảng xếp hạng<ArrowUpRight size={16} /></Link>
@@ -63,7 +56,7 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
                 ))}</tbody>
               </table>
             </div>
-          ) : <DataEmpty title="Chưa có trận PK nào" description="Bắt đầu tìm người để thi đấu. Kết quả và EXP của trận hoàn thành sẽ xuất hiện tại đây." />}
+          ) : <DataEmpty title="Chưa có trận PK nào" description="Bấm Ghép trận để thi đấu. Kết quả và EXP của trận hoàn thành sẽ xuất hiện tại đây." />}
         {history && <CatalogPagination path="/games" query={{ ...query, limit: 10, skill: "", topic: "", search: "" }} data={history} />}
       </section>
     </div>

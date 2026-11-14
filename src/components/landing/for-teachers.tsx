@@ -68,7 +68,7 @@ function BeforeAfterDemo() {
       {/* BEFORE */}
       {/* ------------------------------------------------------------------ */}
 
-      <div className="absolute inset-0 bg-gray-200 p-4 flex flex-col">
+      <div className="absolute inset-0 bg-mist p-4 flex flex-col">
         <div className="flex items-center gap-2 mb-3 opacity-50">
           <X className="h-4 w-4 text-danger" />
 
@@ -77,28 +77,28 @@ function BeforeAfterDemo() {
         </div>
 
         <div className="space-y-2 flex-1">
-          <div className="h-8 bg-gray-300 rounded border-2 border-gray-400 flex items-center px-2">
-            <FileText className="h-3 w-3 text-gray-500 mr-2" />
+          <div className="h-8 bg-paper rounded border-2 border-mist flex items-center px-2">
+            <FileText className="h-3 w-3 text-slate-soft mr-2" />
 
-            <div className="h-2 w-20 bg-gray-400 rounded" />
+            <div className="h-2 w-20 bg-slate-soft/30 rounded" />
           </div>
 
-          <div className="h-8 bg-gray-300 rounded border-2 border-gray-400 flex items-center px-2">
-            <Clock className="h-3 w-3 text-gray-500 mr-2" />
+          <div className="h-8 bg-paper rounded border-2 border-mist flex items-center px-2">
+            <Clock className="h-3 w-3 text-slate-soft mr-2" />
 
-            <div className="h-2 w-16 bg-gray-400 rounded" />
+            <div className="h-2 w-16 bg-slate-soft/30 rounded" />
           </div>
 
-          <div className="h-8 bg-gray-300 rounded border-2 border-gray-400 flex items-center px-2">
-            <FileText className="h-3 w-3 text-gray-500 mr-2" />
+          <div className="h-8 bg-paper rounded border-2 border-mist flex items-center px-2">
+            <FileText className="h-3 w-3 text-slate-soft mr-2" />
 
-            <div className="h-2 w-24 bg-gray-400 rounded" />
+            <div className="h-2 w-24 bg-slate-soft/30 rounded" />
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-2">
-            <div className="h-12 bg-gray-300 rounded border-2 border-gray-400" />
-            <div className="h-12 bg-gray-300 rounded border-2 border-gray-400" />
-            <div className="h-12 bg-gray-300 rounded border-2 border-gray-400" />
+            <div className="h-12 bg-paper rounded border-2 border-mist" />
+            <div className="h-12 bg-paper rounded border-2 border-mist" />
+            <div className="h-12 bg-paper rounded border-2 border-mist" />
           </div>
         </div>
       </div>
@@ -347,7 +347,7 @@ export function ForTeachers() {
 
             <Link
               href="/profile"
-              className="btn-brutalist bg-violet hover:bg-violet-deep"
+              className="btn-brutalist bg-violet hover:bg-violet-deep dark:hover:bg-violet"
             >
                Đặt mục tiêu HSK <ArrowRight className="h-4 w-4" />
             </Link>

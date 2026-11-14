@@ -13,7 +13,7 @@ type Challenge = { clientId: string; nonce: string };
 type GoogleLoginResponse = { user: HskUser; status?: never } | { status: "pending_approval"; message: string; user?: never };
 type GoogleIdentity = {
   initialize: (options: { client_id: string; nonce: string; auto_select: boolean; use_fedcm_for_button: boolean; button_auto_select: boolean; ux_mode: "popup"; callback: (response: { credential?: string }) => void }) => void;
-  renderButton: (element: HTMLElement, options: { type: "standard"; theme: "outline" | "filled_black"; size: "large"; text: "signin_with"; shape: "rectangular"; locale: "vi"; width: number }) => void;
+  renderButton: (element: HTMLElement, options: { type: "standard"; theme: "outline" | "filled_black"; size: "large"; text: "signin_with"; shape: "rectangular"; logo_alignment: "center"; locale: "vi"; width: number }) => void;
 };
 const identity = () => (window as Window & { google?: { accounts?: { id?: GoogleIdentity } } }).google?.accounts?.id;
 type GoogleIdentityState = { identity: GoogleIdentity; clientId: string; nonce: string; callback?: (response: { credential?: string }) => void };
@@ -48,6 +48,7 @@ export function GoogleSignIn({ disabled = false, onBusyChange }: { disabled?: bo
   const [error, setError] = useState("");
   const [approvalMessage, setApprovalMessage] = useState("");
   const [reloadRequired, setReloadRequired] = useState(false);
+  const buttonFrameRef = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
   const busyRef = useRef(false);
@@ -142,31 +143,67 @@ export function GoogleSignIn({ disabled = false, onBusyChange }: { disabled?: bo
 
   useEffect(() => {
     const element = host.current;
-    if (!element || !challenge || !scriptReady) return;
+    const frame = buttonFrameRef.current;
+    if (!element || !frame || !challenge || !scriptReady) return;
     let previousWidth = 0;
     const render = () => {
-      const width = Math.min(400, Math.floor(element.clientWidth));
-      if (width < 200 || width === previousWidth) return;
+      const targetWidth = frame.clientWidth;
+      const targetHeight = frame.clientHeight;
+      if (!targetWidth || !targetHeight) return;
+      const width = Math.min(400, Math.max(200, Math.floor(targetWidth)));
+      // GIS owns the real click target; fit it to the shared button without synthetic clicks.
+      element.style.width = width + "px";
+      element.style.transform = `translate(-50%, -50%) scale(${targetWidth / width}, ${targetHeight / 40})`;
+      if (width === previousWidth) return;
       previousWidth = width;
       element.replaceChildren();
-      identity()?.renderButton(element, { type: "standard", theme: resolvedTheme === "dark" ? "filled_black" : "outline", size: "large", text: "signin_with", shape: "rectangular", locale: "vi", width });
+      identity()?.renderButton(element, { type: "standard", theme: resolvedTheme === "dark" ? "filled_black" : "outline", size: "large", text: "signin_with", shape: "rectangular", logo_alignment: "center", locale: "vi", width });
     };
     render();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(render);
-    observer?.observe(element);
+    observer?.observe(frame);
     return () => { observer?.disconnect(); element.replaceChildren(); };
   }, [challenge, scriptReady, resolvedTheme]);
 
   useEffect(() => { if (host.current) host.current.inert = disabled || busy; }, [disabled, busy, challenge, scriptReady]);
+  useEffect(() => {
+    // Cross-origin iframe focus does not consistently match :focus-within in browsers.
+    const syncFocus = () => queueMicrotask(() => {
+      const frame = buttonFrameRef.current;
+      if (frame) frame.toggleAttribute("data-sdk-focused", Boolean(host.current?.contains(document.activeElement)));
+    });
+    window.addEventListener("blur", syncFocus);
+    window.addEventListener("focus", syncFocus);
+    document.addEventListener("focusin", syncFocus);
+    return () => {
+      window.removeEventListener("blur", syncFocus);
+      window.removeEventListener("focus", syncFocus);
+      document.removeEventListener("focusin", syncFocus);
+    };
+  }, []);
   const ready = Boolean(challenge && scriptReady && !scriptFailed && !reloadRequired);
+  const buttonFrame = "hsk-auth-button bg-surface text-ink dark:bg-paper";
   const onReady = useCallback(() => { setScriptReady(true); setScriptFailed(false); }, []);
 
   return <section className="mt-6 space-y-3" aria-label="Đăng nhập bằng Google">
     <div className="flex items-center gap-3 text-xs text-slate"><span className="h-px flex-1 bg-mist" /><span>Hoặc tiếp tục với</span><span className="h-px flex-1 bg-mist" /></div>
     {challenge && <Script id="google-identity-services" src="https://accounts.google.com/gsi/client?hl=vi" strategy="afterInteractive" onReady={onReady}
       onError={() => { setScriptFailed(true); setError("Không tải được Google. Vui lòng kiểm tra kết nối hoặc đăng nhập bằng email."); }} />}
-    <div ref={host} aria-busy={busy} aria-disabled={disabled || busy} className={"mx-auto flex min-h-10 w-full max-w-[400px] justify-center overflow-hidden " + (!ready ? "hidden" : disabled || busy ? "pointer-events-none opacity-60" : "")} />
-    {!ready && <button type="button" disabled className="hsk-button-secondary w-full">{loading || (challenge && !scriptReady && !scriptFailed) ? "Đang tải đăng nhập Google…" : "Đăng nhập bằng Google"}</button>}
+    <div ref={buttonFrameRef} aria-busy={busy} aria-disabled={disabled || busy}
+      className={buttonFrame + " hsk-google-button " + (!ready ? "hidden" : disabled || busy ? "pointer-events-none opacity-60" : "")}>
+      <div ref={host} className="absolute left-1/2 top-1/2 h-10 origin-center overflow-hidden" />
+      {/* Keep Google's iframe as the real, accessible control. This non-interactive face supplies the app theme. */}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-3 bg-surface px-3 text-ink dark:bg-paper">
+        <svg viewBox="0 0 48 48" className="h-5 w-5 shrink-0" focusable="false">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+        </svg>
+        <span>Đăng nhập bằng Google</span>
+      </span>
+    </div>
+    {!ready && <button type="button" disabled className={buttonFrame}>{loading || (challenge && !scriptReady && !scriptFailed) ? "Đang tải đăng nhập Google…" : "Đăng nhập bằng Google"}</button>}
     {busy && <p role="status" className="text-center text-sm text-ink">Đang xác thực tài khoản Google…</p>}
     <AccountApprovalDialog open={Boolean(approvalMessage)} message={approvalMessage} onClose={() => setApprovalMessage("")} />
     {error && <div role="alert" className="rounded-lg border border-danger/20 bg-danger/5 p-3 text-sm leading-6 text-danger"><p>{error}</p><button type="button" className="mt-2 font-semibold underline" onClick={() => { if (scriptFailed || reloadRequired) window.location.reload(); else { setError(""); if (!challenge) setVersion(current => current + 1); } }}>{reloadRequired ? "Tải lại trang" : "Thử lại"}</button></div>}

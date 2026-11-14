@@ -145,7 +145,7 @@ export default function LoginPage() {
               onClick={() => setShowPassword((current) => !current)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               aria-pressed={showPassword}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-slate-soft transition-colors hover:bg-mist hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-slate-soft transition-colors hover:bg-mist hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal focus-visible:ring-2 focus-visible:ring-teal/30"
             >
               <EyeIcon hidden={!showPassword} />
             </button>
@@ -174,7 +174,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading || googleBusy}
-          className="flex h-12 w-full items-center justify-center rounded-xl border-3 border-ink bg-teal px-5 text-sm font-black text-white shadow-hard transition-all duration-200 hover:shadow-brutalist focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="hsk-auth-button bg-teal text-white"
         >
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>

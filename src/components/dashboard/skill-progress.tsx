@@ -25,22 +25,22 @@ const SKILL_META: Record<
 > = {
   Listening: {
     icon: ListeningIcon,
-    color: "var(--teal)",
+    color: "var(--teal-text)",
     gradient: "from-teal to-cyan",
   },
   Reading: {
     icon: ReadingIcon,
-    color: "var(--navy)",
+    color: "var(--brand-text)",
     gradient: "from-navy to-blue-400",
   },
   Writing: {
     icon: WritingIcon,
-    color: "var(--xp)",
+    color: "var(--xp-text)",
     gradient: "from-xp to-amber-400",
   },
   Speaking: {
     icon: SpeakingIcon,
-    color: "var(--violet)",
+    color: "var(--violet-text)",
     gradient: "from-violet to-purple-400",
   },
 };
@@ -212,7 +212,7 @@ export function SkillProgress({
                           1.2 + index * 0.2,
                         duration: 0.8,
                       }}
-                      className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-[0_0_8px_currentColor]"
+                      className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-inverse shadow-[0_0_8px_currentColor]"
                       style={{ color }}
                     />
                   )}
@@ -247,7 +247,7 @@ export function SkillProgress({
                             hasScore &&
                             score! >= milestone
                               ? "text-slate dark:text-slate-soft"
-                              : "text-slate/40 dark:text-slate/30"
+                              : "text-slate-soft"
                           }`}
                         >
                           {milestone}

@@ -41,17 +41,17 @@ export const notify = {
         initial={{ opacity: 0, y: 20, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.8 }}
-        className="flex items-center gap-3 bg-green-50 border border-green-400 text-green-700 px-4 py-3 rounded-xl shadow-hard"
+        className="flex items-center gap-3 bg-success-soft border border-success/30 text-success px-4 py-3 rounded-xl shadow-hard"
       >
         <motion.div
           animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 0.5 }}
         >
-          <Zap className="h-5 w-5 fill-green-500 text-green-500" />
+          <Zap className="h-5 w-5 fill-current text-success" />
         </motion.div>
         <div>
           <p className="font-semibold text-sm">+{amount.toLocaleString()}  EXP </p>
-          {reason && <p className="text-xs font-bold text-green-600">{reason}</p>}
+          {reason && <p className="text-xs font-bold text-success">{reason}</p>}
         </div>
       </motion.div>
     ), { duration: 3000 }),
@@ -63,13 +63,13 @@ export const notify = {
         initial={{ opacity: 0, y: 20, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.8 }}
-        className="flex items-center gap-3 bg-cyan-50 border border-cyan-400 text-cyan-700 px-4 py-3 rounded-xl shadow-hard"
+        className="flex items-center gap-3 bg-cyan-light border border-teal/30 text-teal px-4 py-3 rounded-xl shadow-hard"
       >
         <motion.div
           animate={{ rotate: [0, 360] }}
           transition={{ duration: 0.6 }}
         >
-          <Gift className="h-5 w-5 text-cyan-500" />
+          <Gift className="h-5 w-5 text-teal" />
         </motion.div>
         <p className="font-semibold text-sm">+{amount}  Đã nhận vật phẩm! </p>
       </motion.div>
@@ -82,17 +82,17 @@ export const notify = {
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.5 }}
-        className="flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-400 text-amber-800 px-5 py-4 rounded-xl shadow-brutalist"
+        className="flex items-center gap-3 bg-warning-soft border border-warning/30 text-warning px-5 py-4 rounded-xl shadow-brutalist"
       >
         <motion.div
           animate={{ rotate: [0, -15, 15, 0], scale: [1, 1.3, 1] }}
           transition={{ duration: 0.6 }}
         >
-          <Trophy className="h-6 w-6 text-amber-500" />
+          <Trophy className="h-6 w-6 text-warning" />
         </motion.div>
         <div>
           <p className="font-semibold text-base"> Lên cấp! 🎉 </p>
-          <p className="text-xs font-bold text-amber-700"> Bạn đã đạt cấp {level} — {title}</p>
+          <p className="text-xs font-bold text-warning"> Bạn đã đạt cấp {level} — {title}</p>
         </div>
       </motion.div>
     ), { duration: 5000 }),

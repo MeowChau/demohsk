@@ -125,7 +125,7 @@ export function ClosingCTA() {
 
               <Link
                 href="/login"
-                className="btn-brutalist-outline bg-white/10 text-white border-white/30 hover:bg-white/20 hover:border-white/50"
+                className="btn-brutalist-outline bg-inverse/10 text-white border-white/30 hover:bg-inverse/20 hover:border-white/50"
               >
                  Tôi đã có tài khoản </Link>
             </div>

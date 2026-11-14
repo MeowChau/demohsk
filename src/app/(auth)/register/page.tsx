@@ -50,7 +50,7 @@ export default function RegisterPage() {
         Tài khoản <strong className="break-all text-ink">{registeredEmail}</strong> đã được đăng ký.
         Vui lòng chờ quản trị viên duyệt tài khoản trước khi đăng nhập.
       </p>
-      <Link href="/login" className="mt-7 flex h-12 items-center justify-center rounded-xl border border-mist bg-teal px-5 text-sm font-semibold text-white shadow-hard transition-all hover:shadow-brutalist">
+      <Link href="/login" className="hsk-auth-button mt-7 bg-teal text-white">
         Đến trang đăng nhập
       </Link>
       <AccountApprovalDialog open={approvalNoticeOpen} registeredEmail={registeredEmail} onClose={() => setApprovalNoticeOpen(false)} />
@@ -80,14 +80,14 @@ export default function RegisterPage() {
           {...register("password")}
           error={errors.password?.message}
           endAdornment={
-            <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword} className="flex h-9 w-9 items-center justify-center rounded-md text-slate-soft hover:bg-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30">
+            <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword} className="flex h-9 w-9 items-center justify-center rounded-md text-slate-soft hover:bg-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal focus-visible:ring-2 focus-visible:ring-teal/30">
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           }
         />
         <Field label="Xác nhận mật khẩu" id="confirmPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Nhập lại mật khẩu" required maxLength={72} {...register("confirmPassword")} error={errors.confirmPassword?.message} />
         {error && <div role="alert" className="rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm leading-5 text-danger">{error}</div>}
-        <button type="submit" disabled={isSubmitting} className="mt-1 flex h-12 w-full items-center justify-center rounded-xl border border-mist bg-teal px-5 text-sm font-semibold text-white shadow-hard transition-all hover:shadow-brutalist focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal/20 disabled:cursor-not-allowed disabled:opacity-60">
+        <button type="submit" disabled={isSubmitting} className="hsk-auth-button mt-1 bg-teal text-white">
           {isSubmitting ? "Đang tạo tài khoản…" : "Đăng ký"}
         </button>
       </form>

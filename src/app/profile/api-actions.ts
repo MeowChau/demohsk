@@ -23,6 +23,10 @@ export async function updateProfileInfoAction(form: FormData) {
   if (!parsed.success)
     return { error: "Vui lòng kiểm tra các ô nhập trong hồ sơ.", fieldErrors: issuesToFieldErrors(parsed.error.issues) };
   const { currentHskLevel, targetHskLevel, dailyStudyTime } = parsed.data;
+  const effectiveCurrent = currentHskLevel ?? user.currentHskLevel;
+  const effectiveTarget = targetHskLevel ?? user.targetHskLevel;
+  if (effectiveCurrent != null && effectiveTarget != null && effectiveCurrent > effectiveTarget)
+    return { error: "Vui lòng kiểm tra cấp độ HSK mục tiêu.", fieldErrors: { targetHskLevel: "Cấp độ HSK mục tiêu phải bằng hoặc cao hơn cấp độ hiện tại." } };
   const goals = {
     ...(currentHskLevel !== undefined && currentHskLevel !== user.currentHskLevel ? { currentHskLevel } : {}),
     ...(targetHskLevel !== undefined && targetHskLevel !== user.targetHskLevel ? { targetHskLevel } : {}),

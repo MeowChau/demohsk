@@ -14,14 +14,14 @@ const steps = [
   },
   {
     num: "02",
-    color: "bg-yellow-300",
+    color: "bg-yellow-300 dark:bg-amber-950",
     icon: BookOpen,
     title: "Học từ vựng và chủ đề",
     desc: "Khám phá chữ Hán, pinyin, nghĩa từ và bài luyện được xuất bản theo chủ đề.",
   },
   {
     num: "03",
-    color: "bg-blue-300",
+    color: "bg-blue-300 dark:bg-blue-950",
     icon: TrendingUp,
     title: "Luyện tập và ôn lại",
     desc: "Luyện từng kỹ năng, đánh dấu từ đã học và theo dõi mục tiêu cùng hoạt động học của bạn.",

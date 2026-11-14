@@ -8,6 +8,9 @@ export const SKILL_LABELS: Record<Skill, string> = {
 };
 
 export const HSK_LEVELS = Array.from({ length: 9 }, (_, index) => index + 1);
+export function validHskLevel(value: unknown): number | null {
+  return typeof value === "number" && HSK_LEVELS.includes(value) ? value : null;
+}
 export const STUDY_MODULES = {
   vocabulary: "vocabulary_review",
   Listening: "practice_listening",

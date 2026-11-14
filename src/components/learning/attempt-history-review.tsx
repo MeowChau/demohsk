@@ -6,6 +6,8 @@ import { HskBadge } from "@/components/ui/catalog";
 import { SharedAudioSection } from "./shared-audio-section";
 import { historyDate, historyDuration, historyHref, historyMetric, historyOptions, historyText, type AttemptHistoryDetail, type HistorySourceItem } from "@/lib/learning-history";
 import { optionMatchesAnswer } from "@/lib/practice-scoring";
+import { writingPractice } from "@/lib/writing-practice";
+import { WritingErrorTable, SpeakingErrorTable } from "./attempt/skill-error-summary";
 import type { Skill } from "@/types/assessment";
 
 const audioFor = (item: HistorySourceItem) => publicMedia(historyText(item.question?.payload.audioUrl)) || publicMedia(item.audioUrl) || "";
@@ -63,6 +65,15 @@ function QuestionReview({ item, number, detail, sharedAudio, grade }: { item: Hi
 
 export function AttemptHistoryReview({ detail, filter }: { detail: AttemptHistoryDetail; filter: string }) {
   const items = detail.snapshot.source.items;
+  const tracingTargets = items.flatMap(item => {
+    const question = item.question;
+    if (question?.skill !== "WRITING") return [];
+    const payload = question.payload;
+    const target = writingPractice({ skill: "Writing", type: question.type,
+      templateId: historyText(payload.templateId),
+      question: historyText(payload.text) || historyText(payload.character) || historyText(payload.hanzi) });
+    return target?.text ? [{ id: String(item.id), text: target.text, pinyin: historyText(payload.pinyin) }] : [];
+  });
   // Build lookup tables once instead of scanning all grades for every question.
   const grades = new Map(detail.result.questions.map(grade => [grade.questionId, grade]));
   const wrongIds = new Set(detail.result.questions.filter(grade => ["incorrect", "unanswered"].includes(grade.status)).map(grade => grade.questionId));
@@ -82,6 +93,11 @@ export function AttemptHistoryReview({ detail, filter }: { detail: AttemptHistor
       {detail.reasons.length > 0 && <ul className="list-disc space-y-1 pl-5 text-sm text-slate">{detail.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
       <p className="text-xs leading-6 text-slate">Bản bài làm được lưu tại thời điểm nộp. Xem lại không thay đổi điểm hoặc mức HSK. Làm lại mở nội dung hiện hành trong một lượt mới.</p>
     </div>
+    {(detail.writingProgress.total > 0 || detail.speaking.totalCount > 0) && <section className="hsk-panel min-w-0 space-y-4" aria-label="Thống kê lỗi trong bài làm đã lưu">
+      <h2 className="hsk-section-title">Từ và âm cần luyện lại</h2>
+      {detail.writingProgress.total > 0 && <div className="rounded-lg border border-mist p-4"><h3 className="font-semibold text-ink">Kết quả luyện viết</h3><WritingErrorTable targets={tracingTargets} progress={detail.snapshot.writingProgress} /></div>}
+      {detail.speaking.totalCount > 0 && <div className="rounded-lg border border-mist p-4"><h3 className="font-semibold text-ink">Kết quả luyện nói</h3><SpeakingErrorTable assessments={detail.snapshot.speakingAssessments} /></div>}
+    </section>}
     <div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-lg font-semibold text-ink">Xem lại bài làm</h2><Link href={"/results/" + detail.id} className={filter !== "wrong" ? "hsk-button" : "hsk-button-secondary"}>Tất cả ({items.length})</Link><Link href={"/results/" + detail.id + "?filter=wrong"} className={filter === "wrong" ? "hsk-button" : "hsk-button-secondary"}>Câu sai, bỏ trống ({items.filter(isWrong).length})</Link></div>
     <p className="text-xs text-slate">Bấm vào hình để mở ảnh đầy đủ. Tỷ lệ đúng chỉ tính trên câu có thể chấm tự động; điểm HSK hiển thị riêng.</p>
     {displayed.length === 0 && <div className="hsk-panel text-sm text-slate">Không có câu sai hoặc bỏ trống trong nhóm câu đã chấm.</div>}

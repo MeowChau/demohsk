@@ -38,11 +38,11 @@ function FAQItem({ item, isOpen, onClick }: { item: typeof faqs[0]; isOpen: bool
         onClick={onClick}
         className="flex w-full items-center justify-between py-6 text-left"
       >
-        <span className="text-base md:text-lg font-bold text-[#0F1720] pr-4">{item.q}</span>
+        <span className="text-base md:text-lg font-bold text-ink pr-4">{item.q}</span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--mist)] text-[var(--navy)]"
+          className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--mist)] text-brand"
         >
           {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
         </motion.span>
@@ -56,7 +56,7 @@ function FAQItem({ item, isOpen, onClick }: { item: typeof faqs[0]; isOpen: bool
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="pb-6 text-[#334155] leading-relaxed">{item.a}</p>
+            <p className="pb-6 text-slate leading-relaxed">{item.a}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -68,7 +68,7 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <section id="faq" className="py-20 md:py-28 bg-[#F0FDFC]">
+    <section id="faq" className="py-20 md:py-28 bg-cyan-light">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -77,9 +77,9 @@ export function FAQSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <span className="inline-block text-sm font-bold tracking-widest text-[var(--teal)] uppercase mb-3">
+          <span className="inline-block text-sm font-bold tracking-widest text-teal uppercase mb-3">
              Câu hỏi thường gặp </span>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F1720]">
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-ink">
              Giải đáp trước khi bắt đầu </h2>
         </motion.div>
 

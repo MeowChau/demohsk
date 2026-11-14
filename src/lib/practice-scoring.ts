@@ -1,5 +1,11 @@
 import type { Question, TestWithQuestions } from "@/types/assessment";
 
+export type GradingMode = "on-submit" | "per-question";
+
+export function parseGradingMode(value: unknown): GradingMode | undefined {
+  return value === "on-submit" || value === "per-question" ? value : undefined;
+}
+
 export type PracticeQuestionStatus = "correct" | "incorrect" | "unanswered" | "ungraded";
 
 export interface PracticeQuestionGrade {

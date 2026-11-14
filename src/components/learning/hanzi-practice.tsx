@@ -55,20 +55,31 @@ function CharacterBoard({ character, onComplete, onInteraction, onStrokeProgress
     let active = true;
     let instance: HanziWriter | null = null;
     let observer: ResizeObserver | undefined;
+    let paletteObserver: MutationObserver | undefined;
     const events = new AbortController();
     setState(initialState);
     async function initialize() {
       try {
         const [{ default: Writer }, data] = await Promise.all([import("hanzi-writer"), loadHanziData(character)]);
         if (!active || !element) return;
+        const palette = () => {
+          const css = getComputedStyle(element);
+          const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+          return {
+            strokeColor: token("--practice-stroke", "#163d69"),
+            drawingColor: token("--practice-stroke", "#163d69"),
+            outlineColor: token("--practice-outline", "#a1a7af"),
+            highlightColor: token("--teal-text", "#0d9f95"),
+            highlightCompleteColor: token("--teal-text", "#0d9f95"),
+          };
+        };
         const size = Math.max(100, Math.floor(element.clientWidth) || 320);
         instance = new Writer(element, {
           width: size, height: size, padding: 22,
           rendererOverride: { createRenderTarget: hanziRenderTarget(events.signal) },
           charDataLoader: () => data,
           showCharacter: false, showOutline: outlineRef.current,
-          strokeColor: "#163d69", drawingColor: "#163d69", outlineColor: "#a1a7af",
-          highlightColor: "#0d9f95", highlightCompleteColor: "#0d9f95",
+          ...palette(),
           drawingWidth: 7, strokeAnimationSpeed: 1, delayBetweenStrokes: 280,
           showHintAfterMisses: 2, leniency: 1.15, acceptBackwardsStrokes: false,
         });
@@ -76,6 +87,16 @@ function CharacterBoard({ character, onComplete, onInteraction, onStrokeProgress
         await instance.setCharacter(character);
         if (!active) return;
         setState(previous => ({ ...previous, total: data.strokes.length }));
+        // Recolor the same board when the theme changes; do not reset the quiz or strokes.
+        if (typeof MutationObserver !== "undefined") {
+          paletteObserver = new MutationObserver(() => {
+            if (!active || !instance) return;
+            for (const [name, color] of Object.entries(palette())) {
+              void instance.updateColor(name as keyof ReturnType<typeof palette>, color, { duration: 0 }).catch(() => {});
+            }
+          });
+          paletteObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        }
         await startQuiz(instance, character);
         if (typeof ResizeObserver !== "undefined") {
           observer = new ResizeObserver(() => {
@@ -91,7 +112,7 @@ function CharacterBoard({ character, onComplete, onInteraction, onStrokeProgress
     }
     void initialize();
     return () => {
-      active = false; observer?.disconnect(); events.abort();
+      active = false; observer?.disconnect(); paletteObserver?.disconnect(); events.abort();
       instance?.cancelQuiz();
       if (instance) void instance.pauseAnimation().catch(() => {});
       if (writer.current === instance) writer.current = null;
@@ -112,10 +133,10 @@ function CharacterBoard({ character, onComplete, onInteraction, onStrokeProgress
 
   const disabled = state.status === "loading" || state.status === "preview" || state.status === "error";
   return <div className="flex flex-col gap-4">
-    <div className="relative mx-auto aspect-square w-full max-w-[344px] overflow-hidden rounded-xl border border-mist bg-[#faf9f5]" role="group" aria-label={`Ô luyện viết chữ ${character}`} onPointerDownCapture={() => callbacks.current.onInteraction?.()}>
-      <svg viewBox="0 0 344 344" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true"><path d="M0 0L344 344M344 0L0 344" fill="none" stroke="#dfe3e6" strokeWidth="0.7" /><path d="M172 0V344M0 172H344" fill="none" stroke="#e7e9eb" strokeWidth="0.6" strokeDasharray="4 5" /></svg>
+    <div className="relative mx-auto aspect-square w-full max-w-[344px] overflow-hidden rounded-xl border border-mist bg-[var(--practice-paper)]" role="group" aria-label={`Ô luyện viết chữ ${character}`} onPointerDownCapture={() => callbacks.current.onInteraction?.()}>
+      <svg viewBox="0 0 344 344" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true"><path d="M0 0L344 344M344 0L0 344" fill="none" stroke="var(--practice-grid)" strokeWidth="0.7" /><path d="M172 0V344M0 172H344" fill="none" stroke="var(--practice-grid)" strokeWidth="0.6" strokeDasharray="4 5" /></svg>
       <div ref={host} className="absolute inset-0 touch-none select-none" aria-hidden="true" />
-      {(state.status === "loading" || state.status === "error") && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#faf9f5]/95 px-6 text-center"><p className="text-sm leading-6 text-slate" role={state.status === "error" ? "alert" : "status"}>{state.message}</p>{state.status === "error" && <button type="button" className="hsk-button-secondary" onClick={() => setRetry(previous => previous + 1)}>Thử lại</button>}</div>}
+      {(state.status === "loading" || state.status === "error") && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--practice-paper)] px-6 text-center"><p className="text-sm leading-6 text-slate" role={state.status === "error" ? "alert" : "status"}>{state.message}</p>{state.status === "error" && <button type="button" className="hsk-button-secondary" onClick={() => setRetry(previous => previous + 1)}>Thử lại</button>}</div>}
     </div>
     <div className="flex flex-wrap items-center justify-center gap-2">
       <button type="button" className="hsk-button-secondary" disabled={disabled} onClick={() => { void preview(); }}><Play size={16} />Xem mẫu</button>
