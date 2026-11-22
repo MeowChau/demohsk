@@ -1,0 +1,99 @@
+import { toast as sonnerToast } from "sonner";
+import { motion } from "framer-motion";
+import { 
+  Check as CheckIcon, 
+  AlertCircle as ErrorIcon, 
+  Info as InfoIcon, 
+  AlertTriangle as WarningIcon, 
+  Waves as WaveIcon, 
+  Zap, 
+  Trophy, 
+  Gift 
+} from "lucide-react";
+
+export const notify = {
+  success: (message: string) =>
+    sonnerToast(message, { icon: <CheckIcon size={20} /> }),
+  error: (message: string) =>
+    sonnerToast(message, { icon: <ErrorIcon size={20} /> }),
+  info: (message: string) =>
+    sonnerToast(message, { icon: <InfoIcon size={20} /> }),
+  warning: (message: string) =>
+    sonnerToast(message, { icon: <WarningIcon size={20} /> }),
+  goodbye: (message: string) =>
+    sonnerToast(message, { icon: <WaveIcon size={20} /> }),
+  
+  confirm: (message: string, onConfirm: () => void, confirmLabel = "Confirm") =>
+    sonnerToast(message, {
+      icon: <WarningIcon size={20} />,
+      duration: 8000,
+      action: {
+        label: confirmLabel,
+        onClick: onConfirm,
+      },
+      cancel: { label: "Hủy", onClick: () => {} },
+    }),
+
+  /** XP earned toast — bouncy green popup */
+  xp: (amount: number, reason?: string) =>
+    sonnerToast.custom(() => (
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.8 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.8 }}
+        className="flex items-center gap-3 bg-success-soft border border-success/30 text-success px-4 py-3 rounded-xl shadow-hard"
+      >
+        <motion.div
+          animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 0.5 }}
+        >
+          <Zap className="h-5 w-5 fill-current text-success" />
+        </motion.div>
+        <div>
+          <p className="font-semibold text-sm">+{amount.toLocaleString()}  EXP </p>
+          {reason && <p className="text-xs font-bold text-success">{reason}</p>}
+        </div>
+      </motion.div>
+    ), { duration: 3000 }),
+
+  /** Gems earned toast */
+  gems: (amount: number) =>
+    sonnerToast.custom(() => (
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.8 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.8 }}
+        className="flex items-center gap-3 bg-cyan-light border border-teal/30 text-teal px-4 py-3 rounded-xl shadow-hard"
+      >
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 0.6 }}
+        >
+          <Gift className="h-5 w-5 text-teal" />
+        </motion.div>
+        <p className="font-semibold text-sm">+{amount}  Đã nhận vật phẩm! </p>
+      </motion.div>
+    ), { duration: 3000 }),
+
+  /** Level up celebration toast */
+  levelUp: (level: number, title: string) =>
+    sonnerToast.custom(() => (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.5 }}
+        className="flex items-center gap-3 bg-warning-soft border border-warning/30 text-warning px-5 py-4 rounded-xl shadow-brutalist"
+      >
+        <motion.div
+          animate={{ rotate: [0, -15, 15, 0], scale: [1, 1.3, 1] }}
+          transition={{ duration: 0.6 }}
+        >
+          <Trophy className="h-6 w-6 text-warning" />
+        </motion.div>
+        <div>
+          <p className="font-semibold text-base"> Lên cấp! 🎉 </p>
+          <p className="text-xs font-bold text-warning"> Bạn đã đạt cấp {level} — {title}</p>
+        </div>
+      </motion.div>
+    ), { duration: 5000 }),
+};

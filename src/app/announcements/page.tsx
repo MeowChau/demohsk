@@ -1,0 +1,29 @@
+import type { Announcement } from "@/types/community";
+import { InfoIcon } from "@/components/icons/stat-icons";
+
+export default async function AnnouncementsPage(){const announcements:Announcement[]=[];
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="font-display text-2xl font-semibold text-ink dark:text-white"> Thông báo </h1>
+
+      {announcements.length === 0 ? (
+        <p className="text-sm text-slate-soft"> Chưa có thông báo mới. </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {announcements.map((a) => (
+            <div key={a.announcementid} className="flex gap-3 rounded-lg bg-surface p-4 shadow-card">
+              <InfoIcon size={20} className="mt-0.5 shrink-0" />
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-sm font-semibold text-ink">{a.title}</h2>
+                  <span className="text-xs text-slate-soft">{new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="mt-1 text-sm text-slate">{a.message}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

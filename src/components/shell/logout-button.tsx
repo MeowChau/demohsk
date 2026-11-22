@@ -1,0 +1,174 @@
+"use client";
+
+import { useState, useEffect, useCallback, useId, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import { apiAction } from "@/lib/api/client";
+import { notify } from "@/lib/toast";
+import { useHasUnsavedChanges } from "@/components/shell/navigation-protection";
+
+interface LogoutButtonProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function LogoutButton({ className, children }: LogoutButtonProps) {
+  const router = useRouter();
+  const hasUnsavedChanges = useHasUnsavedChanges();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [show, setShow] = useState(false);
+  const id = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancel = useRef<HTMLButtonElement>(null);
+
+  // Render outside the blurred header and use the browser's modal top layer.
+  useEffect(() => {
+    if (!open) {
+      setShow(false);
+      return;
+    }
+    const element = dialog.current;
+    if (!element) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    if (!element.open) element.showModal();
+    document.body.style.overflow = "hidden";
+    cancel.current?.focus({ preventScroll: true });
+    const timer = setTimeout(() => setShow(true), 10);
+    return () => {
+      clearTimeout(timer);
+      if (element.open) element.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!loading) setOpen(false);
+    };
+    // Capture also covers the moment all dialog buttons are disabled while submitting.
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [open, loading]);
+
+  const handleConfirm = useCallback(async () => {
+    setLoading(true);
+    try {
+      await apiAction("auth/logout");
+
+      setOpen(false);
+      notify.goodbye("Đã đăng xuất. Hẹn gặp lại bạn!");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      notify.error("Có lỗi xảy ra. Vui lòng thử lại.");
+      setLoading(false);
+    }
+  }, [router]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={
+          className ??
+          "inline-flex items-center justify-center rounded-full border border-mist px-4 py-2 text-sm font-medium text-slate transition-all duration-200 hover:border-danger hover:text-danger dark:border-slate/20 dark:text-slate-soft dark:hover:border-danger dark:hover:text-danger"
+        }
+      >
+        {children ?? "Đăng xuất"}
+      </button>
+
+      {open && createPortal(
+        <dialog ref={dialog} aria-labelledby={id + "-title"} aria-describedby={id + "-description"}
+          className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[360px] overflow-visible overscroll-contain border-0 bg-transparent p-0 text-inherit backdrop:bg-navy-deep/60 backdrop:overscroll-contain"
+          // The account menu's outside-click/Escape handlers must not unmount this dialog.
+          onMouseDown={event => event.stopPropagation()}
+          onCancel={event => { event.preventDefault(); if (!loading) setOpen(false); }}
+          onClick={event => { if (event.target === event.currentTarget && !loading) setOpen(false); }}>
+          {/* Card */}
+          <div
+            className={`relative w-full max-w-[360px] transition-all duration-200 ${
+              show ? "scale-100 opacity-100" : "scale-[0.96] opacity-0"
+            }`}
+          >
+            <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border-3 border-ink bg-surface shadow-hard dark:border-white/20 dark:bg-navy-deep">
+              <div className="flex flex-col items-center p-8">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
+                  <svg
+                    className="h-6 w-6 text-amber-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                    />
+                  </svg>
+                </div>
+
+                <h3 id={id + "-title"} className="text-lg font-black text-ink dark:text-white">
+                   Đăng xuất </h3>
+                <p id={id + "-description"} className="mt-2 text-center text-sm leading-relaxed text-slate dark:text-slate-soft">
+                  {hasUnsavedChanges ? "Bài đang làm chưa được lưu. Nếu đăng xuất, tiến độ trong lượt này sẽ bị mất. Bạn vẫn muốn đăng xuất?" : "Bạn muốn đăng xuất khỏi tài khoản TriceHSK?"} </p>
+
+                <div className="mt-7 flex w-full gap-3">
+                  <button
+                    ref={cancel}
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    disabled={loading}
+                    className="flex-1 rounded-xl border-2 border-ink/10 bg-mist px-4 py-2.5 text-sm font-black text-ink transition-colors hover:bg-slate/20 active:scale-[0.98] disabled:opacity-50 dark:border-white/10 dark:bg-slate/10 dark:text-slate-soft dark:hover:bg-slate/20"
+                  >
+                     Tiếp tục học </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    disabled={loading}
+                    className="flex-1 rounded-xl border-2 border-ink bg-danger px-4 py-2.5 text-sm font-black text-white shadow-hard transition-all hover:shadow-brutalist hover:bg-red-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <svg
+                          className="h-4 w-4 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                         Đang đăng xuất… </span>
+                    ) : (
+                      "Xác nhận đăng xuất"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </dialog>,
+        document.body,
+      )}
+    </>
+  );
+}
