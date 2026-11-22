@@ -171,6 +171,10 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
   useEffect(() => {
     const toolbar = toolbarRef.current;
     if (!toolbar) return;
+    if (!isExam) {
+      formRef.current?.style.setProperty("--practice-toolbar-height", "0px");
+      return;
+    }
     const measure = () => {
       const height = toolbar.getBoundingClientRect().height;
       if (height > 0) formRef.current?.style.setProperty("--practice-toolbar-height", height + "px");
@@ -179,7 +183,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
     observer?.observe(toolbar);
     return () => observer?.disconnect();
-  }, [started]);
+  }, [isExam, started]);
 
   const strokeSummary = Object.values(strokeStats).reduce((summary, item) => ({
     correctStrokes: summary.correctStrokes + item.correctStrokes,
@@ -376,7 +380,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
   return (
     <>
     {recordScores && savedScore?.currentHskLevel != null && savedScore.currentHskLevel > (savedScore.previousCurrentHskLevel ?? 0) && <RefreshProfileAfterPromotion />}
-    {started ? <form ref={formRef} className={"flex flex-col gap-6 " + (sharedAudioTracks.length && showQuestions
+    {started ? <form ref={formRef} className={"flex flex-col gap-6 " + (!isExam ? "[--practice-toolbar-height:0px] " : "") + (sharedAudioTracks.length && showQuestions
       ? "[--practice-audio-offset:calc(var(--practice-audio-dock-height,4rem)+1.5rem)] [--practice-mobile-audio-offset:var(--practice-audio-offset)] lg:[--practice-mobile-audio-offset:0px]" : "")} onSubmit={event => {
       event.preventDefault();
       if (!started || result) return;
@@ -395,7 +399,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     }}>
       <input type="hidden" name="attemptid" value={attemptid} />
       <input type="hidden" name="testid" value={testid} />
-      <div ref={toolbarRef} className="sticky top-[5.5rem] z-30 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-mist bg-surface px-4 py-3 shadow-card">
+      <div ref={toolbarRef} data-attempt-toolbar="" className={"flex flex-wrap items-center justify-between gap-3 rounded-lg border border-mist bg-surface px-4 py-3 shadow-card " + (isExam ? "sticky top-[5.5rem] z-30" : "")}>
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{workedQuestionIds.size}/{questions.length} câu đã làm</p>
           <p className="mt-1 text-xs text-slate">{gradingMode === "per-question" ? "Chấm ngay từng câu" : "Chấm khi nộp bài"}</p>
@@ -518,6 +522,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
 
       {notice && <p role="status" className="hsk-notice">{notice}</p>}
       <div className="flex flex-wrap gap-3">
+        {!isExam && !result && <button type="submit" aria-label="Nộp bài luyện tập" className="hsk-button" disabled={hasSpeakingWorkInProgress}>Nộp bài</button>}
         <button type="button" className="hsk-button-secondary" onClick={downloadBackup}>Tải bài tự luyện của tôi</button>
       </div>
       {hasSpeakingWorkInProgress && <p className="text-xs text-slate" role="status">Hoàn tất ghi âm và nhận diện giọng nói để nộp bài.</p>}

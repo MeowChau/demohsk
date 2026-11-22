@@ -36,6 +36,18 @@ function submit() {
   fireEvent.click(within(screen.getByRole("dialog", { name: "Xác nhận nộp bài?" })).getByRole("button", { name: "Nộp bài" }));
 }
 
+it("submits from the end of a practice set through the same confirmation dialog", () => {
+  mount("on-submit");
+  fireEvent.click(firstQuestion().getByRole("radio", { name: "A. Xin chào" }));
+  fireEvent.click(screen.getByRole("button", { name: "Nộp bài luyện tập" }));
+  const confirmation = within(screen.getByRole("dialog", { name: "Xác nhận nộp bài?" }));
+  expect(screen.queryByRole("region", { name: "Kết quả luyện tập" })).toBeNull();
+  expect((firstQuestion().getByRole("radio", { name: "A. Xin chào" }) as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(confirmation.getByRole("button", { name: "Nộp bài" }));
+  expect(screen.getByRole("region", { name: "Kết quả luyện tập" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Nộp bài luyện tập" })).toBeNull();
+});
+
 it("uses the same accessible mode popup before opening a practice set", () => {
   render(<StartPracticeButton setId={7} title="Bài luyện 7" />);
   fireEvent.click(screen.getByRole("link", { name: "Mở bài luyện" }));
