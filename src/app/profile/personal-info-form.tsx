@@ -64,6 +64,13 @@ export function PersonalInfoForm({
       />
 
       {profile.role === "student" && (
+        <div id="study-goals" className="scroll-mt-28 border-t border-mist pt-4">
+          <h3 className="text-base font-semibold text-ink">Thiết lập mục tiêu học HSK</h3>
+          <p className="mt-2 text-sm leading-6 text-slate">Chọn cấp HSK hiện tại phù hợp với bạn, cấp muốn đạt và số phút có thể học mỗi ngày. Nếu mới bắt đầu, bạn có thể chọn cấp hiện tại là HSK 1. Bấm “Lưu mục tiêu” để áp dụng.</p>
+        </div>
+      )}
+
+      {profile.role === "student" && (
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Current HSK level */}
           <div>
@@ -150,7 +157,7 @@ export function PersonalInfoForm({
                 />
               </svg>
             </div>
-            <p className="mt-1 text-xs text-slate-soft" id="hsk-goal-hint">Mục tiêu phải bằng hoặc cao hơn cấp độ hiện tại.</p>
+            <p className="mt-1 text-xs text-slate-soft" id="hsk-goal-hint">Đây là cấp HSK bạn muốn đạt. Chọn bằng hoặc cao hơn cấp độ hiện tại; bạn có thể đổi mục tiêu sau.</p>
             <FieldError id="targetHskLevel-error" message={validation.errors.targetHskLevel} />
           </div>
         </div>

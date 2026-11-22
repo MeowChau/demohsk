@@ -8,12 +8,12 @@ import type { DashboardTopic, HskExam, HskPractice, HskTopic, HskWord, PageData 
 
 export const getTopics = cache((level?: string) => serverApi<HskTopic[]>("practice-sets/topics" + (level ? "?hskLevel=" + level : "")));
 // Count the same complete topic catalog as the lesson page, while keeping
-// the ten dashboard recommendations at the student's current HSK level.
+// up to ten actionable practice topics at the student's current HSK level.
 export async function getDashboardTopics(level: number): Promise<{ topics: DashboardTopic[]; total: number }> {
   const topics = await getTopics();
   return {
     total: topics.length,
-    topics: topics.filter(topic => topic.hskLevel === level).slice(0, 10).map(({ topicKey, titleVi, titleCn, hskLevel, totalSets }) => ({
+    topics: topics.filter(topic => topic.hskLevel === level && topic.totalSets > 0 && topic.totalQuestions > 0).slice(0, 10).map(({ topicKey, titleVi, titleCn, hskLevel, totalSets }) => ({
       topicKey, titleVi, titleCn, hskLevel, totalSets,
     })),
   };

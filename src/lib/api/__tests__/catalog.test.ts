@@ -115,3 +115,36 @@ describe("dashboard topic summary", () => {
     await expect(getDashboardTopics(2)).rejects.toThrow("unavailable");
   });
 });
+
+describe("actionable dashboard topic recommendations", () => {
+ beforeEach(() => request.mockReset());
+ const topic = (topicKey:string, hskLevel:number, totalSets:number, totalQuestions:number, vocabularyCount=0) => ({
+  topicKey, titleVi:topicKey, titleCn:"", pinyin:"", hskLevel, totalSets, totalQuestions, vocabularyCount,
+ });
+ it("skips the first eighteen empty HSK 3 topics before taking ten ready recommendations", async () => {
+  const empty = Array.from({length:18}, (_,i) => topic("standard-"+i,3,0,0));
+  const ready = Array.from({length:12}, (_,i) => topic("compiled-"+i,3,4,80));
+  const topics = [...empty,...ready,topic("other-level",2,4,80)];
+  const before = JSON.stringify(topics);
+  request.mockResolvedValue(topics);
+  const result = await getDashboardTopics(3);
+  expect(result.total).toBe(topics.length);
+  expect(result.topics.map(item=>item.topicKey)).toEqual(ready.slice(0,10).map(item=>item.topicKey));
+  expect(result.topics.every(item=>item.hskLevel===3 && item.totalSets>0)).toBe(true);
+  expect(JSON.stringify(topics)).toBe(before);
+  expect(request).toHaveBeenCalledTimes(1);
+ });
+ it("excludes empty practice sets and vocabulary-only topics because these cards open practice", async () => {
+  request.mockResolvedValue([
+   topic("empty",3,0,0),topic("set-without-questions",3,1,0),topic("vocabulary-only",3,0,0,20),
+   topic("wrong-level",2,4,80),topic("ready",3,1,5),
+  ]);
+  const result = await getDashboardTopics(3);
+  expect(result.total).toBe(5);
+  expect(result.topics.map(item=>item.topicKey)).toEqual(["ready"]);
+ });
+ it("returns an honest empty state instead of empty cards or recommendations from another HSK level", async () => {
+  request.mockResolvedValue([topic("empty-current",3,0,0),topic("available-other",2,1,10)]);
+  expect(await getDashboardTopics(3)).toEqual({total:2,topics:[]});
+ });
+});
