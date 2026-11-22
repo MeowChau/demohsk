@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { examDetailHref } from "@/lib/attempt-routes";
 import { defaultExamMinutes } from "@/lib/exam-timing";
-import { FileText, ArrowRight, Clock3, LockKeyhole, CheckCircle2 } from "lucide-react";
+import { FileText, Clock3, LockKeyhole, CheckCircle2 } from "lucide-react";
 import { getExams } from "@/lib/api/catalog";
 import { getApiUser } from "@/lib/api/server";
 import { parseCatalogQuery, type SearchParams } from "@/lib/catalog-query";
@@ -23,7 +23,7 @@ export default async function ExamsPage({ searchParams }: { searchParams: Promis
       </p>}
       <p className="line-clamp-3 text-sm leading-6 text-slate">{exam.description || "Mở đề để xem cấu trúc và chọn thời gian làm bài."}</p>
       <p className="flex items-center gap-2 text-sm text-slate"><Clock3 size={16} aria-hidden="true" />{defaultExamMinutes(exam.hskLevel)} phút</p>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-mist pt-4"><span className="text-xs text-slate-soft">{exam.sections?.length || 0} phần · {exam.totalQuestions ?? exam.sections?.reduce((sum, section) => sum + section.sectionQuestions.length, 0) ?? 0} câu</span><Link className="hsk-button" href={examDetailHref(exam.id)}>Xem đề<ArrowRight size={15} /></Link></div>
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-mist pt-4"><span className="text-xs text-slate-soft">{exam.sections?.length || 0} phần · {exam.totalQuestions ?? exam.sections?.reduce((sum, section) => sum + section.sectionQuestions.length, 0) ?? 0} câu</span><Link className="hsk-button" href={examDetailHref(exam.id)}>{exam.access?.canAttempt === false ? <><LockKeyhole size={16} aria-hidden="true" />Mua đề</> : "Xem đề"}</Link></div>
     </article>)}</div> : <DataEmpty title="Chưa có đề thi phù hợp" />}
     <CatalogPagination path="/exams" query={activeQuery} data={exams} />
   </div>;

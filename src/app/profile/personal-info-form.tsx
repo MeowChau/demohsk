@@ -38,10 +38,16 @@ export function PersonalInfoForm({
   }, [state]);
 
   const [currentLevel, setCurrentLevel] = useState(String(profile.current_band ?? ""));
-  const [targetLevel, setTargetLevel] = useState(() => profile.target_band == null ? "" : String(Math.max(profile.target_band, profile.current_band || 0)));
+  const [targetLevel, setTargetLevel] = useState(String(profile.target_band ?? ""));
+  const [dailyMinutes, setDailyMinutes] = useState(String(profile.daily_study_time ?? ""));
+
+  // Refresh saved fields independently without replacing invalid choices in a draft.
+  useEffect(() => { setCurrentLevel(String(profile.current_band ?? "")); }, [profile.current_band]);
+  useEffect(() => { setTargetLevel(String(profile.target_band ?? "")); }, [profile.target_band]);
+  useEffect(() => { setDailyMinutes(String(profile.daily_study_time ?? "")); }, [profile.daily_study_time]);
 
   return (
-    <form action={formAction} {...validation.formProps} className="flex flex-col gap-4">
+    <form action={formAction} {...validation.formProps} onReset={event => event.preventDefault()} className="flex flex-col gap-4">
       <Field
         label="Tên người dùng"
         id="username"
@@ -71,11 +77,7 @@ export function PersonalInfoForm({
                 id="currentHskLevel"
                 name="currentHskLevel"
                 value={currentLevel}
-                onChange={event => {
-                  const next = event.target.value;
-                  setCurrentLevel(next);
-                  if (targetLevel && Number(targetLevel) < Number(next)) setTargetLevel(next);
-                }}
+                onChange={event => setCurrentLevel(event.target.value)}
                 aria-invalid={Boolean(validation.errors.currentHskLevel)}
                 aria-describedby={validation.errors.currentHskLevel ? "currentHskLevel-error" : undefined}
                 className={cn("w-full h-12 px-4 pr-10 rounded-xl border border-control bg-surface text-[var(--ink)] appearance-none focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all cursor-pointer", validation.errors.currentHskLevel && "border-danger focus:border-danger focus:ring-danger/10")}
@@ -127,7 +129,7 @@ export function PersonalInfoForm({
                 <option value="" disabled>
                    Chọn mục tiêu HSK </option>
                 {HSK_LEVELS.map((level) => (
-                  <option key={level} value={level} disabled={Boolean(currentLevel) && level < Number(currentLevel)}>
+                  <option key={level} value={level}>
                     HSK {level}
                   </option>
                 ))}
@@ -158,11 +160,11 @@ export function PersonalInfoForm({
         <p className="text-xs text-danger" role="alert">{validation.serverError}</p>
       )}
 
-      {state?.success && (
-        <p className="text-xs text-success"> Đã cập nhật mục tiêu học. </p>
+      {validation.isSuccess && (
+        <p role="status" className="text-xs text-success"> Đã cập nhật mục tiêu học. </p>
       )}
 
-      {profile.role === "student" && <Field label="Mục tiêu học mỗi ngày (phút)" id="dailyStudyTime" name="dailyStudyTime" type="number" min={1} max={1440} step={1} defaultValue={profile.daily_study_time ?? ""} placeholder="Ví dụ: 30" error={validation.errors.dailyStudyTime} hint="Số nguyên từ 1 đến 1440 phút." />}
+      {profile.role === "student" && <Field label="Mục tiêu học mỗi ngày (phút)" id="dailyStudyTime" name="dailyStudyTime" type="number" min={1} max={1440} step={1} value={dailyMinutes} onChange={event => setDailyMinutes(event.target.value)} placeholder="Ví dụ: 30" error={validation.errors.dailyStudyTime} hint="Số nguyên từ 1 đến 1440 phút." />}
 
       {profile.role === "student" && <button
         type="submit"
