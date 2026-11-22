@@ -151,10 +151,12 @@ async function handle(
     if (renewed) setSession(response, renewed);
     if (
       path === "auth/logout" ||
-      (path === "auth/me" && request.method === "DELETE" && upstream.ok) ||
-      upstream.status === 401
+      (path === "auth/me" && request.method === "DELETE" && upstream.ok)
     )
       clearSession(response);
+    // A concurrent request may have already renewed the browser cookies.
+    // A stale 401 must not clear that newer session; protected pages still
+    // validate authentication and redirect a genuinely expired session to login.
     return response;
   } catch {
     const response = NextResponse.json(

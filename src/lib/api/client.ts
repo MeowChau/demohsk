@@ -48,6 +48,8 @@ export function backendFieldErrors(body: unknown): Record<string, string> {
     .map(([field, value]) => [field, errorMessage({ errors: { [field]: value } }, 422)]));
 }
 export function errorMessage(body: unknown, status: number): string {
+  if (status === 401)
+    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.";
   const value = body as {
     message?: string | string[];
     errors?: Record<string, unknown>;

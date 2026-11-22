@@ -5,9 +5,9 @@ import { useStore } from "zustand";
 import { createAttemptStore, type AttemptStore, type AttemptValues } from "./attempt/attempt-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, ApiError } from "@/lib/api/client";
-import type { SubmittedLearningScore, LearningScoreSubmission, LearningAttemptContext } from "@/lib/learning-scores";
-import { markLearningScoresUpdated } from "@/lib/learning-scores";
+import { ApiError } from "@/lib/api/client";
+import type { LearningScoreSubmission, LearningAttemptContext } from "@/lib/learning-scores";
+import { markLearningScoresUpdated, submitLearningScore } from "@/lib/learning-scores";
 import { historyHref, historyResultHref } from "@/lib/learning-history";
 import { ClipboardCheck, Flag, LayoutGrid } from "lucide-react";
 import { SKILL_LABELS } from "@/lib/hsk";
@@ -227,12 +227,13 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     if (scoreBusy.current || !store.getState().claim(payload)) return;
     scoreBusy.current = true;
     try {
-      const saved = await apiFetch<SubmittedLearningScore>("learning-scores/submit", { method: "POST", body: JSON.stringify(payload) });
+      const saved = await submitLearningScore(payload);
       store.getState().complete(saved);
       setNotice(saved.historyId ? "Đã lưu bài làm vào lịch sử theo tài khoản." : "Đã cập nhật điểm tổng hợp theo tài khoản.");
       markLearningScoresUpdated();
     } catch (cause) {
-      store.getState().fail(cause instanceof ApiError && cause.status === 404 ? "Backend chưa được cập nhật chức năng tính điểm này. Câu trả lời vẫn còn trên trang để thử lại."
+      store.getState().fail(cause instanceof ApiError && cause.status === 401 ? "Phiên đăng nhập đã hết hạn. Câu trả lời vẫn được giữ trên trang. Vui lòng đăng nhập lại rồi thử lưu điểm."
+        : cause instanceof ApiError && cause.status === 404 ? "Backend chưa được cập nhật chức năng tính điểm này. Câu trả lời vẫn còn trên trang để thử lại."
         : cause instanceof Error ? cause.message : "Chưa lưu được kết quả. Hãy thử lại.");
     } finally { scoreBusy.current = false; }
   }
