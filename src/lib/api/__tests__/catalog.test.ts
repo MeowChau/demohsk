@@ -92,20 +92,23 @@ describe("large personalized catalog",()=>{
 
 describe("dashboard topic summary", () => {
   beforeEach(() => request.mockReset());
-  it("uses one topic request and sends only ten compact cards to the client", async () => {
-    const topics = Array.from({length: 31}, (_, i) => ({
-      topicKey: `HSK1-L${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: 1,
+  it.each([1, 2, 3])("counts all 107 topics while recommending only ten HSK %i cards", async level => {
+    const topics = Array.from({length: 107}, (_, i) => ({
+      topicKey: `topic-${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: i < 33 ? 1 : i < 61 ? 2 : 3,
       totalSets: 2, totalQuestions: 80, vocabularyCount: 20, pinyin: "ni hao",
     }));
-    request.mockResolvedValue(topics);
-    const { topics: result, total } = await getDashboardTopics(1);
-    expect(total).toBe(31);
+    request.mockImplementation(async value => {
+      const requestedLevel = new URL(String(value), "http://fixture").searchParams.get("hskLevel");
+      return requestedLevel ? topics.filter(topic => topic.hskLevel === Number(requestedLevel)) : topics;
+    });
+    const { topics: result, total } = await getDashboardTopics(level);
+    expect(total).toBe(107);
     expect(result).toHaveLength(10);
-    expect(result.map(item => item.topicKey)).toEqual(topics.slice(0, 10).map(item => item.topicKey));
+    expect(result.map(item => item.topicKey)).toEqual(topics.filter(item => item.hskLevel === level).slice(0, 10).map(item => item.topicKey));
     expect(result[0]).toMatchObject({totalSets: 2});
     expect(result[0]).not.toHaveProperty("totalQuestions");
     expect(request).toHaveBeenCalledTimes(1);
-    expect(request).toHaveBeenCalledWith("practice-sets/topics?hskLevel=1");
+    expect(request).toHaveBeenCalledWith("practice-sets/topics");
   });
   it("keeps upstream errors visible instead of reporting an empty successful dashboard", async () => {
     request.mockRejectedValue(new Error("unavailable"));

@@ -63,7 +63,7 @@ it("retries stale-day attendance after a failed midnight refresh", async () => {
 
 it("preserves the full topic total while rendering only ten topic cards", () => {
  const topics=Array.from({length:10},(_,i)=>({topicKey:String(i),titleVi:`Bài ${i+1}`,titleCn:"你好",hskLevel:1,totalSets:2}));
- render(<Dashboard {...props} topics={topics} topicCount={31}/>);
- expect(screen.getByText("Bạn có 31 chủ đề bài học HSK.")).toBeTruthy();
+ render(<Dashboard {...props} topics={topics} topicCount={107}/>);
+ expect(screen.getByText("Bạn có 107 chủ đề bài học HSK.")).toBeTruthy();
  expect(screen.getAllByText("2 bài học",{exact:false})).toHaveLength(10);
 });
