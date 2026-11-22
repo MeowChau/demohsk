@@ -1,5 +1,6 @@
 export type { LearningSkill as Skill } from "@/lib/api/generated/learning-contract";
 import type { LearningSkill as Skill } from "@/lib/api/generated/learning-contract";
+import type { QuestionImageRegion } from "@/lib/api/question-adapter";
 export type TestCategory = `HSK ${number}`;
 
 export interface PracticeTest {
@@ -37,6 +38,7 @@ export interface Question {
   pinyin?: string;
   translation?: string;
   image_url?: string | null;
+  image_region?: QuestionImageRegion;
   context_image_url?: string | null;
   continuation_image_url?: string | null;
   audio_url?: string | null;

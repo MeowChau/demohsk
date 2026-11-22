@@ -1,5 +1,6 @@
 "use client";
 import { SKILL_LABELS } from "@/lib/hsk";
+import { formatScore } from "@/lib/utils";
 
 
 import { motion, useInView } from "framer-motion";
@@ -146,7 +147,7 @@ export function SkillProgress({
                     }}
                   >
                     {hasScore
-                      ? score!.toFixed(1)
+                      ? formatScore(score)
                       : tracing ? tracing.completed + "/" + tracing.total : "—"}
                   </span>
 
@@ -168,8 +169,8 @@ export function SkillProgress({
 
                   <span className="font-black text-slate tabular-nums">
                     {hasScore
-                      ? score!.toFixed(1)
-                      : tracing ? Math.round(pct) + "%" : "0.0"}
+                      ? formatScore(score)
+                      : tracing ? Math.round(pct) + "%" : "0"}
                   </span>
                 </div>
 

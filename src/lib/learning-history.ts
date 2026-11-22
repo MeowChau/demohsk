@@ -1,4 +1,5 @@
 import { questionOptions } from "./api/question-adapter";
+import { formatScore } from "./utils";
 import type { SubmittedLearningScore } from "./learning-scores";
 import type { PronunciationAssessment } from "./api/types";
 import type { SearchParams } from "./catalog-query";
@@ -62,8 +63,8 @@ export function historyDuration(seconds: number | null) {
   return Math.floor(seconds / 60) + " phút" + (remainder ? " " + remainder + " giây" : "");
 }
 export function historyMetric(item: AttemptHistorySummary) {
-  if (item.gradedCount > 0) return `${item.correctCount}/${item.gradedCount} câu đúng · ${item.accuracyPercent === null ? "—" : item.accuracyPercent + "%"}`;
-  if (item.speaking.gradedCount > 0) return `${item.speaking.score === null ? "—" : Number(item.speaking.score.toFixed(1))}/100 · ${item.speaking.gradedCount}/${item.speaking.totalCount} câu nói đã chấm`;
+  if (item.gradedCount > 0) return `${item.correctCount}/${item.gradedCount} câu đúng · ${item.accuracyPercent === null ? "—" : formatScore(item.accuracyPercent) + "%"}`;
+  if (item.speaking.gradedCount > 0) return `${item.speaking.score === null ? "—" : formatScore(item.speaking.score)}/100 · ${item.speaking.gradedCount}/${item.speaking.totalCount} câu nói đã chấm`;
   if (item.writingProgress.total > 0) return `${item.writingProgress.correctStrokes}/${item.writingProgress.totalStrokes} nét đúng · ${item.writingProgress.completed}/${item.writingProgress.total} chữ`;
   return "Tự luyện · chưa chấm tự động";
 }

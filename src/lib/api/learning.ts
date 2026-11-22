@@ -250,6 +250,7 @@ export async function testForTaking(
         pinyin: payload.pinyin,
         translation: payload.translation || payload.meaning,
         image_url: publicMedia(payload.imageUrl),
+        image_region: payload.imageRegion,
         context_image_url: publicMedia(payload.contextImageUrl),
         continuation_image_url: publicMedia(payload.continuationImageUrl),
         audio_url: publicMedia(payload.audioUrl || group.audioUrl),

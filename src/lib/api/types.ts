@@ -1,3 +1,5 @@
+import type { QuestionImageRegion } from "./question-adapter";
+
 export interface HskUser {
   id: number | string;
   email: string | null;
@@ -65,6 +67,7 @@ export interface HskQuestion {
     meaning?: string;
     source?: { sourceWord?: string };
     imageUrl?: string;
+    imageRegion?: QuestionImageRegion;
     contextImageUrl?: string;
     continuationImageUrl?: string;
     audioUrl?: string;

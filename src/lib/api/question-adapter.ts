@@ -1,11 +1,18 @@
 import { z } from "zod";
 const skill = z.enum(["LISTENING", "READING", "WRITING", "SPEAKING"]);
+export const imageRegionSchema = z.object({
+  x: z.number().finite().nonnegative(), y: z.number().finite().nonnegative(),
+  width: z.number().finite().positive(), height: z.number().finite().positive(),
+  sourceWidth: z.number().finite().positive().max(20000), sourceHeight: z.number().finite().positive().max(20000),
+}).refine(region => region.x + region.width <= region.sourceWidth && region.y + region.height <= region.sourceHeight);
+export type QuestionImageRegion = z.infer<typeof imageRegionSchema>;
 const payload = z.object({
   templateId: z.string().optional(), text: z.string().optional(), sentence: z.string().optional(),
   questionText: z.string().optional(), character: z.string().optional(), hanzi: z.string().optional(),
   meaning: z.string().optional(), pinyin: z.string().optional(), translation: z.string().optional(),
   source: z.object({ sourceWord: z.string().optional() }).passthrough().optional(),
   imageUrl: z.string().optional(), contextImageUrl: z.string().optional(), continuationImageUrl: z.string().optional(),
+  imageRegion: imageRegionSchema.optional(),
   audioUrl: z.string().optional(), audioScope: z.string().optional(), audioTimestamp: z.number().optional(),
   options: z.array(z.unknown()).optional(), optionImages: z.array(z.unknown()).optional(),
   manualGrading: z.boolean().optional(), reviewRequired: z.boolean().optional(), correctOptionId: z.string().optional(),
