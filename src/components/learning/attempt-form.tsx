@@ -154,8 +154,23 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     setActiveQuestionId(questionId);
     const element = document.getElementById("practice-question-" + questionId);
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    element?.scrollIntoView?.({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
+    const behavior = reducedMotion ? "instant" : "smooth";
+    const viewport = element?.closest<HTMLElement>("[data-shared-audio-questions]");
+    const section = viewport?.closest<HTMLElement>("[data-shared-audio-section]");
+    if (element && viewport && section) {
+      section.scrollIntoView?.({ behavior, block: "start" });
+      viewport.scrollTo?.({ top: viewport.scrollTop + element.getBoundingClientRect().top - viewport.getBoundingClientRect().top - 12, behavior });
+    } else element?.scrollIntoView?.({ behavior, block: "start" });
   }, [setActiveQuestionId]);
+
+  useEffect(() => {
+    if (!started || typeof requestAnimationFrame === "undefined") return;
+    const first = questions[0]?.question.questionid;
+    if (!first || !document.getElementById("practice-question-" + first)?.closest("[data-shared-audio-questions]")) return;
+    // Wait for the toolbar measurement before revealing the listening workspace.
+    const frame = requestAnimationFrame(() => selectQuestion(first));
+    return () => cancelAnimationFrame(frame);
+  }, [attemptVersion, questions, selectQuestion, started]);
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
@@ -365,7 +380,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       const first = questionNumbers.get(group.items[0]!.question.questionid) || 1;
       const last = questionNumbers.get(group.items[group.items.length - 1]!.question.questionid) || first;
       const label = first === last ? "Câu " + first : "Câu " + first + "–" + last;
-      return <SharedAudioSection key={group.id + "-" + attemptVersion} src={group.audioUrl} label={label}>{content}</SharedAudioSection>;
+      return <SharedAudioSection key={group.id + "-" + attemptVersion} src={group.audioUrl} label={label} fitToViewport>{content}</SharedAudioSection>;
     });
   }
   return (
