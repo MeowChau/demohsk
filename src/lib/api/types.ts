@@ -107,17 +107,39 @@ export interface HskExam {
   hskLevel: number;
   totalQuestions?: number;
   description?: string;
+  access?: ExamAccess;
   sections?: {
     id: number;
     title: string;
     order: number;
     audioUrl?: string;
+    questionCount?: number;
+    skill?: string;
     sectionQuestions: {
       questionId: number;
       order: number;
       question: HskQuestion | null;
     }[];
   }[];
+}
+export interface ExamAccess {
+  isFree: boolean;
+  isPurchased: boolean;
+  canAttempt: boolean;
+  price: number;
+  currency: "VND";
+}
+export interface ExamPayment {
+  id: string;
+  examId: number | null;
+  examTitle: string;
+  amount: number;
+  currency: "VND";
+  status: "creating" | "pending" | "paid" | "cancelled" | "expired";
+  checkoutUrl: string | null;
+  expiresAt: string;
+  paidAt: string | null;
+  accessGranted: boolean;
 }
 export interface HskAnalytics {
   timeZone: string;

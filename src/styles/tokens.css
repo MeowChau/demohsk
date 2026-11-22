@@ -27,6 +27,9 @@
   --coral-deep: #E5502F;
   --coral-deep-rgb: 229 80 47;
 
+  /* Shared header and mobile browser tint. */
+  --header-background: #78FFF9;
+
   /* Hero / Marketing cyan — approved for landing page v3 */
   --cyan: #9EFFF5;
   --cyan-rgb: 158 255 245;
@@ -144,6 +147,7 @@
 
 .dark {
   color-scheme: dark;
+  --header-background: var(--navy-deep);
   --ink: #F5F7FA;
   --ink-rgb: 245 247 250;
   --slate: #D7DFE9;

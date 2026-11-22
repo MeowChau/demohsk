@@ -4,6 +4,7 @@ import "server-only";
 import { practiceSetAttemptHref } from "@/lib/attempt-routes";
 import { serverApi, requireApiUser } from "./server";
 import { publicMedia } from "./config";
+import { ApiError } from "./client";
 import type {
   HskAnalytics,
   HskTopic,
@@ -172,10 +173,10 @@ export async function testForTaking(
   if (!match) throw new Error("Mã bài luyện HSK không hợp lệ.");
   const kind = match[1];
   const id = match[2];
-  const data =
-    kind === "set"
-      ? practiceSchema.parse(await serverApi<unknown>(`practice-sets/${id}`))
-      : examSchema.parse(await serverApi<unknown>(`exams/${id}`));
+  const raw = await serverApi<HskPractice | HskExam>(kind === "set" ? `practice-sets/${id}` : `exams/${id}`);
+  if (kind === "exam" && (raw as HskExam).access?.canAttempt === false)
+    throw new ApiError("Bạn cần mua đề thi này trước khi làm bài.", 403, {}, "examPurchaseRequired");
+  const data = kind === "set" ? practiceSchema.parse(raw) : examSchema.parse(raw);
   const set = data as HskPractice;
   const groups =
     kind === "set"

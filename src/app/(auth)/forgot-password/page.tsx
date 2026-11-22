@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,46 +18,87 @@ export default function ForgotPasswordPage() {
     handleSubmit,
     setError: setFieldError,
     formState: { errors, isSubmitting },
-  } = useForm<ForgotPasswordInput>({ resolver: zodResolver(forgotPasswordSchema), mode: "onTouched", defaultValues: { email: "" } });
+  } = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: "onTouched",
+    defaultValues: { email: "" },
+  });
 
   async function onSubmit(values: ForgotPasswordInput) {
     setServerError(null);
-    try { await apiAction("auth/forgot/password", { email: values.email }); }
-    catch (error) { const message=error instanceof Error?error.message:"Không gửi được email."; const fields = errorFields(error); if (fields.email) setFieldError("email", { type: "server", message: fields.email }, { shouldFocus: true }); setServerError(message);notify.error(message);return; }
+    try {
+      await apiAction("auth/forgot/password", { email: values.email });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không gửi được email.";
+      const fields = errorFields(error);
+      if (fields.email) {
+        setFieldError("email", { type: "server", message: fields.email }, { shouldFocus: true });
+      }
+      setServerError(message);
+      notify.error(message);
+      return;
+    }
     notify.info("Đã gửi liên kết đặt lại mật khẩu. Kiểm tra hộp thư của bạn.");
     setSent(true);
   }
 
   if (sent) {
     return (
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-semibold text-navy dark:text-white"> Kiểm tra hộp thư </h1>
-        <p className="mt-2 text-sm text-slate">
-           Nếu email đã được đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. </p>
+      <div className="w-full text-center" role="status">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink sm:text-[32px]">
+          Kiểm tra hộp thư
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate">
+          Nếu email đã được đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu.
+        </p>
+        <Link href="/login" className="hsk-auth-button mt-7 bg-teal text-white">
+          Quay lại đăng nhập
+        </Link>
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="mb-2 text-center font-display text-2xl font-semibold text-navy dark:text-white">
-         Quên mật khẩu </h1>
-      <p className="mb-6 text-center text-sm text-slate">
-         Nhập email để nhận liên kết đặt lại mật khẩu. </p>
-      <form noValidate onSubmit={handleSubmit(onSubmit)} onChangeCapture={() => setServerError(null)} className="flex flex-col gap-4">
-        <Field label="Email" id="email" type="email" autoComplete="email" required maxLength={255} {...register("email")} error={errors.email?.message} />
-        {serverError && <p className="text-sm text-danger">{serverError}</p>}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-2 rounded-pill bg-navy px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
+    <div className="w-full">
+      <div className="mb-8 text-center">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink sm:text-[32px]">
+          Quên mật khẩu
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate">
+          Nhập email để nhận liên kết đặt lại mật khẩu.
+        </p>
+      </div>
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        onChangeCapture={() => setServerError(null)}
+        className="flex flex-col gap-5"
+      >
+        <Field
+          label="Địa chỉ email"
+          id="email"
+          type="email"
+          placeholder="ban@example.com"
+          autoComplete="email"
+          required
+          maxLength={255}
+          {...register("email")}
+          error={errors.email?.message}
+        />
+        {serverError && (
+          <div role="alert" className="rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm leading-5 text-danger">
+            {serverError}
+          </div>
+        )}
+        <button type="submit" disabled={isSubmitting} className="hsk-auth-button mt-1 bg-teal text-white">
           {isSubmitting ? "Đang gửi…" : "Gửi liên kết đặt lại"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-slate">
-        <a href="/login" className="font-medium text-teal"> Quay lại đăng nhập </a>
+      <p className="mt-7 text-center text-sm text-slate">
+        <Link href="/login" className="font-semibold text-teal transition-colors hover:text-teal-deep">
+          Quay lại đăng nhập
+        </Link>
       </p>
-    </>
+    </div>
   );
 }

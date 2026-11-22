@@ -6,6 +6,7 @@
 
 @layer base {
   html {
+    background-color: var(--paper);
     scroll-behavior: smooth;
     color-scheme: light;
   }
@@ -32,6 +33,14 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* iOS Safari samples the pinned header for its status bar tint.
+   Use an opaque surface after scrolling/opening the mobile menu. */
+@supports (-webkit-touch-callout: none) {
+  .hsk-site-header[data-solid-surface="true"] {
+    background-color: var(--white);
   }
 }
 

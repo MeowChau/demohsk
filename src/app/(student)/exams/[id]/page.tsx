@@ -10,6 +10,7 @@ import { HskBadge, PageHeading } from "@/components/ui/catalog";
 import { SourceAttemptHistory } from "@/components/learning/source-attempt-history";
 import { StartExamButton } from "@/components/learning/start-attempt-button";
 import { defaultExamMinutes } from "@/lib/exam-timing";
+import { ExamPurchase } from "@/components/learning/exam-purchase";
 const loadExam = cache((id:string) => serverApi<HskExam>(`exams/${id}`));
 export async function generateMetadata({params}:{params:Promise<{id:string}>}):Promise<Metadata> {
   const id=resourceId((await params).id);
@@ -17,17 +18,17 @@ export async function generateMetadata({params}:{params:Promise<{id:string}>}):P
   try {const exam=await loadExam(id);return {title:exam.title,description:`Đề thi HSK ${exam.hskLevel}: cấu trúc bài thi, thời gian và lịch sử bài làm.`,robots:{index:false,follow:false}};}
   catch {return {title:"Đề thi HSK",robots:{index:false,follow:false}};}
 }
-export default async function ExamPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ExamPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ payment?: string | string[] }> }) {
   const { id } = await params;
   const normalizedId = resourceId(id);
   if (!normalizedId) notFound();
   if (id !== normalizedId) permanentRedirect(examDetailHref(normalizedId));
   let exam: HskExam;
   try { exam = await loadExam(id); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
+  const payment = (await searchParams).payment;
+  const paymentId = typeof payment === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payment) ? payment : undefined;
   const sections = [...(exam.sections || [])].sort((a, b) => a.order - b.order);
-  const totalQuestions = sections.length
-    ? sections.reduce((sum, section) => sum + section.sectionQuestions.length, 0)
-    : exam.totalQuestions ?? 0;
+  const totalQuestions = exam.totalQuestions ?? sections.reduce((sum, section) => sum + (section.questionCount ?? section.sectionQuestions.length), 0);
   const descriptions: Record<string, string> = {
     LISTENING: "Nghe nội dung và trả lời theo yêu cầu của từng câu hỏi.",
     READING: "Đọc từ, câu hoặc đoạn văn rồi chọn hay điền đáp án phù hợp.",
@@ -41,7 +42,9 @@ export default async function ExamPage({ params }: { params: Promise<{ id: strin
     <div className="hsk-panel flex min-w-0 flex-col gap-4">
       <div className="w-fit"><HskBadge level={exam.hskLevel} /></div>
       <p className="whitespace-pre-line break-words text-sm leading-7 text-slate">{exam.description || `Đề luyện HSK ${exam.hskLevel}. Xem cấu trúc các phần bên dưới để chuẩn bị trước khi làm bài.`}</p>
-      <StartExamButton examId={id} level={exam.hskLevel} title={exam.title} />
+      {exam.access?.isFree && <p className="text-sm font-medium text-success">Đề miễn phí của HSK {exam.hskLevel} · Bạn có thể làm lại để ôn tập.</p>}
+      {exam.access && (!exam.access.isFree || paymentId) && <ExamPurchase examId={exam.id} title={exam.title} access={exam.access} paymentId={paymentId} />}
+      {exam.access?.canAttempt !== false && <StartExamButton examId={id} level={exam.hskLevel} title={exam.title} />}
     </div>
 
     <section aria-labelledby="exam-structure-title" className="hsk-panel min-w-0">
@@ -55,11 +58,11 @@ export default async function ExamPage({ params }: { params: Promise<{ id: strin
         <div className="col-span-2 rounded-lg bg-paper p-4 sm:col-span-1"><dt className="text-xs text-slate">Thời gian mặc định</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-brand dark:text-ink">{defaultExamMinutes(exam.hskLevel)} <span className="text-sm font-normal text-slate">phút</span></dd></div>
       </dl>
       {sections.length > 0 && <ol className="mt-5 divide-y divide-mist">{sections.map((section, index) => {
-        const skill = section.sectionQuestions.find(item => item.question?.skill)?.question?.skill;
+        const skill = section.skill || section.sectionQuestions.find(item => item.question?.skill)?.question?.skill;
         return <li key={section.id} className="flex min-w-0 gap-3 py-4 first:pt-0 last:pb-0">
           <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand dark:text-ink">{index + 1}</span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><h3 className="break-words text-base font-semibold text-ink">{section.title}</h3><span className="shrink-0 text-sm font-medium tabular-nums text-brand dark:text-ink">{section.sectionQuestions.length} câu hỏi</span></div>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><h3 className="break-words text-base font-semibold text-ink">{section.title}</h3><span className="shrink-0 text-sm font-medium tabular-nums text-brand dark:text-ink">{section.questionCount ?? section.sectionQuestions.length} câu hỏi</span></div>
             <p className="mt-1 text-sm leading-6 text-slate">{skill && descriptions[skill] || "Làm theo yêu cầu của các câu hỏi trong phần này."}</p>
           </div>
         </li>;

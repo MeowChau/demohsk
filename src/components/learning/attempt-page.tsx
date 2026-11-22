@@ -1,6 +1,6 @@
 import type { GradingMode } from "@/lib/practice-scoring";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { testForTaking } from "@/lib/api/learning";
 import { ApiError } from "@/lib/api/client";
 import { examDetailHref, parseAttemptReference } from "@/lib/attempt-routes";
@@ -15,6 +15,7 @@ export async function AttemptContent({ reference, durationMinutes, gradingMode }
   if (!parsed) notFound();
   const data = await testForTaking(parsed.reference).catch(error => {
     if (error instanceof ApiError && error.status === 404) notFound();
+    if (parsed.kind === "exam" && error instanceof ApiError && error.code === "examPurchaseRequired") redirect(examDetailHref(parsed.id));
     throw error;
   });
   if (parsed.kind === "exam" && durationMinutes !== undefined) data.test.duration = durationMinutes;

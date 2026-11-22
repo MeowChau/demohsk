@@ -16,6 +16,7 @@ const allowed: Record<string, RegExp[]> = {
     /^vocabulary(?:\/topic-counts|\/\d+)?$/,
     /^practice-sets(?:\/topics|\/summary|\/\d+)?$/,
     /^exams(?:\/\d+)?$/,
+    /^exam-payments\/[0-9a-f-]{36}$/i,
     /^analytics\/dashboard$/,
     /^learning-scores$/,
     /^learning-scores\/history(?:\/[0-9a-f-]{36})?$/i,
@@ -28,6 +29,7 @@ const allowed: Record<string, RegExp[]> = {
     /^auth\/(email\/(login|register|confirm|resend|confirm\/new)|forgot\/password|reset\/password|logout)$/,
     /^analytics\/(ping|vocabulary-progress)$/,
     /^learning-scores\/submit$/,
+    /^exam-payments\/exams\/\d+\/checkout$/,
     /^game\/offline\/submit$/,
     /^ai\/(writing-assessment|speaking\/pronunciation-assessment)$/,
   ],
@@ -135,6 +137,8 @@ async function handle(
     }
     if (request.method === "POST" && path === "learning-scores/submit" && upstream.ok)
       revalidatePath("/", "layout");
+    if (path.startsWith("exam-payments/") && upstream.ok && (data as { accessGranted?: boolean } | null)?.accessGranted)
+      revalidatePath("/exams");
     const response =
       upstream.status === 204
         ? new NextResponse(null, { status: 204 })

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { STUDENT_NAV, PUBLIC_NAV, isActiveRoute } from "@/lib/navigation"
-import { Menu, X } from "lucide-react"
+import { Menu, UserRound, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -49,6 +49,7 @@ export function LandingNav({
   const userRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const reducedMotion = useReducedMotion()
+  const solidSurface = scrolled || mobileOpen
   const isLanding = variant === "landing"
   const avatarSurface = avatarUrl ? "bg-[var(--mist)] text-[var(--slate)]" : "bg-[var(--navy)] text-white"
 
@@ -58,6 +59,49 @@ export function LandingNav({
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Safari may tint browser chrome from the document/fixed header instead of
+  // theme-color alone. Keep all three surfaces on the same opaque theme token.
+  useEffect(() => {
+    const root = document.documentElement
+    const previousRootColor = root.style.backgroundColor
+    const previousBodyColor = document.body.style.backgroundColor
+    const existingTags = Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'))
+    const ownedTag = existingTags.length ? null : document.createElement("meta")
+    if (ownedTag) {
+      ownedTag.name = "theme-color"
+      document.head.appendChild(ownedTag)
+    }
+    const tags = ownedTag ? [ownedTag] : existingTags
+    const previousContents = tags.map(tag => tag.getAttribute("content"))
+
+    const syncColor = () => {
+      const color = getComputedStyle(root)
+        .getPropertyValue(solidSurface ? "--white" : "--header-background")
+        .trim()
+      if (!color) return
+      root.style.backgroundColor = color
+      document.body.style.backgroundColor = color
+      tags.forEach(tag => tag.setAttribute("content", color))
+    }
+    syncColor()
+    // next-themes applies its class after child effects. Observe the applied
+    // class so manual, system and cross-tab theme changes use the final tokens.
+    const observer = new MutationObserver(syncColor)
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] })
+
+    return () => {
+      observer.disconnect()
+      root.style.backgroundColor = previousRootColor
+      document.body.style.backgroundColor = previousBodyColor
+      if (ownedTag) ownedTag.remove()
+      else tags.forEach((tag, index) => {
+        const content = previousContents[index]
+        if (content === null) tag.removeAttribute("content")
+        else if (content !== undefined) tag.setAttribute("content", content)
+      })
+    }
+  }, [solidSurface])
 
   useEffect(() => {
     setMobileOpen(false)
@@ -95,10 +139,11 @@ export function LandingNav({
         initial={isLanding && !reducedMotion ? { y: -100 } : false}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`${isLanding ? "fixed inset-x-0" : "sticky w-full"} top-0 z-50 h-20 border-b-2 transition-colors duration-300 motion-reduce:transition-none ${
-          scrolled
+        data-solid-surface={solidSurface}
+        className={`hsk-site-header ${isLanding ? "fixed inset-x-0" : "sticky w-full"} top-0 z-50 h-20 border-b-2 transition-colors duration-300 motion-reduce:transition-none ${
+          solidSurface
             ? "bg-[var(--white)]/80 backdrop-blur-xl border-[var(--mist)] shadow-sm dark:border-slate/20"
-            : "bg-[#78FFF9] border-transparent dark:bg-navy-deep/60"
+            : "bg-[var(--header-background)] border-transparent dark:bg-navy-deep/60"
         }`}
       >
         <div className="mx-auto h-full max-w-full px-4 sm:px-6 lg:px-8">
@@ -326,7 +371,8 @@ export function LandingNav({
                     onClick={() => setMobileOpen(false)}
                     className="text-lg font-bold text-navy dark:text-white py-3 border-b-2 border-[var(--mist)]"
                   >
-                     Hồ sơ và cài đặt </Link>
+                    <UserRound className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />Hồ sơ và cài đặt
+                  </Link>
                   <div className="mt-4">
                     <LogoutButton className="w-full text-center text-base font-bold text-danger border-2 border-danger/20 rounded-full py-3">
                        Đăng xuất </LogoutButton>
