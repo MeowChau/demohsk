@@ -36,9 +36,17 @@ export async function refreshSession(
     return result.ok ? ((await result.json()) as ApiSession) : null;
   })();
   inFlight.set(refreshToken, pending);
+  let refreshed = false;
   try {
-    return await pending;
+    const session = await pending;
+    refreshed = Boolean(session);
+    return session;
   } finally {
-    setTimeout(() => inFlight.delete(refreshToken), 5000);
+    const remove = () => {
+      if (inFlight.get(refreshToken) === pending) inFlight.delete(refreshToken);
+    };
+    // Share successful rotations briefly; a failed refresh must be retryable.
+    if (refreshed) setTimeout(remove, 5000);
+    else remove();
   }
 }
