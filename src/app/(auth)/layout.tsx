@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -13,16 +13,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           aria-label="Trang chủ TriceHSK"
           className="transition-opacity hover:opacity-80"
         >
-          {/* LOGO FIX: white badge so transparent PNG is visible */}
-          <div className="rounded-xl border-3 border-ink bg-white p-2.5 shadow-hard">
-            <Image
-              src="/favicon.ico" unoptimized
-              alt="TriceHSK"
-              width={140}
-              height={42}
-              priority
-              className="h-9 w-9 object-contain"
-            />
+          <div className="flex items-center gap-2 rounded-xl border-3 border-ink bg-white p-2.5 shadow-hard">
+            <BrandLogo className="h-12 w-12" sizes="48px" priority />
             <span className="text-lg font-semibold text-ink">TriceHSK</span>
           </div>
         </Link>

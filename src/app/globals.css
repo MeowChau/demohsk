@@ -49,6 +49,28 @@
 */
 
 @layer components {
+  .hsk-nav-link {
+    @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-transparent px-2.5 py-2 font-body text-sm font-semibold leading-5 text-navy transition-colors dark:text-ink 2xl:px-3.5;
+  }
+  .hsk-nav-link:hover,
+  .hsk-nav-link[aria-expanded="true"] {
+    @apply border-navy/20 bg-white/70 dark:border-slate/30 dark:bg-white;
+  }
+  .hsk-nav-link[aria-current="page"],
+  .hsk-nav-link[data-active="true"] {
+    @apply border-navy-deep bg-navy text-white dark:border-cyan dark:bg-cyan dark:text-navy;
+    box-shadow: 0 3px 0 rgb(11 37 69 / 0.25);
+  }
+  .hsk-nav-link:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+  .dashboard-summary-label {
+    @apply inline-flex min-h-12 w-fit max-w-full items-center rounded-md px-2.5 py-1 font-body text-sm font-bold uppercase leading-5 tracking-wide sm:min-h-0;
+    background-color: rgb(255 255 255 / 0.94);
+    color: #123C6B;
+  }
+
   /* Brutalist Card - thick border + offset shadow */
   .card-brutalist {
     @apply rounded-2xl border-3 border-ink bg-white;

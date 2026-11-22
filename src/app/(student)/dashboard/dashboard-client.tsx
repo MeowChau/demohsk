@@ -105,7 +105,7 @@ function StatCard({
         y: -5,
         scale: 1.02,
       }}
-      className={`relative overflow-hidden rounded-2xl border-3 p-5 shadow-hard transition-all hover:shadow-brutalist ${bg} ${border} ${
+      className={`relative flex flex-col overflow-hidden rounded-2xl border-3 p-5 shadow-hard transition-all hover:shadow-brutalist ${bg} ${border} ${
         highlight ? "ring-2 ring-orange-300" : ""
       }`}
     >
@@ -115,16 +115,12 @@ function StatCard({
         {icon}
       </div>
 
-      <p
-        className={`text-xs font-black uppercase tracking-wider ${
-          textLight ? "text-white/70" : "text-slate dark:text-navy"
-        }`}
-      >
+      <p className="dashboard-summary-label">
         {label}
       </p>
 
       <p
-        className={`font-display text-3xl font-black tracking-tight ${accent}`}
+        className={`mt-2 font-display text-3xl font-black tracking-tight ${accent}`}
       >
         {displayValue.toLocaleString()}
 
@@ -348,19 +344,18 @@ export default function DashboardClient({
         >
           <Link
             href="/practice"
-            className="group flex h-full flex-col justify-center rounded-2xl border-3 border-ink bg-gradient-to-br from-navy to-navy-deep p-5 text-white shadow-hard transition-all hover:shadow-brutalist dark:border-slate/30"
+            className="group flex h-full flex-col rounded-2xl border-3 border-ink bg-gradient-to-br from-navy to-navy-deep p-5 text-white shadow-hard transition-all hover:shadow-brutalist dark:border-slate/30"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-inverse/10">
               <Target size={20} className="text-cyan" />
             </div>
 
-            <p className="text-sm font-black">
-               Bắt đầu luyện tiếng Trung </p>
+            <p className="dashboard-summary-label">Luyện tập mỗi ngày</p>
 
-            <p className="mt-1 text-xs font-medium text-white/70">
+            <p className="mt-2 text-sm font-medium leading-6 text-white/80">
                Chọn kỹ năng và dành thời gian ôn tập hôm nay. </p>
 
-            <div className="mt-3 flex items-center gap-1 text-xs font-black text-cyan transition-all group-hover:gap-2">
+            <div className="mt-3 flex items-center gap-1 text-sm font-semibold text-cyan transition-all group-hover:gap-2">
                Luyện tập ngay <ArrowRight size={14} />
             </div>
           </Link>

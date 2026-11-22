@@ -1,7 +1,7 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
+import { BrandLogo } from "@/components/ui/brand-logo"
 
 const footerLinks = {
   "Khám phá": [
@@ -68,13 +68,7 @@ export function LandingFooter() {
           {/* Brand column */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image
-                src="/favicon.ico" unoptimized
-                alt="TriceHSK"
-                width={90}
-                height={30}
-                className="h-12 w-12 object-contain [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
-              />
+              <BrandLogo className="h-12 w-12" sizes="48px" />
               <span className="text-xl font-extrabold tracking-tight text-white dark:text-white">
                 TriceHSK
               </span>

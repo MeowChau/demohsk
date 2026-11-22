@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation"
 import { LogoutButton } from "@/components/shell/logout-button"
 import { ThemeToggle } from "@/components/shell/theme-toggle"
 import { FeatureMenu } from "@/components/shell/feature-menu"
+import { BrandLogo } from "@/components/ui/brand-logo"
 import type { NavRole } from "@/components/shell/top-nav"
 
 const publicActionClassName = "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border-2 font-bold leading-none transition-colors"
@@ -147,28 +148,22 @@ export function LandingNav({
         }`}
       >
         <div className="mx-auto h-full max-w-full px-4 sm:px-6 lg:px-8">
-          <div className="grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-            <Link href="/" aria-label="Trang chính TriceHSK" className="flex items-center justify-self-start gap-2 whitespace-nowrap"
+          <div className="flex h-full items-center justify-between gap-4">
+            <Link href="/" aria-label="Trang chính TriceHSK" className="flex shrink-0 items-center gap-2 whitespace-nowrap"
               onClick={event => {
                 if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 setMobileOpen(false);
                 setUserOpen(false);
                 if (pathname === "/") window.scrollTo({ top: 0, behavior: "instant" });
               }}>
-              <Image
-                src="/favicon.ico" unoptimized
-                alt="TriceHSK"
-                width={90}
-                height={30}
-                className="h-10 w-10 shrink-0 object-contain sm:h-12 sm:w-12 [filter:drop-shadow(1px_0_0_#fff)_drop-shadow(-1px_0_0_#fff)_drop-shadow(0_1px_0_#fff)_drop-shadow(0_-1px_0_#fff)]"
-              />
+              <BrandLogo priority />
               <span className="text-xl font-extrabold tracking-tight text-navy dark:text-white">
                 TriceHSK
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav aria-label="Điều hướng chính" className="hidden items-center justify-self-center gap-3 whitespace-nowrap xl:flex 2xl:gap-6">
+            <nav aria-label="Điều hướng chính" className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap xl:flex 2xl:gap-3">
               {isLoggedIn ? (
                 <>
                   {roleLinks.map((link) => (
@@ -176,11 +171,9 @@ export function LandingNav({
                       key={link.href}
                       href={link.href}
                       aria-current={isActiveRoute(pathname, link.href) ? "page" : undefined}
-                      className={`text-sm font-semibold transition-colors ${
-                        scrolled ? "text-[var(--slate)] hover:text-navy dark:hover:text-white" : "text-ink/80 hover:text-ink dark:text-slate dark:hover:text-white"
-                      } ${isActiveRoute(pathname, link.href) ? "!text-navy dark:!text-white" : ""}`}
+                      className="hsk-nav-link"
                     >
-                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
+                      <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />{link.label}
                     </Link>
                   ))}
                   <FeatureMenu />
@@ -190,18 +183,16 @@ export function LandingNav({
                   <a
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-semibold transition-colors ${
-                      scrolled ? "text-[var(--slate)] hover:text-navy" : "text-ink/80 hover:text-ink"
-                    }`}
+                    className="hsk-nav-link"
                   >
-                    <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
+                    <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />{link.label}
                   </a>
                 ))
               )}
             </nav>
 
             {/* Right side */}
-            <div className="flex min-w-0 items-center justify-self-end gap-2 sm:gap-3">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
               {isLoggedIn && !isLanding && <div className="hidden sm:block"><ThemeToggle /></div>}
               {isLoggedIn ? (
                 <div className="relative" ref={userRef}>
@@ -333,7 +324,7 @@ export function LandingNav({
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -20 }}
             className="fixed inset-0 z-40 overflow-y-auto bg-[var(--white)] px-6 pb-8 pt-24 xl:hidden"
           >
-            <nav className="flex flex-col gap-4">
+            <nav aria-label="Điều hướng trên điện thoại" className="flex flex-col gap-2">
               {isLoggedIn ? (
                 <>
                   <div className="flex items-center gap-3 pb-4 border-b-2 border-[var(--mist)]">
@@ -361,17 +352,18 @@ export function LandingNav({
                       href={link.href}
                       aria-current={isActiveRoute(pathname, link.href) ? "page" : undefined}
                       onClick={() => setMobileOpen(false)}
-                      className="text-lg font-bold text-navy dark:text-white py-3 border-b-2 border-[var(--mist)]"
+                      className="hsk-nav-link min-h-12 justify-start rounded-xl px-4 text-base"
                     >
-                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
+                      <link.icon className="h-5 w-5 shrink-0" aria-hidden="true" />{link.label}
                     </Link>
                   ))}
                   <Link
                     href="/profile"
+                    aria-current={isActiveRoute(pathname, "/profile") ? "page" : undefined}
                     onClick={() => setMobileOpen(false)}
-                    className="text-lg font-bold text-navy dark:text-white py-3 border-b-2 border-[var(--mist)]"
+                    className="hsk-nav-link min-h-12 justify-start rounded-xl px-4 text-base"
                   >
-                    <UserRound className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />Hồ sơ và cài đặt
+                    <UserRound className="h-5 w-5 shrink-0" aria-hidden="true" />Hồ sơ và cài đặt
                   </Link>
                   <div className="mt-4">
                     <LogoutButton className="w-full text-center text-base font-bold text-danger border-2 border-danger/20 rounded-full py-3">
@@ -385,9 +377,9 @@ export function LandingNav({
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="text-lg font-bold text-navy py-3 border-b-2 border-[var(--mist)]"
+                      className="hsk-nav-link min-h-12 justify-start rounded-xl px-4 text-base"
                     >
-                      <link.icon className="mr-1.5 inline-block h-4 w-4 shrink-0 align-[-2px]" aria-hidden="true" />{link.label}
+                      <link.icon className="h-5 w-5 shrink-0" aria-hidden="true" />{link.label}
                     </a>
                   ))}
                   <div className="mt-4 flex flex-col gap-3">
