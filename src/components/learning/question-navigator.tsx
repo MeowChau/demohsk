@@ -62,7 +62,7 @@ export function QuestionNavigator({ groups, activeId, answeredCount, totalCount,
 
   function panel(mobile: boolean) {
     return (
-      <div className={"flex min-h-0 flex-col " + (mobile ? "max-h-[calc(100dvh-3rem)]" : "max-h-[calc(100dvh-6.5rem-var(--practice-toolbar-height,4.5rem)-1rem)]")}>
+      <div className={"flex min-h-0 flex-col " + (mobile ? "max-h-[calc(100dvh-3rem)]" : "max-h-[calc(100dvh-6.5rem-var(--practice-toolbar-height,4.5rem)-var(--practice-audio-offset,0px)-1rem)]")}>
         <div className="border-b border-mist p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-semibold text-ink" id={mobile ? "practice-question-menu-title" : undefined}>Danh sách câu hỏi</h2>
@@ -121,7 +121,7 @@ export function QuestionNavigator({ groups, activeId, answeredCount, totalCount,
 
   return (
     <>
-      <aside aria-label="Bảng câu hỏi" className="sticky top-[calc(5.5rem+var(--practice-toolbar-height,4.5rem)+1rem)] hidden max-h-[calc(100dvh-6.5rem-var(--practice-toolbar-height,4.5rem)-1rem)] min-h-0 overflow-hidden rounded-lg border border-mist bg-surface lg:flex lg:flex-col">
+      <aside aria-label="Bảng câu hỏi" className="hidden max-h-[calc(100dvh-6.5rem-var(--practice-toolbar-height,4.5rem)-var(--practice-audio-offset,0px)-1rem)] min-h-0 overflow-hidden rounded-lg border border-mist bg-surface lg:flex lg:flex-col">
         {panel(false)}
       </aside>
       <dialog ref={dialog} id="practice-question-menu" aria-labelledby="practice-question-menu-title"

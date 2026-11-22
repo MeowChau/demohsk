@@ -17,7 +17,7 @@ import { publicMedia } from "@/lib/api/config";
 import { HanziPractice } from "@/components/learning/hanzi-practice";
 import { SpeakingRecorder } from "@/components/learning/speaking-recorder";
 import { PronunciationButton } from "@/components/learning/pronunciation-button";
-import { SharedAudioSection } from "@/components/learning/shared-audio-section";
+import { AttemptAudioDock, type AttemptAudioTrack } from "@/components/learning/attempt-audio-dock";
 import { groupPracticeSections, pauseOtherPracticeAudio, type QuestionAudioGroup } from "@/lib/practice-audio";
 import { QuestionNavigator, type QuestionNavigationGroup } from "@/components/learning/question-navigator";
 import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type HandwritingStrokeProgress } from "@/lib/writing-practice";
@@ -106,6 +106,17 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
 
   const questions = useMemo(() => Object.values(data.questionsBySkill).flatMap(items => items || []), [data.questionsBySkill]);
   const questionSections = useMemo(() => groupPracticeSections(data), [data]);
+  const sharedAudioTracks = useMemo<AttemptAudioTrack[]>(() => {
+    const numbers = new Map(questions.map((item, index) => [item.question.questionid, index + 1]));
+    return questionSections.flatMap(section => [...section.passages.flatMap(passage => passage.audioGroups), ...section.audioGroups])
+      .filter(group => group.shared && group.audioUrl)
+      .map(group => {
+        const first = numbers.get(group.items[0]!.question.questionid) || 1;
+        const last = numbers.get(group.items[group.items.length - 1]!.question.questionid) || first;
+        return { id: group.id, src: group.audioUrl!, label: first === last ? "Câu " + first : "Câu " + first + "–" + last,
+          questionIds: group.items.map(item => item.question.questionid) };
+      });
+  }, [questionSections, questions]);
   const hasSpeakingWorkInProgress = Object.values(speakingBusy).some(Boolean);
 
   useEffect(() => {
@@ -154,23 +165,8 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     setActiveQuestionId(questionId);
     const element = document.getElementById("practice-question-" + questionId);
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    const behavior = reducedMotion ? "instant" : "smooth";
-    const viewport = element?.closest<HTMLElement>("[data-shared-audio-questions]");
-    const section = viewport?.closest<HTMLElement>("[data-shared-audio-section]");
-    if (element && viewport && section) {
-      section.scrollIntoView?.({ behavior, block: "start" });
-      viewport.scrollTo?.({ top: viewport.scrollTop + element.getBoundingClientRect().top - viewport.getBoundingClientRect().top - 12, behavior });
-    } else element?.scrollIntoView?.({ behavior, block: "start" });
+    element?.scrollIntoView?.({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
   }, [setActiveQuestionId]);
-
-  useEffect(() => {
-    if (!started || typeof requestAnimationFrame === "undefined") return;
-    const first = questions[0]?.question.questionid;
-    if (!first || !document.getElementById("practice-question-" + first)?.closest("[data-shared-audio-questions]")) return;
-    // Wait for the toolbar measurement before revealing the listening workspace.
-    const frame = requestAnimationFrame(() => selectQuestion(first));
-    return () => cancelAnimationFrame(frame);
-  }, [attemptVersion, questions, selectQuestion, started]);
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
@@ -374,19 +370,14 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
   function renderAudioQuestions(groups: QuestionAudioGroup[]) {
     return groups.map(group => {
       const content = group.items.map(item => renderQuestion(item, !group.shared));
-      if (!group.shared || !group.audioUrl) {
-        return <div key={group.id} className="flex min-w-0 flex-col gap-5">{content}</div>;
-      }
-      const first = questionNumbers.get(group.items[0]!.question.questionid) || 1;
-      const last = questionNumbers.get(group.items[group.items.length - 1]!.question.questionid) || first;
-      const label = first === last ? "Câu " + first : "Câu " + first + "–" + last;
-      return <SharedAudioSection key={group.id + "-" + attemptVersion} src={group.audioUrl} label={label} fitToViewport>{content}</SharedAudioSection>;
+      return <div key={group.id} className="flex min-w-0 flex-col gap-5">{content}</div>;
     });
   }
   return (
     <>
     {recordScores && savedScore?.currentHskLevel != null && savedScore.currentHskLevel > (savedScore.previousCurrentHskLevel ?? 0) && <RefreshProfileAfterPromotion />}
-    {started ? <form ref={formRef} className="flex flex-col gap-6" onSubmit={event => {
+    {started ? <form ref={formRef} className={"flex flex-col gap-6 " + (sharedAudioTracks.length && showQuestions
+      ? "[--practice-audio-offset:calc(var(--practice-audio-dock-height,4rem)+1.5rem)] [--practice-mobile-audio-offset:var(--practice-audio-offset)] lg:[--practice-mobile-audio-offset:0px]" : "")} onSubmit={event => {
       event.preventDefault();
       if (!started || result) return;
       if (Object.values(store.getState().speakingBusy).some(Boolean)) {
@@ -429,7 +420,13 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       </div>
 
       <div className={showQuestions ? "grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_19rem]" : "min-w-0"}>
-        <div className="flex min-w-0 flex-col gap-6">
+        {showQuestions && <div className="contents lg:sticky lg:top-[calc(5.5rem+var(--practice-toolbar-height,4.5rem)+1rem)] lg:col-start-2 lg:row-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          {sharedAudioTracks.length > 0 && <AttemptAudioDock key={attemptVersion} tracks={sharedAudioTracks} activeQuestionId={activeQuestionId} formRef={formRef} />}
+          <Attempt.Navigator groups={navigationGroups} activeId={activeQuestionId} answeredCount={workedQuestionIds.size}
+            totalCount={questions.length} markedCount={markedCount} reviewMode={Boolean(result) || gradingMode === "per-question"}
+            open={questionMenuOpen} onOpenChange={setQuestionMenuOpen} onSelect={selectQuestion} />
+        </div>}
+        <div className="flex min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-1">
 
 
       {result && (
@@ -525,9 +522,6 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       </div>
       {hasSpeakingWorkInProgress && <p className="text-xs text-slate" role="status">Hoàn tất ghi âm và nhận diện giọng nói để nộp bài.</p>}
         </div>
-        {showQuestions && <Attempt.Navigator groups={navigationGroups} activeId={activeQuestionId} answeredCount={workedQuestionIds.size}
-          totalCount={questions.length} markedCount={markedCount} reviewMode={Boolean(result) || gradingMode === "per-question"}
-          open={questionMenuOpen} onOpenChange={setQuestionMenuOpen} onSelect={selectQuestion} />}
       </div>
     </form> : <section className="hsk-panel flex flex-col items-start gap-3">
       <h2 className="hsk-section-title">Chọn cách làm bài để bắt đầu</h2>
@@ -605,7 +599,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
 
   return (
     <article id={"practice-question-" + question.questionid} data-practice-question={question.questionid}
-      className="min-w-0 scroll-mt-[calc(5.5rem+var(--practice-toolbar-height,4.5rem)+1rem)] scroll-mb-[calc(var(--practice-shared-audio-height,0px)+1.5rem)] rounded-lg border border-mist bg-surface p-4 focus:outline-none sm:p-5">
+      className="min-w-0 scroll-mt-[calc(5.5rem+var(--practice-toolbar-height,4.5rem)+var(--practice-mobile-audio-offset,0px)+1rem)] rounded-lg border border-mist bg-surface p-4 focus:outline-none sm:p-5">
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-brand">Câu {number}</p>
         <button type="button" aria-label={bookmarked ? "Bỏ đánh dấu câu " + number : "Đánh dấu câu " + number + " để xem lại"}
