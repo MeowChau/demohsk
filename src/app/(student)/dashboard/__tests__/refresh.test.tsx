@@ -66,4 +66,28 @@ it("preserves the full topic total while rendering only ten topic cards", () => 
  render(<Dashboard {...props} topics={topics} topicCount={107}/>);
  expect(screen.getByText("Bạn có 107 chủ đề bài học HSK.")).toBeTruthy();
  expect(screen.getAllByText("2 bài học",{exact:false})).toHaveLength(10);
+ const destinations = topics.map(topic => {
+  const href = screen.getByText(topic.titleVi).closest("a")!.getAttribute("href")!;
+  const url = new URL(href, "http://localhost");
+  expect(url.pathname).toBe("/practice");
+  expect(url.searchParams.get("topic")).toBe(topic.topicKey);
+  expect(url.searchParams.get("hskLevel")).toBe(String(topic.hskLevel));
+  return href;
+ });
+ expect(new Set(destinations).size).toBe(10);
+ expect(screen.getByRole("link", {name: /Xem tất cả bài học/}).getAttribute("href")).toBe("/learning");
+});
+
+it("opens the selected topic with its own HSK level and safely encoded key", () => {
+ const topics = [
+  {topicKey:"HSK2-L01",titleVi:"Topic two",titleCn:"",hskLevel:2,totalSets:4},
+  {topicKey:"HSK3 & 你好",titleVi:"Topic three",titleCn:"",hskLevel:3,totalSets:3},
+ ];
+ render(<Dashboard {...props} topics={topics}/>);
+ for (const topic of topics) {
+  const href = screen.getByText(topic.titleVi).closest("a")!.getAttribute("href")!;
+  const url = new URL(href, "http://localhost");
+  expect(url.pathname).toBe("/practice");
+  expect(Object.fromEntries(url.searchParams)).toEqual({topic:topic.topicKey,hskLevel:String(topic.hskLevel)});
+ }
 });

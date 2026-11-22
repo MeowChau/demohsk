@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { celebrate } from "@/lib/celebration"
 import Link from "next/link"
+import { practiceHref } from "@/lib/catalog-query"
 import { ArrowRight, Target, Trophy } from "lucide-react"
 
 import { BandProgressChart } from "@/components/dashboard/band-progress-chart"
@@ -518,7 +519,7 @@ export default function DashboardClient({
             {topics.map(topic => (
               <Link
                 key={topic.topicKey}
-                href="/learning"
+                href={practiceHref({ topic: topic.topicKey, hskLevel: String(topic.hskLevel) })}
                 className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-brutalist dark:border-slate/30 dark:bg-surface"
               >
                 <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-teal to-cyan opacity-0 transition-opacity group-hover:opacity-100" />
