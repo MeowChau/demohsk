@@ -23,7 +23,7 @@ import { SharedAudioSection } from "@/components/learning/shared-audio-section";
 import { groupPracticeSections, pauseOtherPracticeAudio, type QuestionAudioGroup } from "@/lib/practice-audio";
 import { QuestionNavigator, type QuestionNavigationGroup } from "@/components/learning/question-navigator";
 import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type HandwritingStrokeProgress } from "@/lib/writing-practice";
-import { optionMatchesAnswer, scorePracticeAttempt, type PracticeScore, type GradingMode } from "@/lib/practice-scoring";
+import { expectsChineseAnswer, textAnswerError, optionMatchesAnswer, scorePracticeAttempt, type PracticeScore, type GradingMode } from "@/lib/practice-scoring";
 import { GradingModeOptions } from "./attempt/grading-mode-options";
 import { WritingErrorTable, SpeakingErrorTable } from "./attempt/skill-error-summary";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -78,6 +78,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
   const pendingLeave = useRef<(() => void) | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useAttemptField("activeQuestionId");
   const [notice, setNotice] = useState("");
+  const [showTextErrors, setShowTextErrors] = useState(false);
   const [result, setResult] = useAttemptField("result");
   const reviewing = phase === "reviewing";
   const setReviewing = store.getState().review;
@@ -108,6 +109,15 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
 
   const questions = useMemo(() => Object.values(data.questionsBySkill).flatMap(items => items || []), [data.questionsBySkill]);
   const questionSections = useMemo(() => groupPracticeSections(data), [data]);
+  const { validAnswers, invalidTextQuestions } = useMemo(() => {
+    const validAnswers = { ...answers };
+    const invalidTextQuestions = questions.filter(item => {
+      if (!textAnswerError(item, answers[item.question.questionid] || "")) return false;
+      delete validAnswers[item.question.questionid];
+      return true;
+    });
+    return { validAnswers, invalidTextQuestions };
+  }, [answers, questions]);
   const hasSpeakingWorkInProgress = Object.values(speakingBusy).some(Boolean);
 
   useEffect(() => {
@@ -190,7 +200,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     ? Math.round(speakingValues.reduce((sum, item) => sum + item.score, 0) / speakingValues.length * 10) / 10
     : null;
   const workedQuestionIds = new Set([
-    ...Object.entries(answers).filter(([, answer]) => Boolean(answer.trim())).map(([id]) => id),
+    ...Object.entries(validAnswers).filter(([, answer]) => Boolean(answer.trim())).map(([id]) => id),
     ...Object.entries(strokeStats).filter(([, progress]) => progress.correctStrokes > 0 || progress.mistakes > 0).map(([id]) => id),
     ...Object.entries(handwriting).filter(([, progress]) => progress.completedPositions.length > 0).map(([id]) => id),
     ...Object.entries(recordedQuestions).filter(([, recorded]) => recorded).map(([id]) => id),
@@ -207,7 +217,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       const progress = handwriting[question.questionid];
       return Boolean(progress && progress.totalCharacters > 0 && progress.completedPositions.length >= progress.totalCharacters);
     }
-    return Boolean(answers[question.questionid]?.trim());
+    return Boolean(validAnswers[question.questionid]?.trim());
   }).length;
   const unfinishedCount = questions.length - completedQuestionCount;
   const hasUnpersistedResult = Boolean(result && recordScores && scorePayload.current && !savedScore);
@@ -249,10 +259,10 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     const separatelyTracked = new Set(questions
       .filter(item => item.question.skill === "Speaking" || writingPractice(item.question) !== null)
       .map(item => item.question.questionid));
-    setResult(scorePracticeAttempt(questions, answers, separatelyTracked));
+    setResult(scorePracticeAttempt(questions, validAnswers, separatelyTracked));
     const reference = /^(exam|set)-(\d+)$/.exec(testid);
     if (recordScores && reference) {
-      const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers,
+      const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers: validAnswers,
         startedAt: new Date(attemptStartedAt.current).toISOString(), durationSeconds: Math.min(data.test.duration > 0 ? data.test.duration * 60 : 604800, Math.max(0, Math.floor((Date.now() - attemptStartedAt.current) / 1000))),
         writingProgress: Object.fromEntries(Object.entries(handwriting).map(([id, progress]) => [id, { completedPositions: progress.completedPositions,
           ...(strokeStats[id] || { correctStrokes: 0, totalStrokes: 0, mistakes: 0 }) }])) };
@@ -314,6 +324,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     attemptStartedAt.current = Date.now();
     examDeadline.current = attemptStartedAt.current + data.test.duration * 60_000;
     setAnswers({});
+    setShowTextErrors(false);
     setHandwriting({});
     setStrokeStats({});
     setSpeakingAssessments({});
@@ -353,7 +364,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
         recordingLocked={hasSpeakingWorkInProgress && !speakingBusy[question.questionid]}
         sampleAudioDisabled={hasSpeakingWorkInProgress} showIndividualAudio={showIndividualAudio}
         grade={gradeByQuestion.get(question.questionid)} submitted={Boolean(result)}
-        persistScores={recordScores} attemptContext={attemptContext} gradingMode={gradingMode}
+        persistScores={recordScores} attemptContext={attemptContext} gradingMode={gradingMode} showTextErrors={showTextErrors}
       />
     );
   }
@@ -383,6 +394,13 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       setNotice("");
       if (autoSubmitted.current && data.test.duration > 0) {
         finishAttempt();
+        return;
+      }
+      if (invalidTextQuestions.length > 0) {
+        setShowTextErrors(true);
+        const id = invalidTextQuestions[0]!.question.questionid;
+        selectQuestion(id);
+        document.getElementById("practice-answer-" + id)?.focus({ preventScroll: true });
         return;
       }
       setQuestionMenuOpen(false);
@@ -422,7 +440,9 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       {result && (
         <section ref={resultRef} tabIndex={-1} aria-label="Kết quả luyện tập" className="hsk-panel flex scroll-mt-24 flex-col gap-4 outline-none">
           <h2 className="font-display text-lg font-semibold text-ink">{isExam ? "Kết quả bài thi" : "Kết quả luyện tập"}</h2>
-          {isExam && expired && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.</p>}
+          {isExam && expired && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.
+            {invalidTextQuestions.length > 0 && " Có " + invalidTextQuestions.length + " câu chưa nhập chữ Hán, được tính là chưa trả lời."}
+          </p>}
           <div className="flex flex-wrap items-center gap-3">
             {savedScore?.historyId ? <>
               <p className="text-sm font-medium text-success">Đã lưu vào lịch sử</p>
@@ -548,7 +568,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
 }
 
 const QuestionBlock = memo(function QuestionBlock({ number, question, options, answer, onAnswerChange, onHandwritingProgress, onStrokeProgress, strokeStats,
-  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext, gradingMode, answerLocked, canCheckImmediately, onCheckAnswer }: {
+  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext, gradingMode, answerLocked, canCheckImmediately, onCheckAnswer, showTextErrors }: {
   number: number;
   question: Question;
   options: Option[];
@@ -560,6 +580,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   gradingMode: GradingMode;
   answerLocked: boolean;
   canCheckImmediately: boolean;
+  showTextErrors?: boolean;
   onCheckAnswer: () => void;
   speechAssessment: PronunciationAssessment | null;
   onSpeakingAssessmentChange: (assessment: PronunciationAssessment | null) => void;
@@ -576,6 +597,13 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   attemptContext?: LearningAttemptContext;
 }) {
   const [sampleAudioError, setSampleAudioError] = useState("");
+  const [answerTouched, setAnswerTouched] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const answerItem = { question, options };
+  const expectsChinese = expectsChineseAnswer(answerItem);
+  const answerError = textAnswerError(answerItem, answer);
+  const visibleAnswerError = !composing && (answerTouched || showTextErrors) ? answerError : null;
+  const answerId = "practice-answer-" + question.questionid;
   const handwriting = writingPractice(question);
   const usesTextAnswer = options.length === 0 || question.type === "ESSAY";
   const hasImageChoices = options.some(option => Boolean(option.image_url));
@@ -638,8 +666,13 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       ) : usesTextAnswer ? (
         <>
           {options.length > 0 && <p className="mb-3 rounded-lg bg-paper p-3 text-sm text-slate">Từ gợi ý: {options.map(item => item.option_text).join(" · ")}</p>}
-          <textarea rows={6} aria-label="Câu trả lời bằng tiếng Trung" className="hsk-input min-h-32" lang="zh-CN" disabled={answerLocked}
-            value={answer} onChange={event => onAnswerChange(event.target.value)} placeholder="Nhập câu trả lời bằng tiếng Trung…" />
+          <textarea id={answerId} rows={6} aria-label={expectsChinese ? "Câu trả lời bằng tiếng Trung" : "Câu trả lời"}
+            aria-invalid={Boolean(visibleAnswerError)} aria-describedby={visibleAnswerError ? answerId + "-error" : undefined}
+            className={"hsk-input min-h-32" + (visibleAnswerError ? " border-danger" : "")} lang={expectsChinese ? "zh-CN" : undefined} disabled={answerLocked}
+            value={answer} onChange={event => onAnswerChange(event.target.value)} onBlur={() => setAnswerTouched(true)}
+            onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)}
+            placeholder={expectsChinese ? "Nhập câu trả lời bằng chữ Hán…" : "Nhập câu trả lời theo yêu cầu…"} />
+          {visibleAnswerError && <p id={answerId + "-error"} role="alert" className="mt-2 text-sm leading-6 text-danger">{visibleAnswerError}</p>}
         </>
       ) : (
         <div className={"mt-4 grid gap-3 " + choiceColumns}>
@@ -670,7 +703,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       )}
       {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && usesTextAnswer && canCheckImmediately && !answerLocked &&
         <div className="mt-3 flex flex-col items-start gap-2">
-          <button type="button" className="hsk-button-secondary" disabled={!answer.trim()} onClick={onCheckAnswer}>Kiểm tra câu này</button>
+          <button type="button" className="hsk-button-secondary" disabled={!answer.trim() || Boolean(answerError) || composing} onClick={onCheckAnswer}>Kiểm tra câu này</button>
           <p className="text-xs leading-5 text-slate">Nhập xong rồi kiểm tra. Câu trả lời sẽ được khóa sau khi chấm.</p>
         </div>}
       {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && !canCheckImmediately &&
@@ -683,7 +716,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   );
 });
 
-type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext" | "gradingMode">;
+type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext" | "gradingMode" | "showTextErrors">;
 const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps) {
   const store = useAttemptStore();
   const id = props.question.questionid;
@@ -697,7 +730,7 @@ const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps)
   const usesTextAnswer = props.options.length === 0 || props.question.type === "ESSAY";
   const checkAnswer = useCallback((value: string) => {
     const state = store.getState();
-    if (props.gradingMode !== "per-question" || !canCheckImmediately || !value.trim() || state.result || state.checkedQuestions[id]) return;
+    if (props.gradingMode !== "per-question" || !canCheckImmediately || !value.trim() || textAnswerError({ question: props.question, options: props.options }, value) || state.result || state.checkedQuestions[id]) return;
     const grade = scorePracticeAttempt([{ question: props.question, options: props.options }], { [id]: value }).questions[0];
     if (grade && (grade.status === "correct" || grade.status === "incorrect")) state.setField("checkedQuestions", previous => ({ ...previous, [id]: grade }));
   }, [store, id, props.gradingMode, props.question, props.options, canCheckImmediately]);

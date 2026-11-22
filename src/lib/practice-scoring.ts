@@ -28,6 +28,22 @@ export interface PracticeScore {
 type PracticeItem = NonNullable<TestWithQuestions["questionsBySkill"][keyof TestWithQuestions["questionsBySkill"]]>;
 type PracticeQuestionItem = PracticeItem[number];
 
+/** Only request Hanzi when the answer key or instruction actually calls for it. */
+export function expectsChineseAnswer(item: PracticeQuestionItem): boolean {
+  const { question, options } = item;
+  if (question.skill === "Speaking" || (options.length > 0 && question.type !== "ESSAY")) return false;
+  const accepted = question.acceptedAnswers?.filter(answer => answer.trim());
+  if (accepted?.length) return accepted.every(answer => /\p{Script=Han}/u.test(answer));
+  // Ambiguous, numeric and pinyin exercises keep a neutral input label.
+  return /bằng tiếng Trung|(?:nhập|viết)\s+(?:bằng\s+)?chữ Hán|用(?:中文|汉语)|填写汉字/iu.test(question.question);
+}
+
+export function textAnswerError(item: PracticeQuestionItem, answer: string): string | null {
+  return answer.trim() && expectsChineseAnswer(item) && !/\p{Script=Han}/u.test(answer)
+    ? "Vui lòng nhập câu trả lời có chữ Hán. Nếu chưa trả lời, hãy để trống ô này."
+    : null;
+}
+
 export function normalizeAnswer(value: string): string {
   return value
     .normalize("NFKC")
