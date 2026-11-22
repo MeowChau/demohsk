@@ -24,7 +24,7 @@ function StartAttemptButton({ reference, level = 1, title }: { reference: string
     if (pending) return;
     const duration = isExam ? parseExamMinutes(minutes.trim()) : null;
     if (isExam && duration === null) {
-      setError("Vui lòng nhập thời gian từ 1 đến 180 phút.");
+      setError("Thời gian phải là số nguyên từ 1 đến 180 phút.");
       return;
     }
     const query = new URLSearchParams({ grading: mode });
@@ -53,7 +53,7 @@ function StartAttemptButton({ reference, level = 1, title }: { reference: string
         <GradingModeOptions value={mode} onChange={setMode} />
         {isExam && <>
           <Field id={id} label="Thời gian (phút)" inputMode="numeric" maxLength={3} value={minutes}
-            onChange={event => { setMinutes(event.target.value); setError(""); }} error={error} hint="Từ 1 đến 180 phút"
+            onChange={event => { setMinutes(event.target.value); setError(""); }} error={error} hint="Nhập số nguyên từ 1 đến 180 phút"
             onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); start(); } }} />
           <p className="text-xs leading-5">Đồng hồ bắt đầu khi mở bài thi. Hết thời gian, hệ thống tự nộp câu trả lời của bạn.</p>
         </>}
