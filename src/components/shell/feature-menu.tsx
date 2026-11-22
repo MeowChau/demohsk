@@ -24,7 +24,7 @@ export function FeatureMenu() {
       className="hsk-nav-link">
       Thêm<ChevronDown size={16} aria-hidden="true" />
     </button>
-    {open && <div id="feature-menu" className="absolute right-0 top-full z-50 mt-3 w-60 rounded-2xl border-2 border-mist bg-surface p-2 shadow-float">
+    {open && <div id="feature-menu" className="absolute right-0 top-full z-50 mt-3 flex w-60 flex-col gap-1 whitespace-normal rounded-2xl border-2 border-mist bg-surface p-2 shadow-float">
       {links.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
         aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
         className="hsk-nav-link w-full justify-start rounded-xl">
