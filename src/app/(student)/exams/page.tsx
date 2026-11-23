@@ -21,7 +21,7 @@ export default async function ExamsPage({ searchParams }: { searchParams: Promis
         {exam.access.canAttempt ? <CheckCircle2 size={17} aria-hidden="true" /> : <LockKeyhole size={17} aria-hidden="true" />}
         {exam.access.isFree ? "Miễn phí" : exam.access.isPurchased ? "Đã mua" : exam.access.canAttempt ? "Được truy cập" : new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(exam.access.price)}
       </p>}
-      <p className="line-clamp-3 text-sm leading-6 text-slate">{exam.description || "Mở đề để xem cấu trúc và chọn thời gian làm bài."}</p>
+      <p className="text-sm leading-6 text-slate">{exam.description?.trim().split(/[\r\n]+|(?<=[.!?。])\s+/, 1)[0] || "Mở đề để xem cấu trúc và chọn thời gian làm bài."}</p>
       <p className="flex items-center gap-2 text-sm text-slate"><Clock3 size={16} aria-hidden="true" />{defaultExamMinutes(exam.hskLevel)} phút</p>
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-mist pt-4"><span className="text-xs text-slate-soft">{exam.sections?.length || 0} phần · {exam.totalQuestions ?? exam.sections?.reduce((sum, section) => sum + section.sectionQuestions.length, 0) ?? 0} câu</span><Link className="hsk-button" href={examDetailHref(exam.id)}>Xem đề<ArrowRight size={15} /></Link></div>
     </article>)}</div> : <DataEmpty title="Chưa có đề thi phù hợp" />}
