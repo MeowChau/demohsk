@@ -105,7 +105,7 @@ export function QuestionNavigator({ groups, activeId, answeredCount, totalCount,
           <p className="mb-3 leading-5">Đã làm {answeredCount}/{totalCount} câu · {markedCount} câu đánh dấu</p>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-brand dark:bg-[var(--brand-text)]" aria-hidden="true" />Đã làm</span>
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-mist bg-paper" aria-hidden="true" />Chưa làm</span>
+            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border-2 border-slate bg-paper" aria-hidden="true" />Chưa làm</span>
             <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border-2 border-brand" aria-hidden="true" />Đang xem</span>
             <span className="flex items-center gap-2"><Flag size={13} className="text-warning" fill="currentColor" aria-hidden="true" />Đánh dấu</span>
             {reviewMode && <>

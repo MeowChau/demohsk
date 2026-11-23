@@ -578,6 +578,14 @@
   .hsk-hanzi { font-family: var(--font-body); font-size: 32px; line-height: 1.6; font-weight: 500; }
   .hsk-input { @apply min-h-11 w-full rounded-lg border border-control bg-surface px-3 py-2.5 text-sm font-normal text-ink outline-none transition placeholder:text-slate-soft focus:border-brand focus:ring-4 focus:ring-brand/10 disabled:cursor-not-allowed disabled:opacity-60; }
   .hsk-button { @apply inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-brand px-4 py-2.5 text-sm font-medium leading-6 text-white shadow-sm transition hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50; }
+  .hsk-checkin-complete:disabled {
+    opacity: 1;
+    color: var(--success-text);
+    background-color: var(--success-soft);
+    border-color: var(--success-text);
+    box-shadow: none;
+    cursor: default;
+  }
   .hsk-auth-button { @apply flex h-12 w-full items-center justify-center rounded-xl border-3 border-ink px-5 text-sm font-black shadow-hard transition-[border-color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal focus-visible:ring-4 focus-visible:ring-teal/20 disabled:cursor-not-allowed disabled:opacity-60; }
   .hsk-auth-button:not(:disabled):not([aria-disabled="true"]):hover { @apply shadow-brutalist; }
   .dark .hsk-auth-button {

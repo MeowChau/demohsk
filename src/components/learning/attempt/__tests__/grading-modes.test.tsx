@@ -148,7 +148,7 @@ it("saves the final attempt once, preserving the initially graded choice and res
   fireEvent.click(firstQuestion().getByRole("radio", { name: "B. Tạm biệt" }));
   expect(apiFetch).not.toHaveBeenCalled();
   submit();
-  await waitFor(() => expect(screen.getByText(/Điểm đã được lưu vào phần tổng hợp/)).toBeTruthy());
+  await waitFor(() => expect(screen.getByText("Đã cập nhật điểm kỹ năng")).toBeTruthy());
   expect(apiFetch).toHaveBeenCalledTimes(1);
   expect(apiFetch).toHaveBeenCalledWith("learning-scores/submit", expect.objectContaining({ body: expect.any(String) }));
   expect(JSON.parse(jest.mocked(apiFetch).mock.calls[0]![1]!.body as string).answers).toEqual({ "11": "B" });
@@ -159,6 +159,20 @@ it("saves the final attempt once, preserving the initially graded choice and res
   expect((firstQuestion().getByRole("radio", { name: "B. Tạm biệt" }) as HTMLInputElement).checked).toBe(false);
   expect((firstQuestion().getByRole("radio", { name: "B. Tạm biệt" }) as HTMLInputElement).disabled).toBe(false);
   expect(firstQuestion().queryByText(/Chưa chính xác/)).toBeNull();
+});
+
+it("announces a saved attempt once and keeps the JSON backup action explicit", async () => {
+  const local = scorePracticeAttempt(data.questionsBySkill.Reading!, { "11": "A" });
+  jest.mocked(apiFetch).mockResolvedValue({ ...local, historyId: "saved-attempt", currentHskLevel: 1, previousCurrentHskLevel: 1 });
+  mount("on-submit", true);
+  fireEvent.click(firstQuestion().getByRole("radio", { name: "A. Xin chào" }));
+  submit();
+  await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Đã lưu vào lịch sử"));
+  expect(screen.getAllByText(/Đã lưu/)).toHaveLength(1);
+  expect(screen.queryByText(/Điểm đã được lưu vào phần tổng hợp/)).toBeNull();
+  expect(screen.getByRole("link", { name: "Xem lại bài làm" }).getAttribute("href")).toBe("/results/saved-attempt");
+  expect(screen.getByRole("button", { name: "Tải bản sao bài làm (.json)" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Tải bài tự luyện của tôi" })).toBeNull();
 });
 
 it("keeps instant grades local to each attempt and clears them on reset", () => {

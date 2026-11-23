@@ -244,7 +244,6 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     try {
       const saved = await submitLearningScore(payload);
       store.getState().complete(saved);
-      setNotice(saved.historyId ? "Đã lưu bài làm vào lịch sử theo tài khoản." : "Đã cập nhật điểm tổng hợp theo tài khoản.");
       markLearningScoresUpdated();
     } catch (cause) {
       store.getState().fail(cause instanceof ApiError && cause.status === 401 ? "Phiên đăng nhập đã hết hạn. Câu trả lời vẫn được giữ trên trang. Vui lòng đăng nhập lại rồi thử lưu điểm."
@@ -317,7 +316,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     link.download = "hsk-" + testid + ".json";
     link.click();
     URL.revokeObjectURL(url);
-    setNotice("Đã tải bản sao câu trả lời và kết quả luyện tập về thiết bị.");
+    setNotice("Đã tải bản sao bài làm (.json) về thiết bị.");
   }
 
   function resetAttempt() {
@@ -439,13 +438,13 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
           {isExam && expired && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.</p>}
           <div className="flex flex-wrap items-center gap-3">
             {savedScore?.historyId ? <>
-              <p className="text-sm font-medium text-success">Đã lưu vào lịch sử</p>
+              <p role="status" className="text-sm font-medium text-[var(--success-text)]">Đã lưu vào lịch sử</p>
               <Link className="hsk-button-secondary" href={historyResultHref(savedScore.historyId)}>Xem lại bài làm</Link>
               <Link className="text-sm font-medium text-brand" href={historyHref({ kind: sourceReference?.[1] || "", sourceId: sourceReference?.[2] || "" })}>Lịch sử bài này →</Link>
-            </> : !savingScore && <button type="button" className="hsk-button-secondary" aria-expanded={reviewing}
+            </> : !savingScore && <>{savedScore && <p role="status" className="text-sm font-medium text-[var(--success-text)]">Đã cập nhật điểm kỹ năng</p>}<button type="button" className="hsk-button-secondary" aria-expanded={reviewing}
               aria-controls="practice-attempt-questions" onClick={() => setReviewing(current => !current)}>
               {reviewing ? "Ẩn chi tiết bài làm" : "Xem lại bài làm"}
-            </button>}
+            </button></>}
           </div>
           {savingScore && <p className="hsk-notice" role="status">Đang chấm theo đáp án và cập nhật điểm kỹ năng…</p>}
           {scoreError && <div className="rounded-lg border border-danger/20 bg-danger-soft p-3 text-sm text-danger" role="alert"><p>{scoreError}</p><button type="button" className="hsk-button-secondary mt-3" disabled={savingScore} onClick={() => { if (scorePayload.current) void persistScore(scorePayload.current); }}>Thử lưu điểm lại</button></div>}
@@ -492,7 +491,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
             </div>
           )}
           {!savingScore && result.ungradedCount > 0 && <p className="hsk-notice">{result.ungradedCount} câu cần chấm thủ công hoặc chưa có đáp án tự chấm.</p>}
-          <p className="text-xs leading-5 text-slate">Đã làm {workedQuestionIds.size}/{questions.length} câu. {savedScore ? "Điểm đã được lưu vào phần tổng hợp theo tài khoản." : "Kết quả hiện có trên trang; bạn có thể tải bản sao về thiết bị."}</p>
+          <p className="text-xs leading-5 text-slate">Đã làm {workedQuestionIds.size}/{questions.length} câu.{!savedScore && " Kết quả hiện có trên trang; bạn có thể tải bản sao về thiết bị."}</p>
         </section>
       )}
 
@@ -523,7 +522,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       {notice && <p role="status" className="hsk-notice">{notice}</p>}
       <div className="flex flex-wrap gap-3">
         {!isExam && !result && <button type="submit" aria-label="Nộp bài luyện tập" className="hsk-button" disabled={hasSpeakingWorkInProgress}>Nộp bài</button>}
-        <button type="button" className="hsk-button-secondary" onClick={downloadBackup}>Tải bài tự luyện của tôi</button>
+        <button type="button" className="hsk-button-secondary" onClick={downloadBackup}>Tải bản sao bài làm (.json)</button>
       </div>
       {hasSpeakingWorkInProgress && <p className="text-xs text-slate" role="status">Hoàn tất ghi âm và nhận diện giọng nói để nộp bài.</p>}
         </div>

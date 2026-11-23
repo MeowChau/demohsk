@@ -149,6 +149,12 @@ export default function DashboardClient({
   analytics,
 }: DashboardClientProps) {
   const [checkInReward, setCheckInReward] = useState<CheckInResponse | null>(null)
+  const rewardIsCurrent = checkInReward !== null && checkInReward.totalExp >= xpTotal
+  const displayedLevel = rewardIsCurrent ? checkInReward.level : levelInfo.level
+  const displayedLevelTitle = rewardIsCurrent ? `Cấp ${displayedLevel}` : levelInfo.title
+  const currentXp = rewardIsCurrent ? checkInReward.currentExp : levelInfo.currentXp
+  const nextLevelXp = rewardIsCurrent ? displayedLevel * 1000 : levelInfo.xpForNextLevel
+  const xpProgress = nextLevelXp > 0 ? Math.min(100, Math.max(0, currentXp / nextLevelXp * 100)) : 0
 
   // Same null-safe fallback pattern rewards-client already uses for streak.
   const currentStreak = streak?.current_streak ?? 0
@@ -223,22 +229,23 @@ export default function DashboardClient({
           className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-5 py-3 shadow-hard dark:border-slate/30 dark:bg-surface"
         >
           <LevelBadge
-            level={levelInfo.level}
-            title={levelInfo.title}
+            level={displayedLevel}
+            title={displayedLevelTitle}
             size="sm"
           />
 
-          <div className="hidden sm:block">
+          <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-wider text-slate">
-              {levelInfo.title}
+              {displayedLevelTitle}
             </p>
 
-            <div className="mt-1 h-2.5 w-28 overflow-hidden rounded-full border border-mist bg-mist">
+            <p className="mt-1 whitespace-nowrap text-xs font-semibold tabular-nums text-ink">{currentXp.toLocaleString("vi-VN")} / {nextLevelXp.toLocaleString("vi-VN")} EXP</p>
+            <div role="progressbar" aria-label="EXP lên cấp tiếp theo" aria-valuemin={0} aria-valuemax={nextLevelXp} aria-valuenow={currentXp} className="mt-1.5 h-2.5 min-w-28 overflow-hidden rounded-full border border-mist bg-mist">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-teal to-cyan"
                 initial={{ width: 0 }}
                 animate={{
-                  width: `${levelInfo.progressPercent}%`,
+                  width: `${xpProgress}%`,
                 }}
                 transition={{
                   delay: 0.8,

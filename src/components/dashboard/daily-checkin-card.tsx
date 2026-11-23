@@ -115,7 +115,7 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
             <p className="mt-1 text-sm text-slate">Nhận EXP một lần mỗi ngày.</p>
           </div>
         </div>
-        <button type="button" className="hsk-button w-full shrink-0 sm:w-auto" onClick={checkIn} disabled={busy || checkedIn} aria-busy={busy}>
+        <button type="button" className={"hsk-button w-full shrink-0 sm:w-auto" + (checkedIn ? " hsk-checkin-complete" : "")} onClick={checkIn} disabled={busy || checkedIn} aria-busy={busy}>
           {busy ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : checkedIn ? <CircleCheck size={18} aria-hidden="true" /> : <CalendarCheck size={18} aria-hidden="true" />}
           {busy ? "Đang điểm danh…" : checkedIn ? "Đã điểm danh hôm nay" : "Điểm danh hôm nay"}
         </button>

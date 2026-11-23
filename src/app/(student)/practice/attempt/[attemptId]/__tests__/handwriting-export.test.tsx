@@ -16,7 +16,7 @@ it("exports handwriting completion separately from typed answers", async () => {
   try {
     render(<AttemptForm attemptid="set-250" testid="set-250" data={data} />);
     fireEvent.click(screen.getByRole("button", { name: "Hoàn thành luyện nét" }));
-    fireEvent.click(screen.getByRole("button", { name: "Tải bài tự luyện của tôi" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tải bản sao bài làm (.json)" }));
     const contents = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsText(exported!); });
     expect(JSON.parse(contents)).toEqual({ testid: "set-250", answers: {}, handwriting: { "41": { text: "发烧", completedPositions: [0, 1], totalCharacters: 2 } } });
   } finally { click.mockRestore(); URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke; }

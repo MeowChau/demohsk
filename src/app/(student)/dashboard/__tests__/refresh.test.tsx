@@ -5,14 +5,16 @@ import Dashboard from '../dashboard-client';
 import {markLearningScoresUpdated} from '@/lib/learning-scores';
 import {apiFetch} from '@/lib/api/client';
 import {celebrate} from '@/lib/celebration';
+import type {CheckInResponse} from '@/lib/daily-checkin';
 let mockInView=false;
+let mockConfirmCheckIn: ((reward: CheckInResponse) => void) | undefined;
 jest.mock('@/lib/celebration',()=>({celebrate:jest.fn(),celebrateWithin:jest.fn().mockResolvedValue(jest.fn())}));
 jest.mock('@/lib/api/client',()=>({apiFetch:jest.fn()}));
 jest.mock('next/navigation',()=>({useRouter:()=>({refresh:jest.fn()})}));
 jest.mock('framer-motion',()=>{const React=jest.requireActual('react');return {useInView:()=>mockInView,motion:new Proxy({},{get:(_t,tag)=>({children}:{children:unknown})=>React.createElement(tag,null,children)})};});
 jest.mock('@/components/dashboard/band-progress-chart',()=>({BandProgressChart:()=>null}));
 jest.mock('@/components/dashboard/skill-progress',()=>({SkillProgress:()=>null}));
-jest.mock('@/components/dashboard/daily-checkin-card',()=>({DailyCheckInCard:()=>null}));
+jest.mock('@/components/dashboard/daily-checkin-card',()=>({DailyCheckInCard:({onConfirmed}:{onConfirmed:(reward:CheckInResponse)=>void})=>{mockConfirmCheckIn=onConfirmed;return null;}}));
 jest.mock('@/components/gamification/xp-gem',()=>({XpGem:()=>null}));
 jest.mock('@/components/gamification/animated-flame',()=>({AnimatedFlame:()=>null}));
 jest.mock('@/components/gamification/level-badge',()=>({LevelBadge:()=>null}));
@@ -45,6 +47,17 @@ it('ignores stale responses after unmount and loads when SSR data is unavailable
 it('refreshes cached back-navigation props after a submission elsewhere',async()=>{
  act(()=>{jest.setSystemTime(100001);markLearningScoresUpdated();});
  render(<Dashboard {...props}/>);await act(async()=>{});expect(apiFetch).toHaveBeenCalledTimes(1);
+});
+
+it('shows current EXP and the next threshold, including a level-up reward before refresh',()=>{
+ const initial={...props,xpTotal:998,levelInfo:{level:1,title:'Cấp 1',currentXp:998,xpForNextLevel:1000,progressPercent:99.8}};
+ const view=render(<Dashboard {...initial}/>);
+ expect(screen.getByText('998 / 1.000 EXP')).toBeTruthy();
+ act(()=>mockConfirmCheckIn?.({studyDate:'2026-11-24',alreadyCheckedIn:false,expAwarded:5,totalExp:1003,level:2,currentExp:3}));
+ expect(screen.getByText('3 / 2.000 EXP')).toBeTruthy();
+ expect(screen.getByText('Cấp 2')).toBeTruthy();
+ view.rerender(<Dashboard {...initial} xpTotal={1010} levelInfo={{level:2,title:'Cấp 2',currentXp:10,xpForNextLevel:2000,progressPercent:0.5}}/>);
+ expect(screen.getByText('10 / 2.000 EXP')).toBeTruthy();
 });
 
 const RealCheckIn = jest.requireActual<typeof import("@/components/dashboard/daily-checkin-card")>("@/components/dashboard/daily-checkin-card").DailyCheckInCard;
