@@ -7,7 +7,7 @@ import { CatalogFilters, CatalogPagination, DataEmpty, HskBadge, PageHeading } f
 import { WordCards } from "@/components/learning/word-cards";
 import { StudyTracker } from "@/components/shell/study-tracker";
 import { STUDY_MODULES } from "@/lib/hsk";
-import { filterTopics, paginateTopics, sortTopics } from "@/lib/topic-catalog";
+import { filterTopics, getVocabularyLessons, getVocabularyTopics, paginateTopics, sortTopics } from "@/lib/topic-catalog";
 import type { HskWord, PageData } from "@/lib/api/types";
 
 export const metadata = { title: "Từ vựng tiếng Trung" };
@@ -16,10 +16,12 @@ export default async function VocabularyPage({ searchParams }: { searchParams: P
   const params = await searchParams;
   const query: CatalogQuery = { ...parseCatalogQuery(params), view: params.view === "list" ? "list" : "cards" };
   const [allTopics, user] = await Promise.all([getTopics(query.hskLevel), getApiUser()]);
-  const topics = prioritizeCatalog(sortTopics(allTopics), user?.currentHskLevel);
-  const vocabularyTopics = topics.filter(topic => topic.vocabularyCount > 0);
+  const topics = prioritizeCatalog(sortTopics(getVocabularyTopics(allTopics)), user?.currentHskLevel);
+  const lessonTopics = prioritizeCatalog(sortTopics(getVocabularyLessons(allTopics)), user?.currentHskLevel);
   const choosingLesson = query.view === "cards" && !query.topic;
-  const lessons = choosingLesson ? paginateTopics(filterTopics(vocabularyTopics, query.search), query.page, query.limit) : null;
+  const vocabularyTopics = query.view === "cards" ? lessonTopics : topics;
+  const lessons = choosingLesson ? paginateTopics(filterTopics(lessonTopics, query.search), query.page, query.limit) : null;
+  const topicNames = Object.fromEntries(topics.map(topic => [topic.topicKey, topic.titleVi]));
   const lesson = topics.find(topic => topic.topicKey === query.topic);
   let words: HskWord[] = [];
   let wordPage: PageData<HskWord> | null = null;
@@ -56,7 +58,7 @@ export default async function VocabularyPage({ searchParams }: { searchParams: P
         <CatalogPagination path="/vocabulary" query={activeQuery} data={lessons} />
       </> : <>
         {query.view === "cards" && <Link className="hsk-button-secondary w-fit" href={catalogHref("/vocabulary", { view: "cards", hskLevel: query.hskLevel })}><ArrowLeft size={16} aria-hidden="true" />Chọn bài khác</Link>}
-        {words.length ? <WordCards key={JSON.stringify({ ...query, view: undefined })} words={words} view={query.view} lessonTitle={lesson?.titleVi || query.topic} lessonTopic={query.topic} /> : <DataEmpty title="Chưa có từ vựng phù hợp" />}
+        {words.length ? <WordCards key={JSON.stringify({ ...query, view: undefined })} words={words} view={query.view} lessonTitle={lesson?.titleVi || query.topic} lessonTopic={query.topic} topicNames={topicNames} /> : <DataEmpty title="Chưa có từ vựng phù hợp" />}
         {wordPage && <CatalogPagination path="/vocabulary" query={activeQuery} data={wordPage} />}
       </>}
     </div>

@@ -3,17 +3,19 @@ import { getLessonWords, getTopics, getWords } from "@/lib/api/catalog";
 import { catalogHref, parseCatalogQuery, type SearchParams } from "@/lib/catalog-query";
 import { CatalogFilters, CatalogPagination, DataEmpty, PageHeading } from "@/components/ui/catalog";
 import { HandwritingLesson } from "@/components/learning/handwriting-lesson";
+import { getVocabularyTopics } from "@/lib/topic-catalog";
 
 export const metadata = { title: "Luyện viết từ vựng" };
 
 export default async function WordWritingPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const query = { ...parseCatalogQuery(params), skill: "" };
-  const [wordPage, lessonWords, topics] = await Promise.all([
+  const [wordPage, lessonWords, allTopics] = await Promise.all([
     query.topic ? null : getWords(query),
     query.topic ? getLessonWords({ ...query, page: 1 }) : null,
     getTopics(query.hskLevel),
   ]);
+  const topics = getVocabularyTopics(allTopics);
   const words = lessonWords || wordPage?.data || [];
   const lesson = topics.find(topic => topic.topicKey === query.topic);
   const lessonTitle = lesson?.titleVi || lesson?.titleCn || query.topic;

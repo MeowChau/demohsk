@@ -92,6 +92,12 @@ describe("large personalized catalog",()=>{
 
 describe("dashboard topic summary", () => {
   beforeEach(() => request.mockReset());
+  it("shows textbook topics without compiled vocabulary reviews in dashboard lesson cards",async()=>{
+    const lesson={topicKey:"HSK1-L01",titleVi:"Bài 1: Chào bạn!",hskLevel:1,totalSets:2};
+    request.mockResolvedValue([lesson,{...lesson,topicKey:"Bài 1: Ôn từ vựng HSK 1 (biên soạn)"}]);
+    expect(await getDashboardTopics(1)).toMatchObject({total:1,topics:[lesson]});
+    expect(request).toHaveBeenCalledTimes(1);
+  });
   it("uses one topic request and sends only ten compact cards to the client", async () => {
     const topics = Array.from({length: 31}, (_, i) => ({
       topicKey: `HSK1-L${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: 1,

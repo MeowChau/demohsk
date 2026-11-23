@@ -9,7 +9,7 @@ import { HskBadge } from "@/components/ui/catalog-badge";
 import { WordDeck } from "./word-deck";
 import { handwritingHref } from "@/lib/hanzi-data";
 
-export function WordCards({ words, view = "cards", lessonTitle, lessonTopic }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string; lessonTopic?: string }) {
+export function WordCards({ words, view = "cards", lessonTitle, lessonTopic, topicNames }: { words: HskWord[]; view?: "cards" | "list"; lessonTitle?: string; lessonTopic?: string; topicNames?: Record<string, string> }) {
   const [ratings, setRatings] = useState<Record<number, string>>({});
   const mutation = useAsyncAction<{ id: number; action: "studied" | "remembered" | "unknown" }, void>(
     input => apiAction<void>("analytics/vocabulary-progress", { vocabularyId: input.id, action: input.action }),
@@ -23,7 +23,7 @@ export function WordCards({ words, view = "cards", lessonTitle, lessonTopic }: {
   return <div className="flex flex-col gap-4">{error && <p className="hsk-error" role="alert">{error}</p>}{view === "cards" ? <WordDeck words={words} lessonTitle={lessonTitle} lessonTopic={lessonTopic} ratings={ratings} busy={busy} onRate={(id, action) => { void rate(id, action); }} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{words.map(word => <article key={word.id} className="hsk-panel flex flex-col gap-4">
     <div className="flex items-start justify-between gap-2"><div><h2 lang="zh-CN" className="hsk-hanzi text-ink">{word.hanzi}</h2><p className="mt-1 text-base text-brand">{word.pinyin}</p></div><HskBadge level={word.hskLevel} /></div>
     <p className="text-sm leading-6 text-slate">{word.meaning}</p>
-    {word.topic && <p className="text-xs text-slate-soft">Chủ đề: {word.topic}</p>}
+    {word.topic && <p className="text-xs text-slate-soft">Chủ đề: {topicNames?.[word.topic] || word.topic}</p>}
     <Link href={handwritingHref(word)} className="hsk-button-secondary w-fit"><PenLine size={16} />Luyện viết</Link>
     <div className="mt-auto flex flex-wrap gap-2 border-t border-mist pt-4">{([
       ["studied", "Đã học", Check], ["remembered", "Đã nhớ", Brain], ["unknown", "Cần ôn", RotateCcw],
