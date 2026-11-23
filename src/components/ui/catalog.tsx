@@ -6,7 +6,15 @@ import type { HskTopic, PageData } from "@/lib/api/types";
 import { RefreshButton } from "./refresh-button";
 
 export function PageHeading({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) {
-  return <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="hsk-page-title">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate">{description}</p></div><div className="flex flex-wrap items-center gap-2">{children}<RefreshButton /></div></div>;
+  return (
+    <div data-page-heading="" className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <h1 className="hsk-page-title min-w-0">{title}</h1>
+      <p className="min-w-0 break-words text-sm leading-6 text-slate sm:col-span-2 sm:row-start-2">{description}</p>
+      <div className="flex max-w-full flex-wrap items-center gap-2 sm:col-start-2 sm:row-start-1 sm:justify-end">
+        {children}<RefreshButton />
+      </div>
+    </div>
+  );
 }
 export { HskBadge } from "./catalog-badge";
 export function CatalogFilters({ path, query, topics = [], skills = false, topicFilter = true, resetHref = path, onSubmit, searchLabel = "Tìm kiếm", searchPlaceholder = "Tên, chữ Hán hoặc pinyin…" }: { path: string; query: CatalogQuery; topics?: HskTopic[]; skills?: boolean; topicFilter?: boolean; resetHref?: string; onSubmit?: React.FormEventHandler<HTMLFormElement>; searchLabel?: string; searchPlaceholder?: string }) {
