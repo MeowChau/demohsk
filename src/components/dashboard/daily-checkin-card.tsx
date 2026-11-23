@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api/client";
 import type { HskAnalytics } from "@/lib/api/types";
 import { checkedInOnDate, studyDateKey, type CheckInResponse } from "@/lib/daily-checkin";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { CheckInCelebration } from "@/components/gamification/check-in-celebration";
 
 export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
   initialAnalytics: HskAnalytics;
@@ -17,7 +18,7 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
   const [date, setDate] = useState(studyDateKey);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+  const [notice, setNotice] = useState<{ title: string; message: string; celebrate: boolean } | null>(null);
   const busyRef = useRef(false);
   const sequence = useRef(0);
   const mounted = useRef(false);
@@ -86,6 +87,7 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
       setAnalytics(current => ({ ...current, studyDate: result.studyDate, checkedInToday: true }));
       onConfirmed?.(result);
       setNotice({
+        celebrate: !result.alreadyCheckedIn && result.expAwarded > 0,
         title: result.alreadyCheckedIn ? "Hôm nay đã điểm danh" : "Điểm danh thành công",
         message: result.alreadyCheckedIn
           ? "Điểm danh hôm nay đã được ghi nhận trên tài khoản. Hãy quay lại vào ngày mai nhé."
@@ -121,7 +123,8 @@ export function DailyCheckInCard({ initialAnalytics, onConfirmed }: {
       {error && <p role="alert" className="mt-4 rounded-lg border border-danger/20 bg-danger-soft p-3 text-sm text-danger">{error}</p>}
       <ConfirmationDialog open={notice !== null} title={notice?.title || "Điểm danh"} confirmLabel="Đã hiểu" cancelLabel={null}
         onCancel={() => setNotice(null)} onConfirm={() => setNotice(null)} icon={<CircleCheck size={20} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />}>
-        {notice?.message}
+        <p>{notice?.message}</p>
+        <CheckInCelebration active={notice?.celebrate === true} />
       </ConfirmationDialog>
     </section>
   );

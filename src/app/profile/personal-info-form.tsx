@@ -11,8 +11,10 @@ import { useValidatedForm } from "@/hooks/use-validated-form";
 import type { FormActionState } from "@/lib/validations/form-errors";
 import { FieldError } from "@/components/ui/field-error";
 import { cn } from "@/lib/utils";
+import { LockKeyhole } from "lucide-react";
 
 type ActionResult = FormActionState;
+const readOnlyStyle = "disabled:border-mist disabled:bg-paper disabled:font-medium disabled:text-ink disabled:opacity-100 disabled:[-webkit-text-fill-color:var(--ink)]";
 
 async function action(
   _prev: ActionResult,
@@ -48,13 +50,18 @@ export function PersonalInfoForm({
         name="username"
         defaultValue={profile.username}
         disabled
+        className={readOnlyStyle}
+        endAdornment={<LockKeyhole size={16} className="text-slate" aria-hidden="true" />}
+        hint="Chỉ đọc · Không thể chỉnh sửa tên người dùng tại đây."
       />
       <Field
         label="Email"
         id="email"
         defaultValue={profile.email}
         disabled
-        
+        className={readOnlyStyle}
+        endAdornment={<LockKeyhole size={16} className="text-slate" aria-hidden="true" />}
+        hint="Chỉ đọc · Không thể chỉnh sửa email tại đây."
       />
 
       {profile.role === "student" && (

@@ -26,7 +26,7 @@ export default async function ProfilePage() {
             </p>
             <p className="text-xs uppercase tracking-wide text-[var(--slate-soft)]">{profile.role === "student" ? "Học viên" : profile.role === "teacher" ? "Giáo viên" : "Quản trị viên"}</p>
             {profile.display_id && (
-              <p className="mt-0.5 font-mono text-xs font-bold text-teal">{profile.display_id}</p>
+              <p className="mt-1 text-xs text-slate">Mã học viên: <span className="font-mono font-semibold text-ink">{profile.display_id}</span></p>
             )}
           </div>
         </div>

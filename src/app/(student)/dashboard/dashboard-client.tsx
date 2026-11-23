@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
-import { celebrate } from "@/lib/celebration"
 import Link from "next/link"
 import { ArrowRight, Target, Trophy } from "lucide-react"
 
@@ -149,14 +148,7 @@ export default function DashboardClient({
   assessmentLoadedAt = 0,
   analytics,
 }: DashboardClientProps) {
-  const confettiFired = useRef(false)
   const [checkInReward, setCheckInReward] = useState<CheckInResponse | null>(null)
-
-  const headerRef = useRef<HTMLDivElement | null>(null)
-
-  const isInView = useInView(headerRef, {
-    once: true,
-  })
 
   // Same null-safe fallback pattern rewards-client already uses for streak.
   const currentStreak = streak?.current_streak ?? 0
@@ -192,26 +184,6 @@ export default function DashboardClient({
     return () => { active = false; window.removeEventListener("hsk-scores-updated", onScore); window.removeEventListener("focus", onFocus) }
   }, [initialAssessment,assessmentLoadedAt,student?.current_band])
 
-  useEffect(() => {
-    if (
-      isInView &&
-      !confettiFired.current &&
-      currentStreak > 0
-    ) {
-      const timeout = setTimeout(() => {
-        confettiFired.current = true
-        void celebrate({
-          particleCount: 60,
-          spread: 60,
-          origin: { y: 0.3 },
-          colors: ["#78FFF9", "#0EA599", "#F5A524"],
-        })
-      }, 500)
-
-      return () => clearTimeout(timeout)
-    }
-  }, [isInView, currentStreak])
-
   return (
     <div className="flex flex-col gap-8">
       {/* 
@@ -219,7 +191,6 @@ export default function DashboardClient({
       */}
 
       <div
-        ref={headerRef}
         className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between"
       >
         <div className="space-y-1">
