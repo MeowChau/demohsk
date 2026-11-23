@@ -51,6 +51,8 @@ export interface HskWord {
   meaning: string;
   hskLevel: number;
   topic?: string | null;
+  // Flashcards enrich this from the existing spoken-word practice audio.
+  audioUrl?: string | null;
 }
 export interface HskQuestion {
   id: number;

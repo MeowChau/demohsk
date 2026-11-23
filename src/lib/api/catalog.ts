@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { backendEndpoint } from "./config";
+import { backendEndpoint, publicMedia } from "./config";
 import { ApiError, errorMessage } from "./client";
 import { serverApi } from "./server";
 import { CATALOG_PAGE_SIZE, catalogSearch, hskLevelPriority, type CatalogQuery } from "@/lib/catalog-query";
@@ -64,9 +64,40 @@ export const getWords = (query: Partial<CatalogQuery>, currentLevel?: number | n
   return currentLevel === undefined ? load(query) : personalizedPage(load, query, currentLevel);
 };
 
-export async function getLessonWords(query: Partial<CatalogQuery>): Promise<HskWord[]> {
+function wordAudioKey(word: Pick<HskWord, "hanzi" | "pinyin" | "hskLevel">): string {
+  // Preserve tone marks to distinguish different readings of the same Hanzi.
+  return word.hskLevel + "|" + word.hanzi.normalize("NFKC").replace(/\s+/gu, "") + "|" + word.pinyin.normalize("NFKC").replace(/\s+/gu, "").toLowerCase();
+}
+
+async function lessonWordAudio(query: Partial<CatalogQuery>): Promise<Map<string, string>> {
+  const audio = new Map<string, string>();
+  let totalPages = 1;
+  for (let page = 1; page <= totalPages; page++) {
+    const result = await getPracticeSets({ topic: query.topic, hskLevel: query.hskLevel, skill: "SPEAKING", page, limit: 100 });
+    if (result.page !== page) throw new Error("Chưa tải đủ âm thanh của bài học.");
+    totalPages = result.totalPages;
+    for (const set of result.data) {
+      if (set.topic !== query.topic || set.skill !== "SPEAKING") continue;
+      for (const { question } of set.practiceSetQuestions || []) {
+        if (!question || question.skill !== "SPEAKING") continue;
+        const payload = question.payload;
+        const hanzi = payload.source?.sourceWord || payload.hanzi || payload.character;
+        const src = publicMedia(payload.audioUrl);
+        if (!hanzi || !payload.pinyin || !src || payload.audioScope === "source-track") continue;
+        audio.set(wordAudioKey({ hanzi, pinyin: payload.pinyin, hskLevel: question.hskLevel }), src);
+      }
+    }
+  }
+  return audio;
+}
+
+export async function getLessonWords(query: Partial<CatalogQuery>, { withAudio = false }: { withAudio?: boolean } = {}): Promise<HskWord[]> {
   if (!query.topic) throw new Error("Chọn một chủ đề để học bằng flashcard.");
-  const first = await getWords({ ...query, page: 1, limit: 100 });
+  const [first, audio] = await Promise.all([
+    getWords({ ...query, page: 1, limit: 100 }),
+    // Optional audio must not prevent reading or reviewing the vocabulary.
+    withAudio ? lessonWordAudio(query).catch(() => new Map<string, string>()) : Promise.resolve(new Map<string, string>()),
+  ]);
   const words = new Map(first.data.map(word => [word.id, word]));
   for (let page = 2; page <= first.totalPages; page++) {
     const next = await getWords({ ...query, page, limit: 100 });
@@ -74,7 +105,7 @@ export async function getLessonWords(query: Partial<CatalogQuery>): Promise<HskW
     next.data.forEach(word => words.set(word.id, word));
   }
   if (words.size !== first.total) throw new Error("Nội dung bài học vừa thay đổi. Vui lòng tải lại để học đủ từ.");
-  return [...words.values()];
+  return [...words.values()].map(word => withAudio ? { ...word, audioUrl: publicMedia(word.audioUrl) || audio.get(wordAudioKey(word)) || null } : word);
 }
 export const getPracticeSets = (query: Partial<CatalogQuery>, currentLevel?: number | null) => {
   const load: CatalogLoader<HskPractice> = next => requestPage<HskPractice>("practice-sets?" + catalogSearch(next));
