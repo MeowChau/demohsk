@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";

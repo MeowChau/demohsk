@@ -1,6 +1,5 @@
 "use client";
-
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Clock3, BookOpen, Brain, CalendarDays } from "lucide-react";
 import type { HskAnalytics } from "@/lib/api/types";

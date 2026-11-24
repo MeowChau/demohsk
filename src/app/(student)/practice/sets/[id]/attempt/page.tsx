@@ -9,7 +9,7 @@ export default async function PracticeSetAttemptPage({ params, searchParams }: {
   const id = resourceId((await params).id);
   if (!id) notFound();
   const query = await searchParams;
-  return <Suspense key={id} fallback={<div role="status"><LoadingSpinner label="Đang tải bài luyện…" /></div>}>
+  return <Suspense key={id} fallback={<LoadingSpinner label="Đang tải bài luyện…" />}>
     <AttemptContent reference={"set-" + id} gradingMode={parseGradingMode(query?.grading)} />
   </Suspense>;
 }

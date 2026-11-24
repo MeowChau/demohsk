@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { SKILL_LABELS } from "@/lib/hsk";
 import { formatScore } from "@/lib/utils";
 import { publicMedia } from "@/lib/api/config";

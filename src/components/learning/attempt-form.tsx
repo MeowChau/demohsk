@@ -4,7 +4,7 @@ import { createContext, memo, useContext, useCallback, useEffect, useMemo, useRe
 import { useStore } from "zustand";
 import { createAttemptStore, type AttemptStore, type AttemptValues } from "./attempt/attempt-store";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ApiError } from "@/lib/api/client";
 import type { LearningScoreSubmission, LearningAttemptContext } from "@/lib/learning-scores";
 import { markLearningScoresUpdated, submitLearningScore } from "@/lib/learning-scores";

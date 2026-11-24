@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import { motion } from "framer-motion"
 import { Check, Zap } from "lucide-react"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { TiltCard } from "@/components/ui/tilt-card"
 
 const plans = [

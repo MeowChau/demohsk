@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ArrowRight, ClipboardCheck, Clock3 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Field } from "@/components/ui/field";

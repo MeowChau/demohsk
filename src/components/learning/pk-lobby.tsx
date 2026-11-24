@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ArrowRight, Check, Clock3, History, LockKeyhole, ShieldCheck, Swords, Trophy, Users, Zap } from "lucide-react";
 import { HskBadge } from "@/components/ui/catalog-badge";
 

@@ -1,4 +1,6 @@
 "use client";
+
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { useState } from "react";
 import { apiAction } from "@/lib/api/client";
 export function ConfirmEmailForm({
@@ -58,11 +60,11 @@ export function ConfirmEmailForm({
             {message}
           </p>
         )}
-        <a
+        <Link
           href="/login"
           className="mt-4 text-center text-sm font-medium text-teal"
         >
-           Quay lại đăng nhập </a>
+           Quay lại đăng nhập </Link>
       </form>
     </>
   );

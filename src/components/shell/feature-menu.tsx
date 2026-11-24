@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ChevronDown } from "lucide-react";
 import { STUDENT_NAV, isActiveRoute } from "@/lib/navigation";
 import { usePathname } from "next/navigation";

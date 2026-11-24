@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ArrowRight } from "lucide-react";
 import { HskBadge } from "@/components/ui/catalog";
 import { historyDate, historyDuration, historyMetric, historyResultHref, type AttemptHistorySummary } from "@/lib/learning-history";

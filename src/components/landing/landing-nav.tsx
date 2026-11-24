@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { STUDENT_NAV, PUBLIC_NAV, isActiveRoute } from "@/lib/navigation"
 import { Menu, UserRound, X } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "@/components/shell/logout-button"
 import { ThemeToggle } from "@/components/shell/theme-toggle"

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { getLessonWords, getTopics, getWords } from "@/lib/api/catalog";
 import { catalogHref, parseCatalogQuery, type SearchParams } from "@/lib/catalog-query";
 import { CatalogFilters, CatalogPagination, DataEmpty, PageHeading } from "@/components/ui/catalog";

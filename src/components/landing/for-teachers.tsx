@@ -13,7 +13,7 @@ import {
   FileText,
   Clock,
 } from "lucide-react"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { useEffect, useRef, useState } from "react"
 
 const teacherFeatures = [

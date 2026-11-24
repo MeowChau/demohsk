@@ -18,7 +18,7 @@ import {
   PenLine,
   Mic,
 } from "lucide-react"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { useRef, useState, useEffect, useCallback } from "react"
 import { celebrate } from "@/lib/celebration"
 import type { HskTopic } from "@/lib/api/types"

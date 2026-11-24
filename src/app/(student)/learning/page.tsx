@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { Headphones, BookOpen, Mic, PenLine, ArrowRight, Languages } from "lucide-react";
 import { getTopics } from "@/lib/api/catalog";
 import { getApiUser } from "@/lib/api/server";

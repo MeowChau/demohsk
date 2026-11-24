@@ -1,5 +1,5 @@
 import type { GradingMode } from "@/lib/practice-scoring";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { notFound, redirect } from "next/navigation";
 import { testForTaking } from "@/lib/api/learning";
 import { ApiError } from "@/lib/api/client";

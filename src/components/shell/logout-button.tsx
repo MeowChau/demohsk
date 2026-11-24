@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useId, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
 import { apiAction } from "@/lib/api/client";
 import { notify } from "@/lib/toast";
 import { useHasUnsavedChanges } from "@/components/shell/navigation-protection";

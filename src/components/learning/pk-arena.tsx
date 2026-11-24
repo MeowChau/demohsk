@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
 import { Swords, RefreshCw, Check, Search, LogOut, LoaderCircle } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { publicMedia } from "@/lib/api/config";

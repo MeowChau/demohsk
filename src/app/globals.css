@@ -9,12 +9,17 @@
     background-color: var(--paper);
     scroll-behavior: smooth;
     color-scheme: light;
+    /* Keep the navbar width stable when a loading screen removes page overflow. */
+    scrollbar-gutter: stable;
   }
   body {
     background: var(--paper);
     color: var(--ink);
     font-family: var(--font-body);
     line-height: var(--text-body-leading);
+  }
+  @supports not (scrollbar-gutter: stable) {
+    body { overflow-y: scroll; }
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
