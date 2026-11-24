@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ChevronLeft, ChevronRight, Check, Brain, RotateCcw, PenLine, Volume2 } from "lucide-react";
 import type { HskWord } from "@/lib/api/types";
 import { HskBadge } from "@/components/ui/catalog-badge";

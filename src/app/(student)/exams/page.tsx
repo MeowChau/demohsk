@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { examDetailHref } from "@/lib/attempt-routes";
 import { defaultExamMinutes } from "@/lib/exam-timing";
 import { FileText, Clock3, LockKeyhole, CheckCircle2 } from "lucide-react";

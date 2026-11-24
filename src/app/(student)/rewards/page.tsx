@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { Trophy, Sparkles, Flame, Medal } from "lucide-react";
 import { requireApiUser, serverApi } from "@/lib/api/server";
 import { levelInfo, totalXp } from "@/lib/api/learning";

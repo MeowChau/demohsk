@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Clock3, ShieldCheck, Swords, Users } from "lucide-react";
 import { requireApiUser } from "@/lib/api/server";

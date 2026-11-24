@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { celebrate } from "@/lib/celebration"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { practiceHref } from "@/lib/catalog-query"
 import { ArrowRight, Target, Trophy } from "lucide-react"
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
 import { getLessonWords, getTopics, getWords } from "@/lib/api/catalog";
 import { getApiUser } from "@/lib/api/server";

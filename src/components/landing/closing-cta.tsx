@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring } from "framer-motion"
 import { ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { useRef, useCallback } from "react"
 import { celebrate } from "@/lib/celebration"
 

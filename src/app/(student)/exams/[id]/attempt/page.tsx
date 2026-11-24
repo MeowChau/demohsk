@@ -12,7 +12,7 @@ export default async function ExamAttemptPage({ params, searchParams }: { params
   const { duration, grading } = await searchParams;
   const minutes = typeof duration === "string" ? parseExamMinutes(duration) : null;
   if (duration !== undefined && minutes === null) redirect("/exams/" + id + "/attempt");
-  return <Suspense key={id} fallback={<div role="status"><LoadingSpinner label="Đang tải bài thi…" /></div>}>
+  return <Suspense key={id} fallback={<LoadingSpinner label="Đang tải bài thi…" />}>
     <AttemptContent reference={"exam-" + id} durationMinutes={minutes ?? undefined} gradingMode={parseGradingMode(grading)} />
   </Suspense>;
 }

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { serverApi } from "@/lib/api/server";
 import { ApiError } from "@/lib/api/client";
 import type { PageData } from "@/lib/api/types";

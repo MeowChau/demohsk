@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
 import type { FormEvent } from "react";
 import { CatalogFilters } from "@/components/ui/catalog";
 import { parseCatalogQuery, practiceHref, practicePath, type CatalogQuery } from "@/lib/catalog-query";

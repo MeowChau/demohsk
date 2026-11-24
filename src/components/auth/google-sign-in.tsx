@@ -2,7 +2,8 @@
 
 import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
+import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { ApiError, apiFetch, errorMessage } from "@/lib/api/client";
 import type { HskUser } from "@/lib/api/types";

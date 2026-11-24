@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigationRouter as useRouter } from "@/components/shell/navigation-protection";
+import { useSearchParams } from "next/navigation";
 import { ApiError, apiAction } from "@/lib/api/client";
 import { loginDestination } from "@/lib/auth/login-destination";
 import { GoogleSignIn } from "@/components/auth/google-sign-in";

@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Centered content */}
       <div className="flex flex-col items-center px-5 pb-20 pt-6 sm:px-8">
         <div className="w-full max-w-[440px]">
-          {children}
+          <Suspense fallback={null}>{children}</Suspense>
         </div>
       </div>
     </main>

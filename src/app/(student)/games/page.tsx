@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { ArrowUpRight, Trophy } from "lucide-react";
 import { requireApiUser, serverApi } from "@/lib/api/server";
 import { publicMedia } from "@/lib/api/config";

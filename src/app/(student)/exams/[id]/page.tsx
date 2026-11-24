@@ -1,6 +1,6 @@
 import { cache } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { examDetailHref, resourceId } from "@/lib/attempt-routes";
 import { notFound, permanentRedirect } from "next/navigation";
 import { serverApi } from "@/lib/api/server";

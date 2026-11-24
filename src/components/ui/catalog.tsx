@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { NavigationForm } from "@/components/shell/navigation-protection";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { HSK_LEVELS, SKILL_LABELS } from "@/lib/hsk";
 import { catalogHref, type CatalogQuery } from "@/lib/catalog-query";
@@ -10,14 +11,14 @@ export function PageHeading({ title, description, children }: { title: string; d
 }
 export { HskBadge } from "./catalog-badge";
 export function CatalogFilters({ path, query, topics = [], skills = false, topicFilter = true, resetHref = path, onSubmit, searchLabel = "Tìm kiếm", searchPlaceholder = "Tên, chữ Hán hoặc pinyin…" }: { path: string; query: CatalogQuery; topics?: HskTopic[]; skills?: boolean; topicFilter?: boolean; resetHref?: string; onSubmit?: React.FormEventHandler<HTMLFormElement>; searchLabel?: string; searchPlaceholder?: string }) {
-  return <form action={path} onSubmit={onSubmit} className="hsk-panel flex flex-wrap items-end gap-3">
+  return <NavigationForm action={path} onSubmit={onSubmit} className="hsk-panel flex flex-wrap items-end gap-3">
     {query.view && <input type="hidden" name="view" value={query.view} />}
     <label className="flex min-w-36 flex-1 flex-col gap-2 text-sm font-medium text-ink">{searchLabel}<input name="search" defaultValue={query.search} className="hsk-input" placeholder={searchPlaceholder} maxLength={500} /></label>
     <label className="flex flex-col gap-2 text-sm font-medium text-ink">Cấp độ<select name="hskLevel" defaultValue={query.hskLevel} className="hsk-input"><option value="">Tất cả cấp độ</option>{HSK_LEVELS.map(level => <option value={level} key={level}>HSK {level}</option>)}</select></label>
     {skills && <label className="flex flex-col gap-2 text-sm font-medium text-ink">Kỹ năng<select name="skill" defaultValue={query.skill} className="hsk-input"><option value="">Tất cả kỹ năng</option>{Object.entries(SKILL_LABELS).map(([key, label]) => <option key={key} value={key.toUpperCase()}>{label}</option>)}</select></label>}
     {topicFilter && <label className="flex min-w-44 max-w-full flex-col gap-2 text-sm font-medium text-ink">Chủ đề<select name="topic" defaultValue={query.topic} className="hsk-input max-w-64"><option value="">Tất cả chủ đề</option>{topics.map(topic => <option key={topic.topicKey} value={topic.topicKey}>{topic.titleVi || topic.titleCn}</option>)}</select></label>}
     <button className="hsk-button" type="submit">Áp dụng</button><Link href={resetHref} className="hsk-button-secondary">Đặt lại</Link>
-  </form>;
+  </NavigationForm>;
 }
 export function CatalogPagination({ path, query, data }: { path: string; query: Pick<CatalogQuery, "page" | "limit"> & Partial<CatalogQuery>; data: Pick<PageData<unknown>, "page" | "total" | "totalPages"> }) {
   const totalPages = Math.max(1, data.totalPages);

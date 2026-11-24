@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 
 const footerLinks = {
   "Khám phá": [
@@ -90,16 +90,19 @@ export function LandingFooter() {
                 {category}
               </h4>
               <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm font-medium text-slate-400 hover:text-[#78FFF9] transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
+                {links.map((link) => {
+                  const Item = link.href.startsWith("/#") ? "a" : Link
+                  return (
+                    <li key={link.label}>
+                      <Item
+                        href={link.href}
+                        className="text-sm font-medium text-slate-400 hover:text-[#78FFF9] transition-colors"
+                      >
+                        {link.label}
+                      </Item>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAsyncAction } from "@/hooks/use-async-action";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { Check, RotateCcw, Brain, PenLine } from "lucide-react";
 import { apiAction } from "@/lib/api/client";
 import type { HskWord } from "@/lib/api/types";

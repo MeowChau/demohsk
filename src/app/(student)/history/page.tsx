@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { NavigationForm } from "@/components/shell/navigation-protection";
+import { NavigationLink as Link } from "@/components/shell/navigation-protection";
 import { requireApiUser, serverApi } from "@/lib/api/server";
 import { ApiError } from "@/lib/api/client";
 import type { PageData } from "@/lib/api/types";
@@ -19,7 +20,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   });
   return <div className="flex flex-col gap-6">
     <PageHeading title="Lịch sử bài làm" description="Xem từng lần làm đề thi, bài luyện và kết quả đã lưu theo tài khoản của bạn." />
-    <form action="/history" className="hsk-panel flex flex-wrap items-end gap-3">
+    <NavigationForm action="/history" className="hsk-panel flex flex-wrap items-end gap-3">
       {query.sourceId && <input type="hidden" name="sourceId" value={query.sourceId} />}
       <label className="hsk-label min-w-40 flex-1">Tên bài<input name="search" defaultValue={query.search} className="hsk-input" maxLength={200} placeholder="Tìm đề thi hoặc bài luyện…" /></label>
       <label className="hsk-label">Loại bài<select name="kind" defaultValue={query.kind} className="hsk-input"><option value="">Tất cả</option><option value="exam">Đề thi</option><option value="set">Bài luyện</option></select></label>
@@ -28,7 +29,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <label className="hsk-label">Từ ngày<input type="date" name="from" defaultValue={query.from} className="hsk-input" max={query.to || undefined} /></label>
       <label className="hsk-label">Đến ngày<input type="date" name="to" defaultValue={query.to} className="hsk-input" min={query.from || undefined} /></label>
       <button className="hsk-button" type="submit">Áp dụng</button><Link className="hsk-button-secondary" href="/history">Đặt lại</Link>
-    </form>
+    </NavigationForm>
     {query.sourceId && <p className="text-sm text-slate">Đang xem lịch sử của {query.kind === "exam" ? "đề thi" : "bài luyện"} #{query.sourceId}. <Link className="font-medium text-brand" href="/history">Xem tất cả bài làm</Link></p>}
     {!history ? <p className="hsk-error" role="alert">{invalidRange ? "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc. Hãy sửa bộ lọc để xem lịch sử." : "Chưa tải được lịch sử bài làm. Bấm Làm mới để thử lại; các kết quả đã lưu vẫn được giữ trên tài khoản."}</p>
       : history.data.length ? <AttemptHistoryTable items={history.data} />
