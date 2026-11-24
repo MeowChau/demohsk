@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { parseGradingMode } from "@/lib/practice-scoring";
 import { parseExamMinutes } from "@/lib/exam-timing";
 import { notFound, redirect } from "next/navigation";
@@ -10,5 +12,7 @@ export default async function ExamAttemptPage({ params, searchParams }: { params
   const { duration, grading } = await searchParams;
   const minutes = typeof duration === "string" ? parseExamMinutes(duration) : null;
   if (duration !== undefined && minutes === null) redirect("/exams/" + id + "/attempt");
-  return <AttemptContent reference={"exam-" + id} durationMinutes={minutes ?? undefined} gradingMode={parseGradingMode(grading)} />;
+  return <Suspense key={id} fallback={<div role="status"><LoadingSpinner label="Đang tải bài thi…" /></div>}>
+    <AttemptContent reference={"exam-" + id} durationMinutes={minutes ?? undefined} gradingMode={parseGradingMode(grading)} />
+  </Suspense>;
 }

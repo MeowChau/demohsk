@@ -64,10 +64,10 @@ it("combines exam timing and grading choices without navigating for an invalid d
   fireEvent.click(screen.getByRole("button", { name: "Bắt đầu làm bài" }));
   const dialog = within(screen.getByRole("dialog", { name: "Chọn cách làm bài" }));
   const minutes = dialog.getByLabelText("Thời gian (phút)");
-  fireEvent.change(minutes, { target: { value: "181" } });
+  fireEvent.change(minutes, { target: { value: "1.5" } });
   fireEvent.click(dialog.getByRole("button", { name: "Bắt đầu làm bài" }));
   expect(push).not.toHaveBeenCalled();
-  expect(dialog.getByText(/Vui lòng nhập thời gian/)).toBeTruthy();
+  expect(dialog.getByText("Thời gian phải là số nguyên từ 1 đến 180 phút.")).toBeTruthy();
   fireEvent.change(minutes, { target: { value: "55" } });
   fireEvent.click(dialog.getByRole("button", { name: "Bắt đầu làm bài" }));
   expect(push).toHaveBeenCalledWith("/exams/2/attempt?grading=on-submit&duration=55");

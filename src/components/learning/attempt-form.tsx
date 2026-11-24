@@ -11,6 +11,7 @@ import { markLearningScoresUpdated, submitLearningScore } from "@/lib/learning-s
 import { historyHref, historyResultHref } from "@/lib/learning-history";
 import { ClipboardCheck, Flag, LayoutGrid } from "lucide-react";
 import { SKILL_LABELS } from "@/lib/hsk";
+import { formatScore } from "@/lib/utils";
 import type { TestWithQuestions, Skill, Question } from "@/types/assessment";
 import type { PronunciationAssessment } from "@/lib/api/types";
 import { publicMedia } from "@/lib/api/config";
@@ -18,10 +19,11 @@ import { HanziPractice } from "@/components/learning/hanzi-practice";
 import { SpeakingRecorder } from "@/components/learning/speaking-recorder";
 import { PronunciationButton } from "@/components/learning/pronunciation-button";
 import { AttemptAudioDock, type AttemptAudioTrack } from "@/components/learning/attempt-audio-dock";
+import { QuestionImage, optionDisplayText } from "@/components/learning/question-content";
 import { groupPracticeSections, pauseOtherPracticeAudio, type QuestionAudioGroup } from "@/lib/practice-audio";
 import { QuestionNavigator, type QuestionNavigationGroup } from "@/components/learning/question-navigator";
 import { writingPractice, sameHandwritingStrokes, type HandwritingProgress, type HandwritingStrokeProgress } from "@/lib/writing-practice";
-import { optionMatchesAnswer, scorePracticeAttempt, type PracticeScore, type GradingMode } from "@/lib/practice-scoring";
+import { expectsChineseAnswer, textAnswerError, optionMatchesAnswer, scorePracticeAttempt, type PracticeScore, type GradingMode } from "@/lib/practice-scoring";
 import { GradingModeOptions } from "./attempt/grading-mode-options";
 import { WritingErrorTable, SpeakingErrorTable } from "./attempt/skill-error-summary";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -76,6 +78,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
   const pendingLeave = useRef<(() => void) | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useAttemptField("activeQuestionId");
   const [notice, setNotice] = useState("");
+  const [showTextErrors, setShowTextErrors] = useState(false);
   const [result, setResult] = useAttemptField("result");
   const reviewing = phase === "reviewing";
   const setReviewing = store.getState().review;
@@ -117,6 +120,15 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
           questionIds: group.items.map(item => item.question.questionid) };
       });
   }, [questionSections, questions]);
+  const { validAnswers, invalidTextQuestions } = useMemo(() => {
+    const validAnswers = { ...answers };
+    const invalidTextQuestions = questions.filter(item => {
+      if (!textAnswerError(item, answers[item.question.questionid] || "")) return false;
+      delete validAnswers[item.question.questionid];
+      return true;
+    });
+    return { validAnswers, invalidTextQuestions };
+  }, [answers, questions]);
   const hasSpeakingWorkInProgress = Object.values(speakingBusy).some(Boolean);
 
   useEffect(() => {
@@ -203,7 +215,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     ? Math.round(speakingValues.reduce((sum, item) => sum + item.score, 0) / speakingValues.length * 10) / 10
     : null;
   const workedQuestionIds = new Set([
-    ...Object.entries(answers).filter(([, answer]) => Boolean(answer.trim())).map(([id]) => id),
+    ...Object.entries(validAnswers).filter(([, answer]) => Boolean(answer.trim())).map(([id]) => id),
     ...Object.entries(strokeStats).filter(([, progress]) => progress.correctStrokes > 0 || progress.mistakes > 0).map(([id]) => id),
     ...Object.entries(handwriting).filter(([, progress]) => progress.completedPositions.length > 0).map(([id]) => id),
     ...Object.entries(recordedQuestions).filter(([, recorded]) => recorded).map(([id]) => id),
@@ -220,7 +232,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       const progress = handwriting[question.questionid];
       return Boolean(progress && progress.totalCharacters > 0 && progress.completedPositions.length >= progress.totalCharacters);
     }
-    return Boolean(answers[question.questionid]?.trim());
+    return Boolean(validAnswers[question.questionid]?.trim());
   }).length;
   const unfinishedCount = questions.length - completedQuestionCount;
   const hasUnpersistedResult = Boolean(result && recordScores && scorePayload.current && !savedScore);
@@ -261,10 +273,10 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     const separatelyTracked = new Set(questions
       .filter(item => item.question.skill === "Speaking" || writingPractice(item.question) !== null)
       .map(item => item.question.questionid));
-    setResult(scorePracticeAttempt(questions, answers, separatelyTracked));
+    setResult(scorePracticeAttempt(questions, validAnswers, separatelyTracked));
     const reference = /^(exam|set)-(\d+)$/.exec(testid);
     if (recordScores && reference) {
-      const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers,
+      const payload: LearningScoreSubmission = { attemptId: scoreAttemptId.current, kind: reference[1] as "exam" | "set", sourceId: Number(reference[2]), answers: validAnswers,
         startedAt: new Date(attemptStartedAt.current).toISOString(), durationSeconds: Math.min(data.test.duration > 0 ? data.test.duration * 60 : 604800, Math.max(0, Math.floor((Date.now() - attemptStartedAt.current) / 1000))),
         writingProgress: Object.fromEntries(Object.entries(handwriting).map(([id, progress]) => [id, { completedPositions: progress.completedPositions,
           ...(strokeStats[id] || { correctStrokes: 0, totalStrokes: 0, mistakes: 0 }) }])) };
@@ -326,6 +338,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
     attemptStartedAt.current = Date.now();
     examDeadline.current = attemptStartedAt.current + data.test.duration * 60_000;
     setAnswers({});
+    setShowTextErrors(false);
     setHandwriting({});
     setStrokeStats({});
     setSpeakingAssessments({});
@@ -365,7 +378,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
         recordingLocked={hasSpeakingWorkInProgress && !speakingBusy[question.questionid]}
         sampleAudioDisabled={hasSpeakingWorkInProgress} showIndividualAudio={showIndividualAudio}
         grade={gradeByQuestion.get(question.questionid)} submitted={Boolean(result)}
-        persistScores={recordScores} attemptContext={attemptContext} gradingMode={gradingMode}
+        persistScores={recordScores} attemptContext={attemptContext} gradingMode={gradingMode} showTextErrors={showTextErrors}
       />
     );
   }
@@ -390,6 +403,13 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       setNotice("");
       if (autoSubmitted.current && data.test.duration > 0) {
         finishAttempt();
+        return;
+      }
+      if (invalidTextQuestions.length > 0) {
+        setShowTextErrors(true);
+        const id = invalidTextQuestions[0]!.question.questionid;
+        selectQuestion(id);
+        document.getElementById("practice-answer-" + id)?.focus({ preventScroll: true });
         return;
       }
       setQuestionMenuOpen(false);
@@ -435,7 +455,9 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
       {result && (
         <section ref={resultRef} tabIndex={-1} aria-label="Kết quả luyện tập" className="hsk-panel flex scroll-mt-24 flex-col gap-4 outline-none">
           <h2 className="font-display text-lg font-semibold text-ink">{isExam ? "Kết quả bài thi" : "Kết quả luyện tập"}</h2>
-          {isExam && expired && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.</p>}
+          {isExam && expired && <p className="hsk-notice">Đã hết thời gian. Hệ thống tự nộp câu trả lời của bạn.
+            {invalidTextQuestions.length > 0 && " Có " + invalidTextQuestions.length + " câu chưa nhập chữ Hán, được tính là chưa trả lời."}
+          </p>}
           <div className="flex flex-wrap items-center gap-3">
             {savedScore?.historyId ? <>
               <p role="status" className="text-sm font-medium text-[var(--success-text)]">Đã lưu vào lịch sử</p>
@@ -450,8 +472,8 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
           {scoreError && <div className="rounded-lg border border-danger/20 bg-danger-soft p-3 text-sm text-danger" role="alert"><p>{scoreError}</p><button type="button" className="hsk-button-secondary mt-3" disabled={savingScore} onClick={() => { if (scorePayload.current) void persistScore(scorePayload.current); }}>Thử lưu điểm lại</button></div>}
           {savedScore && isExam && <div className="rounded-lg border border-brand/20 bg-brand/5 p-4">
             <p className="text-xs text-slate">Điểm thi thử — tổng điểm từng phần</p>
-            <p className="mt-1 text-2xl font-semibold text-brand">{savedScore.totalScore === null ? "Chưa có điểm toàn đề hợp lệ" : savedScore.totalScore.toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + "/" + savedScore.maxScore}</p>
-            <div className="mt-3 flex flex-wrap gap-3">{savedScore.sections.map(section => <p key={section.skill} className="text-sm text-slate">{SKILL_LABELS[section.skill]}: {section.score === null ? "Chưa chấm" : section.score.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "/100"}{!section.complete && " · chưa đầy đủ"}</p>)}</div>
+            <p className="mt-1 text-2xl font-semibold text-brand">{savedScore.totalScore === null ? "Chưa có điểm toàn đề hợp lệ" : formatScore(savedScore.totalScore) + "/" + savedScore.maxScore}</p>
+            <div className="mt-3 flex flex-wrap gap-3">{savedScore.sections.map(section => <p key={section.skill} className="text-sm text-slate">{SKILL_LABELS[section.skill]}: {section.score === null ? "Chưa chấm" : formatScore(section.score) + "/100"}{!section.complete && " · chưa đầy đủ"}</p>)}</div>
             {savedScore.passed && <p className="mt-3 text-sm font-semibold text-brand">Đạt ngưỡng của đề HSK {savedScore.hskLevel}. {promotionMessage(savedScore)}</p>}
             {savedScore.eligible && !savedScore.passed && <p className="mt-3 text-sm font-semibold text-brand">Chưa đạt ngưỡng {savedScore.passScore}/{savedScore.maxScore}. Mức HSK đã ghi nhận được giữ nguyên.</p>}
             {savedScore.reasons.length > 0 && <ul className="mt-3 list-disc pl-4 text-xs leading-6 text-slate">{savedScore.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
@@ -461,7 +483,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg bg-brand/5 p-4">
                 <p className="text-xs text-slate">Điểm đối chiếu đáp án</p>
-                <p className="mt-1 text-2xl font-semibold text-brand">{result.score}/100</p>
+                <p className="mt-1 text-2xl font-semibold text-brand">{formatScore(result.score)}/100</p>
               </div>
               <div className="rounded-lg bg-paper p-4">
                 <p className="text-xs text-slate">Số câu đúng</p>
@@ -484,7 +506,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
           {speakingQuestionCount > 0 && (
             <div className="rounded-lg border border-mist p-4">
               <h3 className="font-semibold text-ink">Kết quả luyện nói</h3>
-              <p className="mt-2 text-xl font-semibold text-brand">{speakingAverage === null ? "Chưa có điểm phát âm" : speakingAverage + "/100"}</p>
+              <p className="mt-2 text-xl font-semibold text-brand">{speakingAverage === null ? "Chưa có điểm phát âm" : formatScore(speakingAverage) + "/100"}</p>
               <p className="mt-2 text-sm leading-6 text-slate">Đã ghi âm {recordingCount}/{speakingQuestionCount} câu · đã chấm {speakingValues.length} câu.</p>
               {speakingValues.length < recordingCount && <p className="mt-1 text-sm text-slate">Một số bản ghi chưa nhận được kết quả chấm phát âm.</p>}
               <SpeakingErrorTable assessments={speakingAssessments} />
@@ -559,7 +581,7 @@ function AttemptContent({ attemptid, testid, data, recordScores = false, initial
 }
 
 const QuestionBlock = memo(function QuestionBlock({ number, question, options, answer, onAnswerChange, onHandwritingProgress, onStrokeProgress, strokeStats,
-  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext, gradingMode, answerLocked, canCheckImmediately, onCheckAnswer }: {
+  speechAssessment, onSpeakingAssessmentChange, onSpeakingBusyChange, onRecordingChange, recordingLocked, sampleAudioDisabled, showIndividualAudio, grade, bookmarked, onToggleBookmark, submitted, persistScores, attemptContext, gradingMode, answerLocked, canCheckImmediately, onCheckAnswer, showTextErrors }: {
   number: number;
   question: Question;
   options: Option[];
@@ -571,6 +593,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   gradingMode: GradingMode;
   answerLocked: boolean;
   canCheckImmediately: boolean;
+  showTextErrors?: boolean;
   onCheckAnswer: () => void;
   speechAssessment: PronunciationAssessment | null;
   onSpeakingAssessmentChange: (assessment: PronunciationAssessment | null) => void;
@@ -587,13 +610,20 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   attemptContext?: LearningAttemptContext;
 }) {
   const [sampleAudioError, setSampleAudioError] = useState("");
+  const [answerTouched, setAnswerTouched] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const answerItem = { question, options };
+  const expectsChinese = expectsChineseAnswer(answerItem);
+  const answerError = textAnswerError(answerItem, answer);
+  const visibleAnswerError = !composing && (answerTouched || showTextErrors) ? answerError : null;
+  const answerId = "practice-answer-" + question.questionid;
   const handwriting = writingPractice(question);
-  const usesTextAnswer = options.length === 0 || ["FILL_IN_BLANK", "SHORT_ANSWER", "ESSAY"].includes(question.type || "");
+  const usesTextAnswer = options.length === 0 || question.type === "ESSAY";
   const hasImageChoices = options.some(option => Boolean(option.image_url));
   const choiceColumns = hasImageChoices && options.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
   const correctAnswerText = grade?.correctAnswers.map(expected => {
     const option = options.find(item => optionMatchesAnswer({ id: item.optionid, text: item.option_text }, expected, question.type));
-    return option ? option.optionid + ". " + option.option_text : expected;
+    return option ? option.optionid + ". " + optionDisplayText(option.option_text) : expected;
   }).join(" / ");
   const feedback = grade?.status === "correct" ? { text: "Chính xác", style: "border-success bg-success-soft text-success" }
     : grade?.status === "incorrect" ? { text: "Chưa chính xác. Đáp án: " + correctAnswerText, style: "border-danger bg-danger-soft text-danger" }
@@ -628,8 +658,10 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       ) : <p className="mb-3 whitespace-pre-line text-sm font-medium leading-7 text-ink">{question.question}</p>}
       {question.pinyin && <p lang="zh-Latn" className={"mb-2 text-sm text-slate " + (question.skill === "Speaking" ? "text-center" : "")}>{question.pinyin}</p>}
       {question.translation && <p className={"mb-3 text-sm text-slate-soft " + (question.skill === "Speaking" ? "text-center" : "")}>{question.translation}</p>}
-      {[question.context_image_url, question.image_url, question.continuation_image_url].filter(Boolean).map((src, index) => (
-        <img key={index} src={publicMedia(src) || undefined} alt="Hình minh họa câu hỏi" className="mx-auto mb-4 h-auto max-w-full rounded-lg" loading="lazy" />
+      {[
+        { src: question.context_image_url }, { src: question.image_url, region: question.image_region }, { src: question.continuation_image_url },
+      ].filter(item => item.src).map((item, index) => (
+        <QuestionImage key={index} src={publicMedia(item.src)} region={item.region} alt="Hình minh họa câu hỏi" className="mx-auto mb-4 h-auto max-w-full rounded-lg" />
       ))}
       {showIndividualAudio && question.audio_url && !handwriting && question.skill !== "Speaking" && <audio controls preload="none" src={publicMedia(question.audio_url) || undefined} className="mb-3 w-full" onPlay={event => pauseOtherPracticeAudio(event.currentTarget)} />}
       {question.skill === "Speaking" ? (
@@ -647,8 +679,13 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       ) : usesTextAnswer ? (
         <>
           {options.length > 0 && <p className="mb-3 rounded-lg bg-paper p-3 text-sm text-slate">Từ gợi ý: {options.map(item => item.option_text).join(" · ")}</p>}
-          <textarea rows={6} aria-label="Câu trả lời bằng tiếng Trung" className="hsk-input min-h-32" lang="zh-CN" disabled={answerLocked}
-            value={answer} onChange={event => onAnswerChange(event.target.value)} placeholder="Nhập câu trả lời bằng tiếng Trung…" />
+          <textarea id={answerId} rows={6} aria-label={expectsChinese ? "Câu trả lời bằng tiếng Trung" : "Câu trả lời"}
+            aria-invalid={Boolean(visibleAnswerError)} aria-describedby={visibleAnswerError ? answerId + "-error" : undefined}
+            className={"hsk-input min-h-32" + (visibleAnswerError ? " border-danger" : "")} lang={expectsChinese ? "zh-CN" : undefined} disabled={answerLocked}
+            value={answer} onChange={event => onAnswerChange(event.target.value)} onBlur={() => setAnswerTouched(true)}
+            onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)}
+            placeholder={expectsChinese ? "Nhập câu trả lời bằng chữ Hán…" : "Nhập câu trả lời theo yêu cầu…"} />
+          {visibleAnswerError && <p id={answerId + "-error"} role="alert" className="mt-2 text-sm leading-6 text-danger">{visibleAnswerError}</p>}
         </>
       ) : (
         <div className={"mt-4 grid gap-3 " + choiceColumns}>
@@ -657,15 +694,15 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
             const correct = grade?.correctAnswers.some(expected => optionMatchesAnswer({ id: option.optionid, text: option.option_text }, expected, question.type));
             const color = correct ? "border-success bg-success-soft" : grade?.status === "incorrect" && selected
               ? "border-danger bg-danger-soft" : selected ? "border-brand bg-brand/5" : "border-mist hover:border-brand/40 hover:bg-brand/5";
-            const optionText = option.option_text.trim() === option.optionid ? "" : option.option_text;
+            const optionText = option.option_text.trim() === option.optionid ? "" : optionDisplayText(option.option_text);
             return (
               <label key={option.optionid} className={"flex min-w-0 cursor-pointer flex-col gap-3 rounded-lg border p-4 text-sm leading-6 text-ink transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/30 " + color}>
                 <span className="flex w-full items-start gap-3">
                   <input type="radio" name={question.questionid} value={option.optionid} checked={selected} disabled={answerLocked}
                     className="mt-1 h-4 w-4 shrink-0 accent-brand" onChange={() => onAnswerChange(option.optionid)} />
-                  <span className="min-w-0 break-words">
-                    <span className="font-semibold text-brand">{option.optionid}.</span>
-                    {optionText && <span className="ml-2">{optionText}</span>}
+                  <span className="flex min-w-0 flex-1 items-start gap-3">
+                    <span className="w-6 shrink-0 font-semibold text-brand">{option.optionid}.</span>
+                    {optionText && <span className="min-w-0 flex-1 whitespace-pre-line break-words">{optionText}</span>}
                   </span>
                 </span>
                 {option.image_url && <span className="flex min-h-32 w-full flex-1 items-center justify-center">
@@ -679,7 +716,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
       )}
       {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && usesTextAnswer && canCheckImmediately && !answerLocked &&
         <div className="mt-3 flex flex-col items-start gap-2">
-          <button type="button" className="hsk-button-secondary" disabled={!answer.trim()} onClick={onCheckAnswer}>Kiểm tra câu này</button>
+          <button type="button" className="hsk-button-secondary" disabled={!answer.trim() || Boolean(answerError) || composing} onClick={onCheckAnswer}>Kiểm tra câu này</button>
           <p className="text-xs leading-5 text-slate">Nhập xong rồi kiểm tra. Câu trả lời sẽ được khóa sau khi chấm.</p>
         </div>}
       {gradingMode === "per-question" && !submitted && !handwriting && question.skill !== "Speaking" && !canCheckImmediately &&
@@ -692,7 +729,7 @@ const QuestionBlock = memo(function QuestionBlock({ number, question, options, a
   );
 });
 
-type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext" | "gradingMode">;
+type ConnectedProps = Pick<ComponentProps<typeof QuestionBlock>, "number" | "question" | "options" | "recordingLocked" | "sampleAudioDisabled" | "showIndividualAudio" | "grade" | "submitted" | "persistScores" | "attemptContext" | "gradingMode" | "showTextErrors">;
 const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps) {
   const store = useAttemptStore();
   const id = props.question.questionid;
@@ -703,10 +740,10 @@ const ConnectedQuestion = memo(function ConnectedQuestion(props: ConnectedProps)
   const checkedGrade = useStore(store, state => state.checkedQuestions[id]);
   const canCheckImmediately = props.question.skill !== "Speaking" && !writingPractice(props.question)
     && !props.question.manualGrading && Boolean(props.question.acceptedAnswers?.length);
-  const usesTextAnswer = props.options.length === 0 || ["FILL_IN_BLANK", "SHORT_ANSWER", "ESSAY"].includes(props.question.type || "");
+  const usesTextAnswer = props.options.length === 0 || props.question.type === "ESSAY";
   const checkAnswer = useCallback((value: string) => {
     const state = store.getState();
-    if (props.gradingMode !== "per-question" || !canCheckImmediately || !value.trim() || state.result || state.checkedQuestions[id]) return;
+    if (props.gradingMode !== "per-question" || !canCheckImmediately || !value.trim() || textAnswerError({ question: props.question, options: props.options }, value) || state.result || state.checkedQuestions[id]) return;
     const grade = scorePracticeAttempt([{ question: props.question, options: props.options }], { [id]: value }).questions[0];
     if (grade && (grade.status === "correct" || grade.status === "incorrect")) state.setField("checkedQuestions", previous => ({ ...previous, [id]: grade }));
   }, [store, id, props.gradingMode, props.question, props.options, canCheckImmediately]);

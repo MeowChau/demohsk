@@ -69,6 +69,23 @@ describe("profile request contracts", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { currentHskLevel: "3", targetHskLevel: "1", dailyStudyTime: "30" },
+    { targetHskLevel: "1" },
+    { currentHskLevel: "7" },
+  ])("rejects lower targets against submitted or saved levels before writing %o", async values => {
+    const result = await updateProfileInfoAction(form(values));
+    expect(result).toMatchObject({ fieldErrors: { targetHskLevel: "Cấp độ HSK mục tiêu phải bằng hoặc cao hơn cấp độ hiện tại." } });
+    expect(result).not.toHaveProperty("success");
+    expect(request).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("accepts a target equal to the current level", async () => {
+    expect(await updateProfileInfoAction(form({ currentHskLevel: "3", targetHskLevel: "3", dailyStudyTime: "45" }))).toEqual({ success: true });
+    expect(request).toHaveBeenCalledWith("users/me/study-goals", { method: "PATCH", body: JSON.stringify({ targetHskLevel: 3, dailyStudyTime: 45 }) });
+  });
+
   it("does not report success or write account data when saving study goals fails", async () => {
     request.mockRejectedValueOnce(new Error("Backend unavailable"));
     const result = await updateProfileInfoAction(form({ firstName: "Lan", dailyStudyTime: "60" }));

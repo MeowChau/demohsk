@@ -87,7 +87,50 @@ it("retries stale-day attendance after a failed midnight refresh", async () => {
 
 it("preserves the full topic total while rendering only ten topic cards", () => {
  const topics=Array.from({length:10},(_,i)=>({topicKey:String(i),titleVi:`Bài ${i+1}`,titleCn:"你好",hskLevel:1,totalSets:2}));
- render(<Dashboard {...props} topics={topics} topicCount={31}/>);
- expect(screen.getByText("Bạn có 31 chủ đề bài học HSK.")).toBeTruthy();
- expect(screen.getAllByText("2 bài học",{exact:false})).toHaveLength(10);
+ render(<Dashboard {...props} topics={topics} topicCount={107}/>);
+ expect(screen.getByText("Bạn có 107 chủ đề bài học HSK.")).toBeTruthy();
+ expect(screen.getAllByText("2 bài luyện",{exact:false})).toHaveLength(10);
+ const destinations = topics.map(topic => {
+  const href = screen.getByText(topic.titleVi).closest("a")!.getAttribute("href")!;
+  const url = new URL(href, "http://localhost");
+  expect(url.pathname).toBe("/practice");
+  expect(url.searchParams.get("topic")).toBe(topic.topicKey);
+  expect(url.searchParams.get("hskLevel")).toBe(String(topic.hskLevel));
+  return href;
+ });
+ expect(new Set(destinations).size).toBe(10);
+ expect(screen.getByRole("link", {name: /Xem tất cả bài học/}).getAttribute("href")).toBe("/learning");
+});
+
+it("opens the selected topic with its own HSK level and safely encoded key", () => {
+ const topics = [
+  {topicKey:"HSK2-L01",titleVi:"Topic two",titleCn:"",hskLevel:2,totalSets:4},
+  {topicKey:"HSK3 & 你好",titleVi:"Topic three",titleCn:"",hskLevel:3,totalSets:3},
+ ];
+ render(<Dashboard {...props} topics={topics}/>);
+ for (const topic of topics) {
+  const href = screen.getByText(topic.titleVi).closest("a")!.getAttribute("href")!;
+  const url = new URL(href, "http://localhost");
+  expect(url.pathname).toBe("/practice");
+  expect(Object.fromEntries(url.searchParams)).toEqual({topic:topic.topicKey,hskLevel:String(topic.hskLevel)});
+ }
+});
+
+it("guides a new learner directly to the study-goals fields in their profile", () => {
+ render(<Dashboard {...props} student={{current_band:null,target_band:null}}/>);
+ const setup = screen.getByRole("link", {name:"Thiết lập mục tiêu học"});
+ expect(setup.getAttribute("href")).toBe("/profile#study-goals");
+ expect(screen.queryByRole("link", {name:"Chỉnh sửa mục tiêu"})).toBeNull();
+});
+
+it("offers goal editing instead of first-time setup once the learner has a goal", () => {
+ render(<Dashboard {...props}/>);
+ expect(screen.getByRole("link", {name:"Chỉnh sửa mục tiêu"}).getAttribute("href")).toBe("/profile#study-goals");
+ expect(screen.queryByRole("link", {name:"Thiết lập mục tiêu học"})).toBeNull();
+});
+
+it("explains that the current level has no practice content while keeping the full catalog reachable", () => {
+ render(<Dashboard {...props} topics={[]} student={{current_band:3,target_band:3}}/>);
+ expect(screen.getByText("Chưa có bài luyện ở cấp HSK hiện tại.")).toBeTruthy();
+ expect(screen.getByRole("link", {name:/Xem tất cả bài học/}).getAttribute("href")).toBe("/learning");
 });

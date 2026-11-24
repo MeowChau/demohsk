@@ -65,6 +65,6 @@ export function useValidatedForm<T extends z.ZodTypeAny>(schema: T, state?: Form
     setErrors(serverErrors.current);
     if (formRef.current) focusFirstError(formRef.current, serverErrors.current);
   }, []);
-  return { errors, validateForm, applyServerError, serverError: edited ? undefined : state?.error,
+  return { errors, validateForm, applyServerError, isSuccess: !edited && Boolean(state?.success), serverError: edited ? undefined : state?.error,
     formProps: { ref: formRef, noValidate: true, onSubmit, onBlurCapture, onChangeCapture } };
 }

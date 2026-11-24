@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import Link from "next/link"
+import { practiceHref } from "@/lib/catalog-query"
 import { ArrowRight, Target, Trophy } from "lucide-react"
 
 import { BandProgressChart } from "@/components/dashboard/band-progress-chart"
@@ -423,7 +424,20 @@ export default function DashboardClient({
             currentBand={assessment?.currentHskLevel ?? student?.current_band ?? null}
             targetBand={student?.target_band ?? null}
           />
-          <p className="mt-5 text-center text-xs leading-6 text-slate">Đạt đề HSK của cấp cao hơn để cập nhật mức hiện tại trong hồ sơ. Làm lại đề cùng cấp không tự tăng sang cấp tiếp theo.</p>
+          <div className="mt-5 space-y-3 text-center">
+            {student?.target_band == null ? (
+              <>
+                <p className="text-sm font-semibold text-ink">Bạn chưa đặt mục tiêu học HSK.</p>
+                <p className="text-xs leading-6 text-slate">Vào Hồ sơ để chọn cấp HSK muốn đạt và số phút học mỗi ngày. Bạn có thể điều chỉnh mục tiêu bất cứ lúc nào.</p>
+                <Link href="/profile#study-goals" className="hsk-button w-full justify-center">Thiết lập mục tiêu học</Link>
+              </>
+            ) : (
+              <>
+                <p className="text-xs leading-6 text-slate">Cấp hiện tại theo hồ sơ của bạn. Khi bạn đạt đề HSK ở cấp cao hơn, hệ thống cũng tự cập nhật cấp hiện tại. Mục tiêu là cấp bạn muốn đạt và có thể chỉnh trong Hồ sơ.</p>
+                <Link href="/profile#study-goals" className="hsk-button-secondary w-full justify-center">Chỉnh sửa mục tiêu</Link>
+              </>
+            )}
+          </div>
         </motion.section>
 
         {/* Điểm tổng hợp theo cấp; kỹ năng chưa được chấm giữ trạng thái riêng. */}
@@ -481,17 +495,17 @@ export default function DashboardClient({
             </div>
 
             <p className="text-sm font-black text-slate">
-               Chưa có chủ đề HSK. </p>
+               Chưa có bài luyện ở cấp HSK hiện tại. </p>
 
             <p className="mt-1 text-xs font-medium text-slate-soft">
-               Nội dung sẽ xuất hiện khi có chủ đề phù hợp với cấp độ của bạn. </p>
+               Chọn “Xem tất cả bài học” để khám phá nội dung ở các cấp HSK khác. </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {topics.map(topic => (
               <Link
                 key={topic.topicKey}
-                href="/learning"
+                href={practiceHref({ topic: topic.topicKey, hskLevel: String(topic.hskLevel) })}
                 className="group relative overflow-hidden rounded-2xl border-3 border-ink bg-white p-5 shadow-hard transition-all hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-brutalist dark:border-slate/30 dark:bg-surface"
               >
                 <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-teal to-cyan opacity-0 transition-opacity group-hover:opacity-100" />
@@ -503,7 +517,7 @@ export default function DashboardClient({
                     </p>
 
                     <p className="mt-1 text-sm text-slate">
-                      {topic.totalSets} bài học
+                      {topic.totalSets} bài luyện
 
                       {` · HSK ${topic.hskLevel}`}
                     </p>

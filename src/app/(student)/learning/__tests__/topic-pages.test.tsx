@@ -54,7 +54,7 @@ it("keeps unmatched words and their source identifiers accessible in list mode",
 
 it("uses the textbook name inside the flashcard lesson without changing the request key",async()=>{
  render(await VocabularyPage({searchParams:Promise.resolve({view:"cards",topic:reviewName})}));
- expect(getLessonWords).toHaveBeenCalledWith(expect.objectContaining({topic:reviewName}));
+ expect(getLessonWords).toHaveBeenCalledWith(expect.objectContaining({topic:reviewName}),{withAudio:true});
  expect(screen.getByRole("heading",{name:lesson.titleVi+" (từ vựng)"})).toBeTruthy();
  expect(screen.getByText(/1 từ cùng chủ đề/)).toBeTruthy();
 });

@@ -2,8 +2,10 @@ import type { PronunciationAssessment } from "@/lib/api/types";
 import type { HandwritingStrokeProgress } from "@/lib/writing-practice";
 import { errorDistribution, pronunciationFeedback, writingFeedback, PRACTICE_FEEDBACK_THRESHOLD, type WritingFeedbackTarget } from "@/lib/practice-feedback";
 
+import { formatScore } from "@/lib/utils";
+
 const limit = 5;
-const scoreText = (score: number | null) => score === null ? "Chưa chấm" : score.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "/100";
+const scoreText = (score: number | null) => score === null ? "Chưa chấm" : formatScore(score) + "/100";
 const tableClass = "w-full table-fixed text-left text-sm text-ink";
 const headClass = "bg-paper text-xs font-medium text-slate";
 const cellClass = "px-3 py-3 align-top sm:px-4";

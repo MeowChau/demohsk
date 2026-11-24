@@ -29,7 +29,7 @@ export default async function VocabularyPage({ searchParams }: { searchParams: P
     wordPage = await getWords(query, user?.currentHskLevel ?? 1);
     words = wordPage.data;
   } else if (query.topic) {
-    words = await getLessonWords(query);
+    words = await getLessonWords(query, { withAudio: true });
   }
   const activePage = lessons || wordPage;
   const activeQuery = activePage ? { ...query, page: activePage.page, limit: activePage.limit } : query;

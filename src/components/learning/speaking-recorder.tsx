@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, RotateCcw, Square } from "lucide-react";
 import { apiFetch } from "@/lib/api/client";
+import { formatScore } from "@/lib/utils";
 import { encodeStudyWav } from "@/lib/audio-wav";
 import { pronunciationResultSchema } from "@/lib/validations/assessment";
 import type { PronunciationAssessment } from "@/lib/api/types";
@@ -240,18 +241,18 @@ export function SpeakingRecorder({ questionId, attemptContext, referenceText, as
       {assessment?.progressSaved === false && <p className="text-xs leading-5 text-danger" role="status">{assessment.progressMessage || "Đã chấm nhưng chưa lưu được điểm tổng hợp."}</p>}
       {assessment && (
         <div className="w-full rounded-lg border border-brand/20 bg-surface p-4" aria-live="polite">
-          <p className="text-2xl font-semibold text-brand">{assessment.score}<span className="text-sm font-normal text-slate">/100</span></p>
+          <p className="text-2xl font-semibold text-brand">{formatScore(assessment.score)}<span className="text-sm font-normal text-slate">/100</span></p>
           <p className="mt-3 text-xs text-slate">Nội dung nhận diện</p>
           <p lang="zh-CN" className="mt-1 whitespace-pre-line text-base leading-8 text-ink">{assessment.recognizedText || "Chưa nhận diện được nội dung."}</p>
           <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-            {[["Phát âm", assessment.accuracyScore], ["Trôi chảy", assessment.fluencyScore], ["Đọc đủ", assessment.completenessScore]].map(([label, score]) => (
-              <div key={label} className="rounded-lg bg-paper p-2"><dt className="text-xs text-slate">{label}</dt><dd className="mt-1 font-semibold text-ink">{score}</dd></div>
+            {([["Phát âm", assessment.accuracyScore], ["Trôi chảy", assessment.fluencyScore], ["Đọc đủ", assessment.completenessScore]] as const).map(([label, score]) => (
+              <div key={label} className="rounded-lg bg-paper p-2"><dt className="text-xs text-slate">{label}</dt><dd className="mt-1 font-semibold text-ink">{formatScore(score)}</dd></div>
             ))}
           </dl>
           <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate">{assessment.feedback}</p>
           {assessment.words.length > 0 && <ul className="mt-3 flex flex-wrap gap-2" aria-label="Phát âm từng từ">
             {assessment.words.map((word, index) => <li key={index} className="rounded-lg border border-mist px-2 py-1 text-sm text-ink">
-              {word.word} · {word.accuracyScore ?? "Chưa chấm"}
+              {word.word} · {word.accuracyScore == null ? "Chưa chấm" : formatScore(word.accuracyScore)}
             </li>)}
           </ul>}
         </div>

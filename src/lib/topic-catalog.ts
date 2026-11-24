@@ -70,8 +70,13 @@ export function paginateTopics(topics: HskTopic[], requestedPage: number, limit 
   return { data: topics.slice((page - 1) * limit, page * limit), total, page, limit, totalPages };
 }
 
+function topicSearchText(value: string): string {
+  return value.normalize("NFD").replace(/\p{M}/gu, "")
+    .toLocaleLowerCase("vi").replace(/đ/g, "d").replace(/\s+/gu, " ").trim();
+}
+
 export function filterTopics(topics: HskTopic[], search: string) {
-  const term = search.toLocaleLowerCase("vi");
+  const term = topicSearchText(search);
   return topics.filter(topic => [topic.titleVi, topic.titleCn, topic.pinyin, topic.topicKey]
-    .some(text => (text || "").toLocaleLowerCase("vi").includes(term)));
+    .some(text => topicSearchText(text || "").includes(term)));
 }

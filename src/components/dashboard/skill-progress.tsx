@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { SKILL_LABELS } from "@/lib/hsk";
+import { formatScore } from "@/lib/utils";
 import { ListeningIcon, ReadingIcon, WritingIcon, SpeakingIcon } from "@/components/icons/stat-icons";
 import type { Skill } from "@/types/assessment";
 import type { LearningScoreSummary } from "@/lib/learning-scores";
@@ -24,7 +25,7 @@ export function SkillProgress({ summary, selectedLevel = 1 }: { summary: Learnin
       const hasScore = score !== null && Number.isFinite(score);
       const tracing = skill === "Writing" && !hasScore && (summary?.writingProgress?.total || 0) > 0 ? summary!.writingProgress : null;
       const pct = Math.min(100, Math.max(0, hasScore ? score : tracing ? tracing.completed / tracing.total * 100 : 0));
-      const shownScore = hasScore ? score.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) : "";
+      const shownScore = hasScore ? formatScore(score) : "";
 
       return <motion.div key={skill} data-skill={skill} role="group" aria-label={SKILL_LABELS[skill] + " · HSK " + (summary?.hskLevel || selectedLevel)}
         initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}

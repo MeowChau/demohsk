@@ -33,7 +33,7 @@ export default async function ProfilePage() {
 
         <ProfileTabs
           personalInfo={
-            <PersonalInfoForm key={profile.current_band} profile={profile} />
+            <PersonalInfoForm key={profile.userid} profile={profile} />
           }
           settings={
             <div className="flex flex-col gap-6">

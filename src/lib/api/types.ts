@@ -1,3 +1,5 @@
+import type { QuestionImageRegion } from "./question-adapter";
+
 export interface HskUser {
   id: number | string;
   email: string | null;
@@ -49,6 +51,8 @@ export interface HskWord {
   meaning: string;
   hskLevel: number;
   topic?: string | null;
+  // Flashcards enrich this from the existing spoken-word practice audio.
+  audioUrl?: string | null;
 }
 export interface HskQuestion {
   id: number;
@@ -65,6 +69,7 @@ export interface HskQuestion {
     meaning?: string;
     source?: { sourceWord?: string };
     imageUrl?: string;
+    imageRegion?: QuestionImageRegion;
     contextImageUrl?: string;
     continuationImageUrl?: string;
     audioUrl?: string;

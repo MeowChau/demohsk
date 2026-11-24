@@ -1,7 +1,7 @@
 import {sortTopics,filterTopics,paginateTopics,getTextbookTopics,getVocabularyTopics,getVocabularyLessons,vocabularyForLesson} from "../topic-catalog";
 import {hskLevelPriority,prioritizeCatalog} from "../catalog-query";
 import type {HskTopic} from "../api/types";
-const topic=(n:number,level=1)=>({id:String(n),topicKey:`HSK${level}-L${n}`,titleVi:`Bài ${n}`,titleCn:"你好",pinyin:"ni hao",hskLevel:level,totalSets:1,totalQuestions:20,vocabularyCount:10,listeningCount:1,readingCount:0,writingCount:0,speakingCount:0}) satisfies HskTopic;
+const topic=(n:number,level=1)=>({id:String(n),topicKey:`HSK${level}-L${n}`,titleVi:`Bài ${n}`,titleCn:"你好",pinyin:"nǐ hǎo",hskLevel:level,totalSets:1,totalQuestions:20,vocabularyCount:10,listeningCount:1,readingCount:0,writingCount:0,speakingCount:0}) satisfies HskTopic;
 it("orders lessons naturally and paginates 205 items without duplicates or omissions",()=>{
  const input=Array.from({length:205},(_,i)=>topic(205-i));const sorted=sortTopics(input);expect(sorted[0]!.titleVi).toBe("Bài 1");
  const pages=Array.from({length:23},(_,i)=>paginateTopics(sorted,i+1));expect(pages[0]!.data).toHaveLength(9);expect(pages.flatMap(x=>x.data)).toHaveLength(205);
@@ -83,4 +83,20 @@ it("hides unmatched reviews from lesson cards while keeping them available for t
  expect(lessons.map(item=>item.topicKey)).toEqual([review(1).topicKey]);
  expect(getVocabularyTopics(input)).toHaveLength(3);
  expect(getVocabularyTopics(input).map(item=>item.vocabularyCount)).toEqual([20,20,20]);
+});
+
+const greetings = [
+ {...topic(1), titleVi:"Bài 1: Chào bạn, AI Tiểu Ngữ!", titleCn:"AI 小语，你好！", pinyin:"AI Xiǎoyǔ, nǐ hǎo!"},
+ {...topic(2), titleVi:"Bài 2: Chào các bạn", titleCn:"你们好", pinyin:"nǐmen hǎo"},
+];
+it.each(["ni hao", "nǐ hǎo", "NI HAO", "  ni   hao  ", "nǐ hǎo".normalize("NFD")])("finds accented pinyin with query %s", query => {
+ expect(filterTopics(greetings,query).map(item=>item.topicKey)).toEqual(["HSK1-L1"]);
+ expect(greetings[0]!.pinyin).toBe("AI Xiǎoyǔ, nǐ hǎo!");
+});
+it("preserves Chinese and topic-code searches and accepts unaccented Vietnamese titles",()=>{
+ expect(filterTopics(greetings,"小语").map(item=>item.topicKey)).toEqual(["HSK1-L1"]);
+ expect(filterTopics(greetings,"hsk1-l2").map(item=>item.topicKey)).toEqual(["HSK1-L2"]);
+ expect(filterTopics(greetings,"chao ban").map(item=>item.topicKey)).toEqual(["HSK1-L1"]);
+ expect(filterTopics(greetings,"khong co chu de nay")).toEqual([]);
+ expect(filterTopics(greetings,"   ")).toEqual(greetings);
 });

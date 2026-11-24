@@ -92,29 +92,66 @@ describe("large personalized catalog",()=>{
 
 describe("dashboard topic summary", () => {
   beforeEach(() => request.mockReset());
-  it("shows textbook topics without compiled vocabulary reviews in dashboard lesson cards",async()=>{
+  it("counts textbook lessons separately from actionable skill practice recommendations",async()=>{
     const lesson={topicKey:"HSK1-L01",titleVi:"Bài 1: Chào bạn!",hskLevel:1,totalSets:2};
-    request.mockResolvedValue([lesson,{...lesson,topicKey:"Bài 1: Ôn từ vựng HSK 1 (biên soạn)"}]);
-    expect(await getDashboardTopics(1)).toMatchObject({total:1,topics:[lesson]});
+    const review={...lesson,topicKey:"Bài 1: Ôn từ vựng HSK 1 (biên soạn)"};
+    request.mockResolvedValue([lesson,review].map(topic=>({...topic,totalQuestions:20})));
+    expect(await getDashboardTopics(1)).toMatchObject({total:1,topics:[lesson,review]});
     expect(request).toHaveBeenCalledTimes(1);
   });
-  it("uses one topic request and sends only ten compact cards to the client", async () => {
-    const topics = Array.from({length: 31}, (_, i) => ({
-      topicKey: `HSK1-L${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: 1,
+  it.each([1, 2, 3])("counts textbooks across all levels while recommending only ten HSK %i practice cards", async level => {
+    const topics = Array.from({length: 107}, (_, i) => ({
+      topicKey: `HSK${i < 33 ? 1 : i < 61 ? 2 : 3}-L${i + 1}`, titleVi: `Bài ${i + 1}`, titleCn: "你好", hskLevel: i < 33 ? 1 : i < 61 ? 2 : 3,
       totalSets: 2, totalQuestions: 80, vocabularyCount: 20, pinyin: "ni hao",
     }));
-    request.mockResolvedValue(topics);
-    const { topics: result, total } = await getDashboardTopics(1);
-    expect(total).toBe(31);
+    request.mockImplementation(async value => {
+      const requestedLevel = new URL(String(value), "http://fixture").searchParams.get("hskLevel");
+      return requestedLevel ? topics.filter(topic => topic.hskLevel === Number(requestedLevel)) : topics;
+    });
+    const { topics: result, total } = await getDashboardTopics(level);
+    expect(total).toBe(107);
     expect(result).toHaveLength(10);
-    expect(result.map(item => item.topicKey)).toEqual(topics.slice(0, 10).map(item => item.topicKey));
+    expect(result.map(item => item.topicKey)).toEqual(topics.filter(item => item.hskLevel === level).slice(0, 10).map(item => item.topicKey));
     expect(result[0]).toMatchObject({totalSets: 2});
     expect(result[0]).not.toHaveProperty("totalQuestions");
     expect(request).toHaveBeenCalledTimes(1);
-    expect(request).toHaveBeenCalledWith("practice-sets/topics?hskLevel=1");
+    expect(request).toHaveBeenCalledWith("practice-sets/topics");
   });
   it("keeps upstream errors visible instead of reporting an empty successful dashboard", async () => {
     request.mockRejectedValue(new Error("unavailable"));
     await expect(getDashboardTopics(2)).rejects.toThrow("unavailable");
   });
+});
+
+describe("actionable dashboard topic recommendations", () => {
+ beforeEach(() => request.mockReset());
+ const topic = (topicKey:string, hskLevel:number, totalSets:number, totalQuestions:number, vocabularyCount=0) => ({
+  topicKey, titleVi:topicKey, titleCn:"", pinyin:"", hskLevel, totalSets, totalQuestions, vocabularyCount,
+ });
+ it("skips the first eighteen empty HSK 3 topics before taking ten ready recommendations", async () => {
+  const empty = Array.from({length:18}, (_,i) => topic("HSK3-L"+(i+1),3,0,0));
+  const ready = Array.from({length:12}, (_,i) => topic("compiled-"+i,3,4,80));
+  const topics = [...empty,...ready,topic("HSK2-L01",2,4,80)];
+  const before = JSON.stringify(topics);
+  request.mockResolvedValue(topics);
+  const result = await getDashboardTopics(3);
+  expect(result.total).toBe(19);
+  expect(result.topics.map(item=>item.topicKey)).toEqual(ready.slice(0,10).map(item=>item.topicKey));
+  expect(result.topics.every(item=>item.hskLevel===3 && item.totalSets>0)).toBe(true);
+  expect(JSON.stringify(topics)).toBe(before);
+  expect(request).toHaveBeenCalledTimes(1);
+ });
+ it("excludes empty practice sets and vocabulary-only topics because these cards open practice", async () => {
+  request.mockResolvedValue([
+   topic("HSK3-L01",3,0,0),topic("HSK3-L02",3,1,0),topic("vocabulary-only",3,0,0,20),
+   topic("HSK2-L01",2,4,80),topic("HSK3-L03",3,1,5),
+  ]);
+  const result = await getDashboardTopics(3);
+  expect(result.total).toBe(4);
+  expect(result.topics.map(item=>item.topicKey)).toEqual(["HSK3-L03"]);
+ });
+ it("returns an honest empty state instead of empty cards or recommendations from another HSK level", async () => {
+  request.mockResolvedValue([topic("HSK3-L01",3,0,0),topic("HSK2-L01",2,1,10)]);
+  expect(await getDashboardTopics(3)).toEqual({total:2,topics:[]});
+ });
 });
